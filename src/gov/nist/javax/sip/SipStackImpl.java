@@ -29,29 +29,23 @@ import gov.nist.core.CommonLogger;
 import gov.nist.core.LogLevels;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
-import gov.nist.core.net.AddressResolver;
-import gov.nist.core.net.NetworkLayer;
-import gov.nist.core.net.SslNetworkLayer;
+import gov.nist.core.net.*;
 import gov.nist.javax.sip.clientauthutils.AccountManager;
 import gov.nist.javax.sip.clientauthutils.AuthenticationHelper;
 import gov.nist.javax.sip.clientauthutils.AuthenticationHelperImpl;
 import gov.nist.javax.sip.clientauthutils.SecureAccountManager;
 import gov.nist.javax.sip.parser.MessageParserFactory;
-import gov.nist.javax.sip.parser.PipelinedMsgParser;
+import gov.nist.javax.sip.parser.PostParseExecutorServices;
 import gov.nist.javax.sip.parser.StringMsgParser;
 import gov.nist.javax.sip.parser.StringMsgParserFactory;
-import gov.nist.javax.sip.stack.ClientAuthType;
-import gov.nist.javax.sip.stack.DefaultMessageLogFactory;
-import gov.nist.javax.sip.stack.DefaultRouter;
-import gov.nist.javax.sip.stack.MessageProcessor;
-import gov.nist.javax.sip.stack.MessageProcessorFactory;
-import gov.nist.javax.sip.stack.OIOMessageProcessorFactory;
-import gov.nist.javax.sip.stack.SIPEventInterceptor;
-import gov.nist.javax.sip.stack.SIPMessageValve;
-import gov.nist.javax.sip.stack.SIPTransactionStack;
+import gov.nist.javax.sip.stack.*;
 import gov.nist.javax.sip.stack.timers.DefaultSipTimer;
 import gov.nist.javax.sip.stack.timers.SipTimer;
 
+import javax.sip.*;
+import javax.sip.address.Router;
+import javax.sip.header.HeaderFactory;
+import javax.sip.message.Request;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -59,28 +53,10 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
-import java.util.Collections;
-import java.util.Hashtable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Properties;
-import java.util.StringTokenizer;
+import java.security.GeneralSecurityException;
+import java.util.*;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-
-import javax.sip.InvalidArgumentException;
-import javax.sip.ListeningPoint;
-import javax.sip.ObjectInUseException;
-import javax.sip.PeerUnavailableException;
-import javax.sip.ProviderDoesNotExistException;
-import javax.sip.SipException;
-import javax.sip.SipListener;
-import javax.sip.SipProvider;
-import javax.sip.SipStack;
-import javax.sip.TransportNotSupportedException;
-import javax.sip.address.Router;
-import javax.sip.header.HeaderFactory;
-import javax.sip.message.Request;
 
 /**
  * Implementation of SipStack.
@@ -356,7 +332,20 @@ import javax.sip.message.Request;
  * remain disabled. An example of how to use this property is in
  * src/examples/threadaudit.</li>
  * 
+ * <li><b>gov.nist.javax.sip.NIO_MAX_SOCKET_IDLE_TIME = long </b> <br/>
+ * Defines the number of milliseconds a NIO TCP socket will be kept alive after the
+ * last IO operation on that socket. This allows to clean up after high initial load
+ * of new calls that hang up or stay idle. Note that disconnecting the socket does't
+ * end the SIP call. A new socket will be established when needed for any existing calls
+ * by the SIP RFC spec.
+ * </li>
  * 
+ * <li><b>gov.nist.javax.sip.stack.USE_DIRECT_BUFFERS = [true|false]</b> <br/>
+ * Default is <it>true</it> If set to <it>false</it>, the NIO stack won't use direct buffers.
+ * As Direct buffers reside outside of the heap memory, they can lead to unforeseen out of memory exceptions
+ * as seen in http://java.net/jira/browse/JSIP-430. This flag allows to use non direct buffers for better memory
+ * monitoring and management.
+ * </li>
  * 
  * <li><b>gov.nist.javax.sip.COMPUTE_CONTENT_LENGTH_FROM_MESSAGE_BODY =
  * [true|false] </b> <br/>
@@ -545,12 +534,12 @@ import javax.sip.message.Request;
  * </li>
  *
  *<li><b>gov.nist.javax.sip.RELIABLE_CONNECTION_KEEP_ALIVE_TIMEOUT</b> Value in seconds which is used as default keepalive timeout
- * (See also http://tools.ietf.org/html/rfc5626#section-4.4.1)</li>
+ * (See also http://tools.ietf.org/html/rfc5626#section-4.4.1). Defaults to "infiinity" seconds (i.e. timeout event not delivered).</li>
  * 
  * <li><b>gov.nist.javax.sip.SSL_HANDSHAKE_TIMEOUT</b> Value in seconds which is used as default timeout for performing the SSL Handshake
  * This prevents bad clients of connecting without sending any data to block the server</li>
  *
- * 
+ *
  * <li><b>javax.net.ssl.keyStore = fileName </b> <br/>
  * Default is <it>NULL</it>. If left undefined the keyStore and trustStore will
  * be left to the java runtime defaults. If defined, any TLS sockets created
@@ -784,6 +773,11 @@ public class SipStackImpl extends SIPTransactionStack implements
 		// Our router does not do DNS lookups.
 		this.outboundProxy = configurationProperties
 				.getProperty("javax.sip.OUTBOUND_PROXY");
+
+		// http://java.net/jira/browse/JSIP-430
+        ByteBufferFactory.getInstance().setUseDirect(Boolean.valueOf(
+                configurationProperties.getProperty("gov.nist.javax.sip.stack.USE_DIRECT_BUFFERS",
+                        Boolean.TRUE.toString())));
 
 		this.defaultRouter = new DefaultRouter(this, outboundProxy);
 
@@ -1049,7 +1043,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {
 				int threads = new Integer(tcpTreadPoolSize).intValue();
 				super.setTcpPostParsingThreadPoolSize(threads);
-				PipelinedMsgParser.setPostParseExcutorSize(threads, congetstionControlTimeout);
+				PostParseExecutorServices.setPostParseExcutorSize(threads, congetstionControlTimeout);
 			} catch (NumberFormatException ex) {
 				if (logger.isLoggingEnabled())
 					this.logger.logError(
@@ -1096,6 +1090,35 @@ public class SipStackImpl extends SIPTransactionStack implements
 		} else {
 			this.unlimitedClientTransactionTableSize = true;
 		}
+
+        /*
+         * gets the SecurityManagerProvider implementation, if any. Note that this is a
+         * NIST only feature.
+         */
+
+        final String SECURITY_MANAGER_PROVIDER_KEY = "gov.nist.javax.sip.SECURITY_MANAGER_PROVIDER";
+
+        if (configurationProperties.containsKey(SECURITY_MANAGER_PROVIDER_KEY)) {
+            String path = configurationProperties
+                    .getProperty(SECURITY_MANAGER_PROVIDER_KEY);
+            try {
+                Class<?> clazz = Class.forName(path);
+                Constructor<?> c = clazz.getConstructor(new Class[0]);
+                securityManagerProvider = (SecurityManagerProvider) c.newInstance(new Object[0]);
+            } catch (Exception e) {
+                throw new PeerUnavailableException(
+                        "can't find or instantiate SecurityManagerProvider implementation: "
+                                + path, e);
+            }
+        } else
+            securityManagerProvider = new DefaultSecurityManagerProvider();
+        try {
+            securityManagerProvider.init(configurationProperties);
+        } catch (GeneralSecurityException ex) {
+            throw new PeerUnavailableException("Cannot initialize security manager provider", ex);
+        } catch (IOException ex) {
+            throw new PeerUnavailableException("Cannot initialize security manager provider", ex);
+        }
 
 		super.cacheServerConnections = true;
 		String flag = configurationProperties
@@ -1319,6 +1342,15 @@ public class SipStackImpl extends SIPTransactionStack implements
 						"Bad configuration value for gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", e);			
 		}
 		
+		String maxIdleTimeString = configurationProperties.getProperty("gov.nist.javax.sip.NIO_MAX_SOCKET_IDLE_TIME", "7200000");
+		try {
+			super.nioSocketMaxIdleTime = Long.parseLong(maxIdleTimeString);
+		} catch (Exception e) {
+			logger
+				.logError(
+						"Bad configuration value for gov.nist.javax.sip.NIO_MAX_SOCKET_IDLE_TIME=" + maxIdleTimeString, e);			
+		}
+		
 		String defaultTimerName = configurationProperties.getProperty("gov.nist.javax.sip.TIMER_CLASS_NAME",DefaultSipTimer.class.getName());
 		try {
 			setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
@@ -1408,7 +1440,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 		if (!transport.equalsIgnoreCase("UDP")
 				&& !transport.equalsIgnoreCase("TLS")
 				&& !transport.equalsIgnoreCase("TCP")
-				&& !transport.equalsIgnoreCase("SCTP"))
+				&& !transport.equalsIgnoreCase("SCTP")
+				&& !transport.equalsIgnoreCase("WS")
+				&& !transport.equalsIgnoreCase("WSS"))
 			throw new TransportNotSupportedException("bad transport "
 					+ transport);
 
@@ -1429,7 +1463,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 				MessageProcessor messageProcessor = this
 						.createMessageProcessor(inetAddr, port, transport);
 				if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
-					this.logger.logDebug(
+					logger.logDebug(
 							"Created Message Processor: " + address
 									+ " port = " + port + " transport = "
 									+ transport);
@@ -1619,7 +1653,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		if (this.eventScanner != null)
 			this.eventScanner.forceStop();
 		this.eventScanner = null;
-		PipelinedMsgParser.shutdownTcpThreadpool();
+		PostParseExecutorServices.shutdownThreadpool();
 
 	}
 

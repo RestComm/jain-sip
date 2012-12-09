@@ -67,7 +67,7 @@ import javax.net.ssl.SSLServerSocket;
  * @author M. Ranganathan <br/>
  * 
  */
-public class TLSMessageProcessor extends ConnectionOrientedMessageProcessor {
+public class TLSMessageProcessor extends ConnectionOrientedMessageProcessor implements Runnable {
 	
 	private static StackLogger logger = CommonLogger.getLogger(TLSMessageProcessor.class);
     
@@ -87,7 +87,7 @@ public class TLSMessageProcessor extends ConnectionOrientedMessageProcessor {
      */
     public void start() throws IOException {
         Thread thread = new Thread(this);
-        thread.setName("TLSMessageProcessorThread");
+        thread.setName("MessageProcessorThread-TLS-" + getIpAddress().getHostAddress() + '/' + getPort());
         // ISSUE 184
         thread.setPriority(sipStack.getThreadPriority());
         thread.setDaemon(true);

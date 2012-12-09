@@ -71,6 +71,55 @@ public class MultipartMimeParserTest extends TestCase {
                                         + "From: user1 <sip:user1@server1.com>;tag=1928301774\r\n"
                                         + "Call-ID: a84b4c76e66710@pc33.server1.com\r\n" + "CSeq: 314159 INVITE\r\n"
                                         + "Contact: <sip:user1@pc33.server1.com>\r\n" + "Content-Length: 0\r\n\r\n";
+  
+  private static String contentType2String = 
+		  "--boundary1\n"+
+		  "Content-Type: application/sdp\n"+
+		  "\n"+
+		  "v=0\n"+
+		  "o=IWSPM 2266426 2266426 IN IP4 10.92.9.164\n"+
+		  "s=-\n"+
+		  "c=IN IP4 10.92.9.164\n"+
+		  "t=0 0\n"+
+		  "m=audio 31956 RTP/AVP 0 8 18 101\n"+
+		  "a=ptime:20\n"+
+		  "a=rtpmap:101 telephone-event/8000\n"+
+		  "a=fmtp:101 0-15\n"+
+		  "\n"+
+		  "--boundary1\n"+
+		  "Content-Type: application/pidf+xml\n"+
+		  "Content-ID: alice123@atlanta.example.com\n"+
+		  "\n"+
+		  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"+
+		  "<presence xmlns=\"urn:ietf:params:xml:ns:pidf\"\n"+
+		  "  xmlns:gp=\"urn:ietf:params:xml:ns:pidf:geopriv10\"\n"+
+		  "  xmlns:gml=\"http://www.opengis.net/gml\" \n"+
+		  "  xmlns:cl=\"urn:ietf:params:xml:ns:pidf:geopriv10:civicAddr\"\n"+
+		  "  entity=\"pres:alice@atlanta.example.com\">\n"+
+		  "<tuple id=\"sg89ae\">\n"+
+		  " <timestamp>2007-07-09T14:00:00Z</timestamp>\n"+
+		  " <status>\n"+
+		  "  <gp:geopriv>\n"+
+		  "	<gp:location-info>\n"+
+		  "	  <gml:location>\n"+
+		  "		<gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">\n"+
+		  "		  <gml:pos>33.001111 -96.68142</gml:pos>\n"+
+		  "		</gml:Point>\n"+
+		  "	   </gml:location>\n"+
+		  "	</gp:location-info>\n"+
+		  "	<gp:usage-rules>\n"+
+		  "	  <gp:retransmission-allowed>no</gp:retransmission-allowed>\n"+
+		  "	  <gp:retention-expiry>2007-07-27T18:00:00Z</gp:retention-expiry>\n"+
+		  "	</gp:usage-rules>\n"+
+		  "	<gp:method>DHCP</gp:method>\n"+
+		  "	<gp:provided-by>www.example.com</gp:provided-by>\n"+
+		  "  </gp:geopriv>\n"+
+		  " </status>\n"+
+		  "</tuple>\n"+
+		  "</presence>\n"+
+		  "--boundary1--";
+
+  
 
   String type[] = { "application", "applicaiton" };
   String subtype[] = { "sdp", "p25issi" };
@@ -85,12 +134,13 @@ public class MultipartMimeParserTest extends TestCase {
                       "g-access:1\r\n" + "g-agroup:0B4561A27271\r\n" + "g-pri:2\r\n" + "g-ecap:1\r\n" + "g-eprempt:0\r\n"
                         + "g-rfhangt:0\r\n" + "g-ccsetupT:0\r\n" + "g-intmode:0\r\n" + "g-sec:1\r\n" + "g-ic:0\r\n" + "g-icsecstart:0\r\n" };
 
-  private static MessageFactoryExt messageFactory = new MessageFactoryImpl();
-  private static HeaderFactoryExt headerFactory = new HeaderFactoryImpl();
+  private MessageFactoryExt messageFactory;
+  private HeaderFactoryExt headerFactory;
 
   @Override
   public void setUp() throws Exception {
-
+	  messageFactory = new MessageFactoryImpl();
+	  headerFactory = new HeaderFactoryImpl();
   }
 
   public void testCreateMultipartMimeContent() throws Exception {
@@ -159,12 +209,14 @@ public class MultipartMimeParserTest extends TestCase {
 
   public void testMultiPartMimeMarshallingAndUnMarshallingWithExtraHeaders() throws Exception {
     SIPRequest request = new SIPRequest();
-    InputStream in = getClass().getClassLoader().getResourceAsStream("test/unit/gov/nist/javax/sip/multipartmime/multipart-body.txt");
-    byte[] content = toByteArray(in);
+//    InputStream in = getClass().getClassLoader().getResourceAsStream("test/unit/gov/nist/javax/sip/multipartmime/multipart-body.txt");
+//    byte[] content = toByteArray(in);
+    byte[] content = contentType2String.getBytes("UTF-8");
     ContentType contentType = new ContentType("multipart", "mixed");
     contentType.setParameter("boundary", "boundary1");
     request.setContent(content, contentType);
-    MultipartMimeContent multipartMimeContent = request.getMultipartMimeContent();
+    System.out.println("request " + request);
+    MultipartMimeContent multipartMimeContent = request.getMultipartMimeContent();    
     checkMultiPart(multipartMimeContent);
 
     // let's now marshall back the body and reparse it to check consistency
@@ -179,6 +231,9 @@ public class MultipartMimeParserTest extends TestCase {
     Content sdpPart = partContentIterator.next();
     Content pidfPart = partContentIterator.next();
 
+    System.out.println("sdpPart " + sdpPart);
+    System.out.println("content type header " + sdpPart.getContentTypeHeader());
+    
     assertEquals("application/sdp", ((ContentType) sdpPart.getContentTypeHeader()).getValue());
     assertFalse(sdpPart.getExtensionHeaders().hasNext());
 

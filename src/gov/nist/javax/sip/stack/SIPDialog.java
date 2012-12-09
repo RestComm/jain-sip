@@ -332,7 +332,6 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
   private SIPDialog originalDialog;
 
   private AckSendingStrategy ackSendingStrategy = new AckSendingStrategyImpl();
-
 	
     // //////////////////////////////////////////////////////
     // Inner classes
@@ -806,13 +805,13 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         this.setLastResponse(null, sipResponse);
         this.localSequenceNumber = sipResponse.getCSeq().getSeqNumber();
         this.originalLocalSequenceNumber = localSequenceNumber;
-        this.setLocalTag(sipResponse.getFrom().getTag());
-        this.setRemoteTag(sipResponse.getTo().getTag());
         this.localParty = sipResponse.getFrom().getAddress();
         this.remoteParty = sipResponse.getTo().getAddress();
         this.method = sipResponse.getCSeq().getMethod();
         this.callIdHeader = sipResponse.getCallId();
         this.serverTransactionFlag = false;
+        this.setLocalTag(sipResponse.getFrom().getTag());
+        this.setRemoteTag(sipResponse.getTo().getTag());
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug("Creating a dialog : " + this);
             logger.logStackTrace();
@@ -867,7 +866,6 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         addRoute(not);
         setState(CONFIRMED_STATE); // set state, *after* setting route set!
     }
-    
 
     // ///////////////////////////////////////////////////////////
     // Private methods
@@ -1498,7 +1496,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             	sipStack.getTimer().schedule(
                     this.dialogDeleteTask,
                     SIPTransaction.TIMER_H
-                            * SIPTransactionStack.BASE_TIMER_INTERVAL);
+                            * lastTransaction.getBaseTimerInterval());
             } else {
             	this.delete();
             }
@@ -2878,8 +2876,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                 this.timerTask = new DialogTimerTask(transaction);
                 if ( sipStack.getTimer() != null && sipStack.getTimer().isStarted()) {
                 	sipStack.getTimer().scheduleWithFixedDelay(timerTask,
-                        SIPTransactionStack.BASE_TIMER_INTERVAL,
-                        SIPTransactionStack.BASE_TIMER_INTERVAL);
+                        transaction.getBaseTimerInterval(),
+                        transaction.getBaseTimerInterval());
                 }
             }
         } finally {
@@ -4100,7 +4098,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             	sipStack.getTimer().schedule(
                     dialogDeleteIfNoAckSentTask,
                     sipStack.getAckTimeoutFactor()
-                            * SIPTransactionStack.BASE_TIMER_INTERVAL);
+                            * lastTransaction.getBaseTimerInterval());
             }
         }
     }
