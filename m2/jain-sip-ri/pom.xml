@@ -164,8 +164,8 @@
 	</repositories>	
 
 	<scm>
-		<connection>scm:git:https://code.google.com/p/jain-sip/</connection>
-		<developerConnection>scm:git:https://code.google.com/p/jain-sip/</developerConnection>
-		<url>https://code.google.com/p/jain-sip/</url>
-	</scm>
+                <connection>scm:git:git@bitbucket.org:telestax/telscale-jsip.git</connection>
+                <developerConnection>scm:git:git@bitbucket.org:telestax/telscale-jsip.git</developerConnection>
+                <url>https://bitbucket.org/telestax/telscale-jsip</url>
+        </scm>
 </project>

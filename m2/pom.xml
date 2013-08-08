@@ -127,16 +127,16 @@
 
 	<distributionManagement>
 	    <repository>
-	      <id>mobicents-releases-repository</id>
-	      <name>Mobicents Releases Repository</name>
-	      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
+		<id>telscale-releases-repository</id>
+		<name>TelScale Releases Repository</name>
+		<url>http://telestax.artifactoryonline.com/telestax/releases</url>
 	    </repository>
 	    <snapshotRepository>
-	      <id>mobicents-snapshots-repository</id>
-	      <name>Mobicents Snapshots Repository</name>
-	      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+	      <id>telscale-snapshots-repository</id>
+	      <name>TelScale Snapshots Repository</name>
+	      <url>http://telestax.artifactoryonline.com/telestax/snapshots</url>
 	    </snapshotRepository>
-  	</distributionManagement>
+	  </distributionManagement>
 
 	<build>	
 		<plugins>	
@@ -148,9 +148,9 @@
 	</build>
 
 	<scm>
-		<connection>scm:git:https://code.google.com/p/jain-sip/</connection>
-		<developerConnection>scm:git:https://code.google.com/p/jain-sip/</developerConnection>
-		<url>https://code.google.com/p/jain-sip/</url>
-	</scm>
+                <connection>scm:git:git@bitbucket.org:telestax/telscale-jsip.git</connection>
+                <developerConnection>scm:git:git@bitbucket.org:telestax/telscale-jsip.git</developerConnection>
+                <url>https://bitbucket.org/telestax/telscale-jsip</url>
+        </scm>
 
 </project>
