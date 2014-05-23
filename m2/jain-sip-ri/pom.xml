@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>jain-sip-ri</artifactId>
-	<version>7.0.2.GA-TelScale</version>
+	<version>7.0.2-TelScale-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
 	<name>jain-sip-ri</name>
