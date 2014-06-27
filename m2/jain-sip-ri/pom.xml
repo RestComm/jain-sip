@@ -79,7 +79,7 @@
 				        </execution>
 				    </executions>
 			</plugin>
-			<plugin>
+			<!--plugin>
                               <groupId>org.sonatype.plugins</groupId>
                               <artifactId>nexus-staging-maven-plugin</artifactId>
                               <version>1.6.2</version>
@@ -94,12 +94,11 @@
                                     <phase>deploy</phase>
                                     <goals>
                                         <goal>deploy</goal>
-                                        <!--goal>close</goal-->
                                         <goal>release</goal>
                                     </goals>
                                 </execution>
                             </executions>
-                        </plugin>
+                        </plugin-->
 		</plugins>
 		<resources>
 			<resource>
