@@ -35,7 +35,7 @@ import java.util.Map.Entry;
 
 /**
  * @author jean.deruelle@gmail.com
- *
+ * 
  */
 public class SocketTimeoutAuditor extends SIPStackTimerTask {
 	private static StackLogger logger = CommonLogger.getLogger(SocketTimeoutAuditor.class);
