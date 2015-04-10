@@ -10,7 +10,7 @@
 	</parent>
 
 	<artifactId>jain-sip-ri</artifactId>
-	<version>1.2.233</version>
+	<version>1.2.233.jdk6</version>
 	<packaging>jar</packaging>
 
 	<name>jain-sip-ri</name>
@@ -23,14 +23,17 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
+					<source>1.6</source>
+					<target>1.6</target>
 					<includes>
                                                <include>gov/nist/javax/sip/**</include>
                                                <include>gov/nist/javax/sdp/**</include>
                                                <include>gov/nist/core/**</include>
                                                <include>javax/sdp/**</include>
                                        </includes>
+                                       <excludes>
+                                                <exclude>gov/nist/javax/sip/stack/sctp/**</exclude>
+                                        </excludes>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -108,8 +111,9 @@
 					<include>javax/sdp/**</include>
 				</includes>
 				<excludes>
-					<exclude>**/*.java</exclude>
-				</excludes>
+                                        <exclude>**/*.java</exclude>
+                                        <exclude>gov/nist/javax/sip/stack/sctp/**</exclude>
+                                </excludes>
 			</resource>
 		</resources>		
 	</build>
