@@ -184,8 +184,10 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 			SIPTransactionStack sipStack,
 			NioTcpMessageProcessor nioTcpMessageProcessor) throws IOException {
 		super(sipStack);
-		logger.logDebug("NioTcpMessageChannel::NioTcpMessageChannel: "
+		if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+			logger.logDebug("NioTcpMessageChannel::NioTcpMessageChannel: "
 				+ inetAddress.getHostAddress() + ":" + port);
+		}
 		try {
 			messageProcessor = nioTcpMessageProcessor;
 			// Take a cached socket to the destination, if none create a new one and cache it
