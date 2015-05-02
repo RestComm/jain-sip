@@ -9,6 +9,7 @@
 		<relativePath>../pom.xml</relativePath>
 	</parent>
 
+    <groupId>javax.sip</groupId>
 	<artifactId>android-jain-sip-ri</artifactId>
 	<version>7.0.3-TelScale-SNAPSHOT</version>
 	<packaging>jar</packaging>
