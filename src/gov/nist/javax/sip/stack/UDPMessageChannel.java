@@ -526,7 +526,9 @@ public class UDPMessageChannel extends MessageChannel implements
         sipMessage.setLocalPort(this.getPort());
         sipMessage.setLocalAddress(this.getMessageProcessor().getIpAddress());
         //Issue 3: https://telestax.atlassian.net/browse/JSIP-3
-        logger.logInfo("Setting SIPMessage peerPacketSource to: "+peerPacketSourceAddress+":"+peerPacketSourcePort);
+        if(logger.isLoggingEnabled(LogWriter.TRACE_INFO)) {
+        	logger.logInfo("Setting SIPMessage peerPacketSource to: "+peerPacketSourceAddress+":"+peerPacketSourcePort);
+        }
         sipMessage.setPeerPacketSourceAddress(this.peerPacketSourceAddress);
         sipMessage.setPeerPacketSourcePort(this.peerPacketSourcePort);
 
