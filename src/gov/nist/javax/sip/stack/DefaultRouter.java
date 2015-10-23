@@ -189,8 +189,12 @@ public class DefaultRouter implements Router {
          *
          * Subsequently, the request URI will be used as next hop target
          */
-
-        if (routes != null) {
+         
+        // In case of b2b UA and/or pure proxy behaviour, the routes list may not be null
+        // but the only remaining entry might be removed via proxy in order to route the message to
+        // its final destination.
+        // We should make null check in order to avoid null pointer at line 201
+        if (routes != null && routes.getFirst () != null) {
 
             // to send the request through a specified hop the application is
             // supposed to prepend the appropriate Route header which.
