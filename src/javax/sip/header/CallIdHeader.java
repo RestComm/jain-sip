@@ -148,6 +148,6 @@ public interface CallIdHeader extends Header {
      */
 
     public final static String NAME = "Call-ID";
-
+    public final static String NAME_LOWER = NAME.toLowerCase();
 }
 

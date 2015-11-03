@@ -416,7 +416,7 @@ public class ParserFactory {
                     parserConstructorCache.putIfAbsent(parserClass, cons);
                 }
                 Object[] args = new Object[1];
-                args[0] = line;
+                args[0] = headerValue;
                 HeaderParser retval = (HeaderParser) cons.newInstance(args);
                 return retval;
 
