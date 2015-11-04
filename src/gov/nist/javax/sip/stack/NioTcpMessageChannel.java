@@ -86,9 +86,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 	}
 	
 	public void readChannel() {
-                if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                    logger.logDebug("NioTcpMessageChannel::readChannel");
-                }
+		logger.logDebug("NioTcpMessageChannel::readChannel");
 		int bufferSize = 4096;
 		byte[] msg = new byte[bufferSize];
 		this.isRunning = true;
@@ -186,10 +184,8 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 			SIPTransactionStack sipStack,
 			NioTcpMessageProcessor nioTcpMessageProcessor) throws IOException {
 		super(sipStack);
-		if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-			logger.logDebug("NioTcpMessageChannel::NioTcpMessageChannel: "
+		logger.logDebug("NioTcpMessageChannel::NioTcpMessageChannel: "
 				+ inetAddress.getHostAddress() + ":" + port);
-		}
 		try {
 			messageProcessor = nioTcpMessageProcessor;
 			// Take a cached socket to the destination, if none create a new one and cache it

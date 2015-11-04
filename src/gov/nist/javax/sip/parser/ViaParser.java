@@ -43,7 +43,7 @@ public class ViaParser extends HeaderParser {
     public ViaParser(String via) {
         super(via);
     }
-    
+
     public ViaParser(Lexer lexer) {
         super(lexer);
     }
@@ -200,7 +200,10 @@ public class ViaParser extends HeaderParser {
         try {
             ViaList viaList = new ViaList();
             // The first via header.
-            headerName(TokenTypes.VIA);
+            this.lexer.match(TokenTypes.VIA);
+            this.lexer.SPorHT(); // ignore blanks
+            this.lexer.match(':'); // expect a colon.
+            this.lexer.SPorHT(); // ingore blanks.
 
             while (true) {
                 Via v = new Via();

@@ -32,8 +32,6 @@ import java.text.ParseException;
 import javax.sip.*;
 
 import gov.nist.core.*;
-import java.lang.ref.WeakReference;
-import java.util.WeakHashMap;
 
 /**
  * Parser for CSeq headers.
@@ -45,26 +43,6 @@ import java.util.WeakHashMap;
  * 
  */
 public class CSeqParser extends HeaderParser {
-    
-    /**
-     * https://github.com/Mobicents/jain-sip/issues/13
-     * a cache of 100 entries should be enough to store method names
-     */
-    private static final WeakHashMap<String, WeakReference<String>> s_manualCache =
-        new WeakHashMap<String, WeakReference<String>>( 100 );
- 
-    private static String manualIntern( final String str )
-    {
-        final WeakReference<String> cached = s_manualCache.get( str );
-        if ( cached != null )
-        {
-            final String value = cached.get();
-            if ( value != null )
-                return value;
-        }
-        s_manualCache.put( str, new WeakReference<String>( str ) );
-        return str;
-    }    
 
     public CSeqParser(String cseq) {
         super(cseq);
@@ -81,7 +59,7 @@ public class CSeqParser extends HeaderParser {
             String number = this.lexer.number();
             c.setSeqNumber(Long.parseLong(number));
             this.lexer.SPorHT();
-            String m = manualIntern(SIPRequest.getCannonicalName( method() ));
+            String m = SIPRequest.getCannonicalName( method() ).intern();
             c.setMethod(m);
             this.lexer.SPorHT();
             this.lexer.match('\n');

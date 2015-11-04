@@ -28,9 +28,6 @@
 *******************************************************************************/
 package gov.nist.javax.sip.header;
 
-import java.lang.ref.WeakReference;
-import java.util.WeakHashMap;
-
 /**
  * Root class from which all SIPHeader objects are subclassed.
  *
@@ -42,26 +39,6 @@ import java.util.WeakHashMap;
 public abstract class SIPHeader
     extends SIPObject
     implements SIPHeaderNames, javax.sip.header.Header, HeaderExt {
-    
-    /**
-     * https://github.com/Mobicents/jain-sip/issues/13
-     * a cache of 100 entries should be enough to store header names
-     */    
-    private static final WeakHashMap<String, WeakReference<String>> s_manualCache =
-        new WeakHashMap<String, WeakReference<String>>( 100 );
- 
-    private static String manualIntern( final String str )
-    {
-        final WeakReference<String> cached = s_manualCache.get( str );
-        if ( cached != null )
-        {
-            final String value = cached.get();
-            if ( value != null )
-                return value;
-        }
-        s_manualCache.put( str, new WeakReference<String>( str ) );
-        return str;
-    }
 
     /** name of this header
      */
@@ -74,7 +51,7 @@ public abstract class SIPHeader
      * @param hname String to set
      */
     protected SIPHeader(String hname) {
-        headerName = manualIntern(hname);
+        headerName = hname.intern();
     }
 
     /** Default constructor
