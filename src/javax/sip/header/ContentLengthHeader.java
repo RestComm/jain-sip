@@ -112,6 +112,6 @@ public interface ContentLengthHeader extends Header {
      */
 
     public final static String NAME = "Content-Length";
-    public final static String NAME_LOWER = NAME.toLowerCase();
+
 }
 

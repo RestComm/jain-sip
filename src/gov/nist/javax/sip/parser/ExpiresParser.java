@@ -65,8 +65,10 @@ public class ExpiresParser extends HeaderParser {
         if (debug)
             dbg_enter("parse");
         try {
-            headerName(TokenTypes.EXPIRES);
-
+            lexer.match(TokenTypes.EXPIRES);
+            lexer.SPorHT();
+            lexer.match(':');
+            lexer.SPorHT();
             String nextId = lexer.getNextId();
             try {
                 int delta = Integer.parseInt(nextId);

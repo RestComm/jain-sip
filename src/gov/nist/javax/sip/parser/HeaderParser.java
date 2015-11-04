@@ -155,7 +155,7 @@ public class HeaderParser extends Parser {
     protected HeaderParser(String header) {
         this.lexer = new Lexer("command_keywordLexer", header);
     }
-    
+
     protected HeaderParser(Lexer lexer) {
         this.lexer = lexer;
         this.lexer.selectLexer("command_keywordLexer");
@@ -182,11 +182,9 @@ public class HeaderParser extends Parser {
      * Parse the header name until the colon  and chew WS after that.
      */
     protected void headerName(int tok) throws ParseException {
-        /* no longer required, since only the header value is parsed.
-        https://github.com/Mobicents/jain-sip/issues/14
         this.lexer.match(tok);
         this.lexer.SPorHT();
-        this.lexer.match(':');*/
+        this.lexer.match(':');
         this.lexer.SPorHT();
     }
 }
