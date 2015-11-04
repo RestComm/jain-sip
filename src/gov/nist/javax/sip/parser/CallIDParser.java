@@ -63,10 +63,7 @@ public class CallIDParser extends HeaderParser {
         if (debug)
             dbg_enter("parse");
         try {
-            this.lexer.match(TokenTypes.CALL_ID);
-            this.lexer.SPorHT();
-            this.lexer.match(':');
-            this.lexer.SPorHT();
+            headerName(TokenTypes.CALL_ID);
 
             CallID callID = new CallID();
 
