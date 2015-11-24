@@ -81,38 +81,24 @@ public class SubscriptionStateParser extends HeaderParser {
             while (lexer.lookAhead(0) == ';') {
                 this.lexer.match(';');
                 this.lexer.SPorHT();
-                lexer.match(TokenTypes.ID);
-                token = lexer.getNextToken();
-                String value = token.getTokenValue();
-                if (value.equalsIgnoreCase("reason")) {
-                    this.lexer.match('=');
-                    this.lexer.SPorHT();
-                    lexer.match(TokenTypes.ID);
-                    token = lexer.getNextToken();
-                    value = token.getTokenValue();
-                    subscriptionState.setReasonCode(value);
-                } else if (value.equalsIgnoreCase("expires")) {
-                    this.lexer.match('=');
-                    this.lexer.SPorHT();
-                    lexer.match(TokenTypes.ID);
-                    token = lexer.getNextToken();
-                    value = token.getTokenValue();
+                //allows doubleQuoted genericParams as defined in RFC
+                //Host params still not supported
+                //Fixes https://github.com/Mobicents/jain-sip/issues/23                 
+                NameValue nv = this.nameValue('=');
+                if (nv.getName().equalsIgnoreCase("reason")) {
+                    subscriptionState.setReasonCode(nv.getValue());
+                } else if (nv.getName().equalsIgnoreCase("expires")) {
                     try {
-                        int expires = Integer.parseInt(value);
+                        int expires = Integer.parseInt(nv.getValue());
                         subscriptionState.setExpires(expires);
                     } catch (NumberFormatException ex) {
                         throw createParseException(ex.getMessage());
                     } catch (InvalidArgumentException ex) {
                         throw createParseException(ex.getMessage());
                     }
-                } else if (value.equalsIgnoreCase("retry-after")) {
-                    this.lexer.match('=');
-                    this.lexer.SPorHT();
-                    lexer.match(TokenTypes.ID);
-                    token = lexer.getNextToken();
-                    value = token.getTokenValue();
+                } else if (nv.getName().equalsIgnoreCase("retry-after")) {
                     try {
-                        int retryAfter = Integer.parseInt(value);
+                        int retryAfter = Integer.parseInt(nv.getValue());
                         subscriptionState.setRetryAfter(retryAfter);
                     } catch (NumberFormatException ex) {
                         throw createParseException(ex.getMessage());
@@ -120,12 +106,7 @@ public class SubscriptionStateParser extends HeaderParser {
                         throw createParseException(ex.getMessage());
                     }
                 } else {
-                    this.lexer.match('=');
-                    this.lexer.SPorHT();
-                    lexer.match(TokenTypes.ID);
-                    Token secondToken = lexer.getNextToken();
-                    String secondValue = secondToken.getTokenValue();
-                    subscriptionState.setParameter(value, secondValue);
+                    subscriptionState.setParameter(nv);
                 }
                 this.lexer.SPorHT();
             }
