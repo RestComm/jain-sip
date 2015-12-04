@@ -189,10 +189,12 @@ public class EventScanner implements Runnable {
                             ( tx.getLastResponseStatusCode() / 100 == 2 ||
                                 sipStack.isNon2XXAckPassedToListener())) {
 
-                        if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG))
+                    	if(!sipStack.isNon2XXAckPassedToListener()) {
+                    		if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG))
                             logger
                                     .logDebug(
                                             "Detected broken client sending ACK with same branch! Passing...");
+                    	}
                     } else {
                         if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG))
                             logger.logDebug(
