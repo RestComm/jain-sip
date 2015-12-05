@@ -275,7 +275,7 @@ public class Shootist implements SipListener {
         try {
 
             // JvB: new: process challenge response too
-            if (response.getStatusCode() == Response.UNAUTHORIZED
+            if ((response.getStatusCode() == Response.UNAUTHORIZED || response.getStatusCode() == Response.PROXY_AUTHENTICATION_REQUIRED)
                     && ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
                             .getMethod().equals(Request.INVITE)) {
 
