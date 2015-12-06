@@ -32,6 +32,8 @@ import gov.nist.core.CommonLogger;
 import gov.nist.core.LogLevels;
 import gov.nist.core.LogWriter;
 import gov.nist.core.StackLogger;
+import gov.nist.javax.sip.header.CallID;
+import gov.nist.javax.sip.header.ContentLength;
 import gov.nist.javax.sip.message.SIPMessage;
 import gov.nist.javax.sip.stack.ConnectionOrientedMessageChannel;
 import gov.nist.javax.sip.stack.QueuedMessageDispatchBase;
@@ -46,9 +48,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-
-import javax.sip.header.CallIdHeader;
-import javax.sip.header.ContentLengthHeader;
 
 /**
  * This is a FSM that can parse a single stream of messages with they bodies and 
@@ -278,12 +277,12 @@ public class NioPipelineParser {
 				message.append(line); // Collect the line so far in the message buffer (line by line)
                 String lineIgnoreCase = line.toLowerCase();
                 // contribution from Alexander Saveliev compare to lower case as RFC 3261 states (7.3.1 Header Field Format) states that header fields are case-insensitive
-				if(lineIgnoreCase.startsWith(ContentLengthHeader.NAME_LOWER)) { // naive Content-Length header parsing to figure out how much bytes of message body must be read after the SIP headers
+				if(lineIgnoreCase.startsWith(ContentLength.NAME_LOWER)) { // naive Content-Length header parsing to figure out how much bytes of message body must be read after the SIP headers
 					contentLength = Integer.parseInt(line.substring(
-							ContentLengthHeader.NAME_LOWER.length()+1).trim());
-				} else if(lineIgnoreCase.startsWith(CallIdHeader.NAME_LOWER)) { // naive Content-Length header parsing to figure out how much bytes of message body must be read after the SIP headers
+							ContentLength.NAME_LOWER.length()+1).trim());
+				} else if(lineIgnoreCase.startsWith(CallID.NAME_LOWER)) { // naive Content-Length header parsing to figure out how much bytes of message body must be read after the SIP headers
 					callId = line.substring(
-							CallIdHeader.NAME_LOWER.length()+1).trim();
+							CallID.NAME_LOWER.length()+1).trim();
 				}
 			} else {				
 				if(isPreviousLineCRLF) {
