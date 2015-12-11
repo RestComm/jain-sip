@@ -29,6 +29,7 @@ import gov.nist.core.CommonLogger;
 import gov.nist.core.LogLevels;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
+import gov.nist.core.ThreadAuditor;
 import gov.nist.core.net.AddressResolver;
 import gov.nist.core.net.DefaultSecurityManagerProvider;
 import gov.nist.core.net.NetworkLayer;
@@ -683,7 +684,8 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {				
 				setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
 				getTimer().start(this, configurationProperties);
-				if (getThreadAuditor().isEnabled()) {
+				// Contribution for https://github.com/Mobicents/jain-sip/issues/39
+				if (getThreadAuditor() != null && getThreadAuditor().isEnabled()) {
 		            // Start monitoring the timer thread
 		            getTimer().schedule(new PingTimer(null), 0);
 		        }
@@ -1083,7 +1085,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		.parseInt(configurationProperties.getProperty(
 				"gov.nist.javax.sip.CONGESTION_CONTROL_TIMEOUT",
 		"8000"));
-		super.stackCongenstionControlTimeout = congetstionControlTimeout;
+		super.setStackCongestionControlTimeout(congetstionControlTimeout);
 
 		String tcpTreadPoolSize = configurationProperties
 		.getProperty("gov.nist.javax.sip.TCP_POST_PARSING_THREAD_POOL_SIZE");
@@ -1091,7 +1093,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {
 				int threads = new Integer(tcpTreadPoolSize).intValue();
 				super.setTcpPostParsingThreadPoolSize(threads);
-				PostParseExecutorServices.setPostParseExcutorSize(threads, congetstionControlTimeout);
+				PostParseExecutorServices.setPostParseExcutorSize(this, threads, congetstionControlTimeout);
 			} catch (NumberFormatException ex) {
 				if (logger.isLoggingEnabled())
 					this.logger.logError(
@@ -1239,6 +1241,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 				.getProperty("gov.nist.javax.sip.THREAD_AUDIT_INTERVAL_IN_MILLISECS");
 		if (interval != null) {
 			try {
+				threadAuditor = new ThreadAuditor();
 				// Make the monitored threads ping the auditor twice as fast as
 				// the audits
 				getThreadAuditor().setPingIntervalInMillisecs(
@@ -1356,7 +1359,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 						.toString());
 		bufferSizeInteger = new Integer(bufferSize).intValue();
 		super.setSendUdpBufferSize(bufferSizeInteger);
-
+		
 		super.isBackToBackUserAgent = Boolean
 				.parseBoolean(configurationProperties.getProperty(
 						"gov.nist.javax.sip.IS_BACK_TO_BACK_USER_AGENT",
@@ -1413,7 +1416,8 @@ public class SipStackImpl extends SIPTransactionStack implements
 		try {
 			setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
 			getTimer().start(this, configurationProperties);
-			if (getThreadAuditor().isEnabled()) {
+			// Contribution for https://github.com/Mobicents/jain-sip/issues/39
+			if (getThreadAuditor() != null && getThreadAuditor().isEnabled()) {
 	            // Start monitoring the timer thread
 	            getTimer().schedule(new PingTimer(null), 0);
 	        }
