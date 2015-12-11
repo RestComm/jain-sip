@@ -383,7 +383,7 @@ public abstract class SIPTransactionStack implements
     
     public long nioSocketMaxIdleTime;
 
-    protected boolean aggressiveCleanup = false;
+    private ReleaseReferencesStrategy releaseReferencesStrategy = ReleaseReferencesStrategy.None;
 
     public SIPMessageValve sipMessageValve;
     
@@ -3154,14 +3154,20 @@ public abstract class SIPTransactionStack implements
      * @param aggressiveCleanup the aggressiveCleanup to set
      */
     public void setAggressiveCleanup(boolean aggressiveCleanup) {
-        this.aggressiveCleanup = aggressiveCleanup;
+    	if(aggressiveCleanup)
+    		releaseReferencesStrategy = ReleaseReferencesStrategy.Normal;
+    	else
+    		releaseReferencesStrategy = ReleaseReferencesStrategy.None;
     }
 
     /**
      * @return the aggressiveCleanup
      */
     public boolean isAggressiveCleanup() {
-        return aggressiveCleanup;
+    	if(releaseReferencesStrategy == releaseReferencesStrategy.None)
+    		return false;
+    	else
+    		return true;
     }
 
 
@@ -3376,5 +3382,19 @@ public abstract class SIPTransactionStack implements
 	public void setStackCongestionControlTimeout(
 			int stackCongestionControlTimeout) {
 		this.stackCongestionControlTimeout = stackCongestionControlTimeout;
+	}
+
+	/**
+	 * @return the releaseReferencesStrategy
+	 */
+	public ReleaseReferencesStrategy getReleaseReferencesStrategy() {
+		return releaseReferencesStrategy;
+	}
+
+	/**
+	 * @param releaseReferencesStrategy the releaseReferencesStrategy to set
+	 */
+	public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferencesStrategy) {
+		this.releaseReferencesStrategy = releaseReferencesStrategy;
 	}
 }

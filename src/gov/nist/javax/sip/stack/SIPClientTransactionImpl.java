@@ -1792,9 +1792,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         originalRequest.cleanUp();
         // we keep the request in a byte array to be able to recreate it
         // no matter what to keep API backward compatibility
-        if (originalRequestBytes == null) {
-          originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
-        }
+//        if (originalRequestBytes == null) {
+//          originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+//        }
         if (!getMethod().equalsIgnoreCase(Request.INVITE)
             && !getMethod().equalsIgnoreCase(Request.CANCEL))
         {
@@ -1833,7 +1833,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       // we keep the request in a byte array to be able to recreate it
       // no matter what to keep API backward compatibility
       if (originalRequest != null && originalRequestBytes == null) {
-        originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+//        originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
         // http://java.net/jira/browse/JSIP-429
         // store the merge id from the tx to avoid reparsing of request on aggressive cleanup
         super.mergeId = ((SIPRequest) originalRequest).getMergeId();
@@ -1868,22 +1868,22 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
       logger.logDebug("removing  = " + this + " isReliable " + isReliable());
     }
-    if (isReleaseReferences()) {
-
-      if (originalRequest == null && originalRequestBytes != null) {
-        try {
-          originalRequest = (SIPRequest) sipStack.getMessageParserFactory()
-                                                 .createMessageParser(sipStack)
-                                                 .parseSIPMessage(originalRequestBytes,
-                                                                  true,
-                                                                  false,
-                                                                  null);
-          // originalRequestBytes = null;
-        } catch (ParseException e) {
-          logger.logError("message " + originalRequestBytes + " could not be reparsed !");
-        }
-      }
-    }
+//    if (isReleaseReferences()) {
+//
+//      if (originalRequest == null && originalRequestBytes != null) {
+//        try {
+//          originalRequest = (SIPRequest) sipStack.getMessageParserFactory()
+//                                                 .createMessageParser(sipStack)
+//                                                 .parseSIPMessage(originalRequestBytes,
+//                                                                  true,
+//                                                                  false,
+//                                                                  null);
+//          // originalRequestBytes = null;
+//        } catch (ParseException e) {
+//          logger.logError("message " + originalRequestBytes + " could not be reparsed !");
+//        }
+//      }
+//    }
 
     sipStack.removeTransaction(this);
 
@@ -1898,7 +1898,11 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         // Let the connection linger for a while and then close
         // it.
         SIPStackTimerTask myTimer = new LingerTimer();
-        sipStack.getTimer().schedule(myTimer, SIPTransactionStack.CONNECTION_LINGER_TIME * 1000);
+        if(sipStack.getConnectionLingerTimer() != 0) {
+        	sipStack.getTimer().schedule(myTimer, sipStack.getConnectionLingerTimer() * 1000);
+        } else {
+        	myTimer.runTask();
+        }
       }
 
     } else {
