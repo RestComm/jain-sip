@@ -47,11 +47,32 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 	private static StackLogger logger = CommonLogger.getLogger(ScheduledExecutorSipTimer.class);
 	protected SipStackImpl sipStackImpl;
 	ScheduledThreadPoolExecutor threadPoolExecutor;
-	// Counts the number of cancelled tasks
-    private volatile int numCancelled = 0;
     
 	public ScheduledExecutorSipTimer() {
 		threadPoolExecutor = new ScheduledThreadPoolExecutor(1, new NamingThreadFactory("jain_sip_timer_executor"));		
+	}
+	
+	private void schedulePurgeTaskIfNeeded() {
+		int purgePeriod = Integer.parseInt(sipStackImpl.getConfigurationProperties().getProperty("gov.nist.javax.sip.timers.SCHEDULED_EXECUTOR_PURGE_DELAY", "1"));
+		if(purgePeriod > 0) {
+			Runnable r = new Runnable() {			
+				public void run() {
+					try {
+						if(logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
+							logger.logDebug("Purging canceled timer tasks...");
+						}
+						threadPoolExecutor.purge();
+						if(logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
+							logger.logDebug("Purging canceled timer tasks completed.");
+						}						
+					}
+					catch (Exception e) {
+						logger.logError("failed to execute purge",e);
+					}
+				}
+			};
+			threadPoolExecutor.scheduleWithFixedDelay(r, purgePeriod, purgePeriod, TimeUnit.MINUTES);
+		}
 	}
 	
 	/* (non-Javadoc)
@@ -99,6 +120,7 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 		sipStackImpl= sipStack;
 		// TODO have a param in the stack properties to set the number of thread for the timer executor
 		threadPoolExecutor.prestartAllCoreThreads();
+		schedulePurgeTaskIfNeeded();
 		if(logger.isLoggingEnabled(StackLogger.TRACE_INFO)) {
 			logger.logInfo("the sip stack timer " + this.getClass().getName() + " has been started");
 		}
@@ -116,13 +138,6 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 			threadPoolExecutor.remove((Runnable)sipTimerTask);
 			cancelled = sipTimerTask.cancel(false);
 		} 
-		// Purge is expensive when called frequently, only call it every now and then.
-        // We do not sync the numCancelled variable. We dont care about correctness of
-        // the number, and we will still call purge rought once on every 100 cancels.
-        numCancelled++;
-        if(numCancelled % 50 == 0) {
-            threadPoolExecutor.purge();
-        }
 		return cancelled;
 	}
 
