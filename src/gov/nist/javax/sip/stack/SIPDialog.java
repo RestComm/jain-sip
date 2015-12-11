@@ -254,10 +254,6 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
 
     public final static int TERMINATED_STATE = DialogState._TERMINATED;
 
-    // the amount of time to keep this dialog around before the stack GC's it
-
-    private static final int DIALOG_LINGER_TIME = 8;
-
     protected boolean serverTransactionFlag;
 
     private transient SipProviderImpl sipProvider;
@@ -1543,8 +1539,12 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         if (state == TERMINATED_STATE) {
             this.removeEventListener(this.getSipProvider());
             if (sipStack.getTimer() != null && sipStack.getTimer().isStarted() ) { // may be null after shutdown
+            	if(sipStack.getConnectionLingerTimer() > 0) {
                 sipStack.getTimer().schedule(new LingerTimer(),
-                        DIALOG_LINGER_TIME * 1000);
+                        sipStack.getConnectionLingerTimer() * 1000);
+            	} else {
+            		new LingerTimer().runTask();
+            	}
             }
             this.stopTimer();
 

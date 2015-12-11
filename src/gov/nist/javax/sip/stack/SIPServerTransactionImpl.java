@@ -382,8 +382,11 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 // of new server tx
                 SIPStackTimerTask myTimer = new LingerTimer();
 
-                sipStack.getTimer().schedule(myTimer,
-                    SIPTransactionStack.CONNECTION_LINGER_TIME * 1000);
+                if(sipStack.getConnectionLingerTimer() != 0) {
+                	sipStack.getTimer().schedule(myTimer, sipStack.getConnectionLingerTimer() * 1000);
+                } else {
+                	myTimer.runTask();
+                }
             } else {
                 // Add to the fire list -- needs to be moved
                 // outside the synchronized block to prevent
@@ -1957,11 +1960,13 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                     logger.logError("message " + originalRequestBytes + "could not be reparsed !");
                 }
             } else if (originalRequest != null && originalRequestBytes == null) {
-                originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+//                originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
             }
             // http://java.net/jira/browse/JSIP-429
             // store the merge id from the tx to avoid reparsing of request on aggressive cleanup
-            super.mergeId =  ((SIPRequest)originalRequest).getMergeId();
+            if (originalRequest != null && originalRequestBytes == null) {
+            	super.mergeId =  ((SIPRequest)originalRequest).getMergeId();
+            }
             sipStack.removeTransaction(this);
             cleanUpOnTimer();
             // commented out because the application can hold on a ref to the tx
@@ -2046,15 +2051,15 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 }
                 // we keep the request in a byte array to be able to recreate it
                 // no matter what to keep API backward compatibility
-                if(originalRequestBytes == null) {
-                    originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
-                }
+//                if(originalRequestBytes == null) {
+//                    originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+//                }
                 if(!getMethod().equalsIgnoreCase(Request.INVITE) && !getMethod().equalsIgnoreCase(Request.CANCEL)) {
                     originalRequest = null;
                 }
             }
             if(lastResponse != null) {
-                lastResponseAsBytes = lastResponse.encodeAsBytes(this.getTransport());
+//                lastResponseAsBytes = lastResponse.encodeAsBytes(this.getTransport());
                 lastResponse = null;
             }
             pendingReliableResponseAsBytes = null;
