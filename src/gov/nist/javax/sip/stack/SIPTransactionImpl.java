@@ -305,10 +305,13 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             	
         		raiseErrorEvent(SIPTransactionErrorEvent.TIMEOUT_ERROR);
         	
-        		 SIPStackTimerTask myTimer = new LingerTimer();
-                 sipStack.getTimer().schedule(myTimer,
-                     SIPTransactionStack.CONNECTION_LINGER_TIME * 1000);
-                 maxTxLifeTimeListener = null;
+        		SIPStackTimerTask myTimer = new LingerTimer();
+        		if(sipStack.getConnectionLingerTimer() != 0) {
+        			sipStack.getTimer().schedule(myTimer, sipStack.getConnectionLingerTimer() * 1000);
+    	        } else {
+    	        	myTimer.runTask();
+    	        }
+                maxTxLifeTimeListener = null;
                  
             } catch (Exception ex) {
                 logger.logError("unexpected exception", ex);
