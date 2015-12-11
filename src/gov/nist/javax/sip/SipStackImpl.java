@@ -684,7 +684,6 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {				
 				setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
 				getTimer().start(this, configurationProperties);
-				// Contribution for https://github.com/Mobicents/jain-sip/issues/39
 				if (getThreadAuditor() != null && getThreadAuditor().isEnabled()) {
 		            // Start monitoring the timer thread
 		            getTimer().schedule(new PingTimer(null), 0);
@@ -1359,7 +1358,10 @@ public class SipStackImpl extends SIPTransactionStack implements
 						.toString());
 		bufferSizeInteger = new Integer(bufferSize).intValue();
 		super.setSendUdpBufferSize(bufferSizeInteger);
-		
+		// Contribution for https://github.com/Mobicents/jain-sip/issues/40
+		super.setConnectionLingerTimer(Integer.parseInt(configurationProperties.getProperty(
+				"gov.nist.javax.sip.LINGER_TIMER", "8")));
+
 		super.isBackToBackUserAgent = Boolean
 				.parseBoolean(configurationProperties.getProperty(
 						"gov.nist.javax.sip.IS_BACK_TO_BACK_USER_AGENT",
@@ -1416,7 +1418,6 @@ public class SipStackImpl extends SIPTransactionStack implements
 		try {
 			setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
 			getTimer().start(this, configurationProperties);
-			// Contribution for https://github.com/Mobicents/jain-sip/issues/39
 			if (getThreadAuditor() != null && getThreadAuditor().isEnabled()) {
 	            // Start monitoring the timer thread
 	            getTimer().schedule(new PingTimer(null), 0);
