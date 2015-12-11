@@ -276,19 +276,21 @@ public class UDPMessageChannel extends MessageChannel implements
 
             if (sipStack.threadPoolSize != -1) {
 
-                if (threadHandle == null) {
+            	// Contribution for https://github.com/Mobicents/jain-sip/issues/39
+                if (threadHandle == null && sipStack.getThreadAuditor() != null) {
                     threadHandle = sipStack.getThreadAuditor()
                             .addCurrentThread();
                 }
 
                 // Send a heartbeat to the thread auditor
-                threadHandle.ping();
+                if (threadHandle != null) 
+                	threadHandle.ping();
 
                 try {
                 	DatagramQueuedMessageDispatch work = null;
                 	// adding condition to avoid looping and taking too much CPU if the 
                 	// auditing is not enabled
-                	if (sipStack.getThreadAuditor().isEnabled()) {
+                	if (threadHandle != null && sipStack.getThreadAuditor() !=null && sipStack.getThreadAuditor().isEnabled()) {
                 		work = udpMessageProcessor.messageQueue.poll(threadHandle
 	                        .getPingIntervalInMillisecs(), TimeUnit.MILLISECONDS);
                 	} else {

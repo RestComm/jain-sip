@@ -132,9 +132,10 @@ public class UDPMessageProcessor extends MessageProcessor implements Runnable {
             logger.logDebug("Max Message size is " + maxMessageSize);
         }
         this.messageQueue = new LinkedBlockingQueue<DatagramQueuedMessageDispatch>();
-        if(sipStack.stackCongenstionControlTimeout>0) {
+        // Contribution for https://github.com/Mobicents/jain-sip/issues/39
+        if(sipStack.getStackCongestionControlTimeout()>0) {
         	this.congestionAuditor = new BlockingQueueDispatchAuditor(this.messageQueue);
-        	this.congestionAuditor.setTimeout(sipStack.stackCongenstionControlTimeout);
+        	this.congestionAuditor.setTimeout(sipStack.getStackCongestionControlTimeout());
         	this.congestionAuditor.start(2000);
         }
 
@@ -150,7 +151,8 @@ public class UDPMessageProcessor extends MessageProcessor implements Runnable {
              * If the thread auditor is enabled, define a socket timeout value in order to
              * prevent sock.receive() from blocking forever
              */
-            if (sipStack.getThreadAuditor().isEnabled()) {
+            // Contribution for https://github.com/Mobicents/jain-sip/issues/39
+            if (sipStack.getThreadAuditor() != null && sipStack.getThreadAuditor().isEnabled()) {
                 sock.setSoTimeout((int) sipStack.getThreadAuditor().getPingIntervalInMillisecs());
             }
             if ( ipAddress.getHostAddress().equals(IN_ADDR_ANY)  ||
@@ -213,14 +215,19 @@ public class UDPMessageProcessor extends MessageProcessor implements Runnable {
         }
 
         // Ask the auditor to monitor this thread
-        ThreadAuditor.ThreadHandle threadHandle = sipStack.getThreadAuditor().addCurrentThread();
+        ThreadAuditor.ThreadHandle threadHandle = null;
+        // Contribution for https://github.com/Mobicents/jain-sip/issues/39
+        if(sipStack.getThreadAuditor() != null) {
+        	threadHandle = sipStack.getThreadAuditor().addCurrentThread();
+        }
 
         // Somebody asked us to exit. if isRunnning is set to false.
         while (this.isRunning) {
 
             try {
                 // Let the thread auditor know we're up and running
-                threadHandle.ping();
+            	if(threadHandle != null)
+            		threadHandle.ping();
 
                 int bufsize = this.maxMessageSize;
                 byte message[] = new byte[bufsize];
@@ -310,7 +317,8 @@ public class UDPMessageProcessor extends MessageProcessor implements Runnable {
           for (Object messageChannel : messageChannels) {
 			((MessageChannel)messageChannel).close();
           }
-          if(sipStack.stackCongenstionControlTimeout > 0 && congestionAuditor != null) {
+          // Contribution for https://github.com/Mobicents/jain-sip/issues/39
+          if(sipStack.getStackCongestionControlTimeout() > 0 && congestionAuditor != null) {
           	this.congestionAuditor.stop();
           }
     }
