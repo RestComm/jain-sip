@@ -87,7 +87,8 @@ public abstract class SIPTransactionStack implements
      * Connection linger time (seconds) this is the time (in seconds) for which
      * we linger the TCP connection before closing it.
      */
-    public static final int CONNECTION_LINGER_TIME = 8;
+    // Moved to non constant as part of https://github.com/Mobicents/jain-sip/issues/40
+    private static int connectionLingerTimer = 8;
 
     /*
      * Dialog Early state timeout duration.
@@ -319,7 +320,7 @@ public abstract class SIPTransactionStack implements
 
     // / Provides a mechanism for applications to check the health of threads in
     // the stack
-    protected ThreadAuditor threadAuditor = new ThreadAuditor();
+    protected ThreadAuditor threadAuditor = null;
 
     protected LogRecordFactory logRecordFactory;
 
@@ -339,7 +340,7 @@ public abstract class SIPTransactionStack implements
     // Send UDP buffer size
     protected int sendUdpBufferSize;
 
-    protected int stackCongenstionControlTimeout = 0;
+    private int stackCongestionControlTimeout = 0;
 
     protected boolean isBackToBackUserAgent = false;
 
@@ -469,7 +470,8 @@ public abstract class SIPTransactionStack implements
             // Check if we still have a timer (it may be null after shutdown)
             if (getTimer() != null) {
                 // Register the timer task if we haven't done so
-                if (threadHandle == null) {
+            	// Contribution for https://github.com/Mobicents/jain-sip/issues/39
+                if (threadHandle == null && getThreadAuditor() != null) {
                     // This happens only once since the thread handle is passed
                     // to the next scheduled ping timer
                     threadHandle = getThreadAuditor().addCurrentThread();
@@ -3345,5 +3347,34 @@ public abstract class SIPTransactionStack implements
 
 	public void setSslRenegotiationEnabled(boolean sslRenegotiationEnabled) {
 		this.sslRenegotiationEnabled = sslRenegotiationEnabled;
+	}
+
+	/**
+	 * @return the connectionLingerTimer
+	 */
+	public int getConnectionLingerTimer() {
+		return connectionLingerTimer;
+	}
+
+	/**
+	 * @param connectionLingerTimer the connectionLingerTimer to set
+	 */
+	public void setConnectionLingerTimer(int connectionLingerTimer) {
+		SIPTransactionStack.connectionLingerTimer = connectionLingerTimer;
+	}
+
+	/**
+	 * @return the stackCongestionControlTimeout
+	 */
+	public int getStackCongestionControlTimeout() {
+		return stackCongestionControlTimeout;
+	}
+
+	/**
+	 * @param stackCongestionControlTimeout the stackCongestionControlTimeout to set
+	 */
+	public void setStackCongestionControlTimeout(
+			int stackCongestionControlTimeout) {
+		this.stackCongestionControlTimeout = stackCongestionControlTimeout;
 	}
 }
