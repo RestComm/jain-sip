@@ -25,6 +25,7 @@
  */
 package gov.nist.javax.sip.stack;
 
+import gov.nist.javax.sip.ReleaseReferencesStrategy;
 import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.TransactionExt;
 import gov.nist.javax.sip.header.Via;
@@ -464,14 +465,14 @@ public interface SIPTransaction extends TransactionExt {
    * 
    * @see gov.nist.javax.sip.DialogExt#isReleaseReferences()
    */
-  public boolean isReleaseReferences();
+  public ReleaseReferencesStrategy getReleaseReferencesStrategy();
 
   /*
    * (non-Javadoc)
    * 
-   * @see gov.nist.javax.sip.DialogExt#setReleaseReferences(boolean)
+   * @see gov.nist.javax.sip.DialogExt#setReleaseReferences(ReleaseReferencesStrategy)
    */
-  public void setReleaseReferences(boolean releaseReferences);
+  public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferenceStrategy);
 
   /*
    * (non-Javadoc)
