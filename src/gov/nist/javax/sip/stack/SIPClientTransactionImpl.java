@@ -30,6 +30,7 @@ import gov.nist.core.InternalErrorHandler;
 import gov.nist.core.LogWriter;
 import gov.nist.core.NameValueList;
 import gov.nist.core.StackLogger;
+import gov.nist.javax.sip.ReleaseReferencesStrategy;
 import gov.nist.javax.sip.SIPConstants;
 import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.SipStackImpl;
@@ -1768,7 +1769,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
   // jeand method use to cleanup eagerly all structures that won't be needed anymore once the tx
   // passed in the COMPLETED state
   protected void cleanUpOnTimer() {
-    if (isReleaseReferences()) {
+    if (getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
       if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
         logger.logDebug("cleanupOnTimer: " + getTransactionId());
       }
@@ -1792,9 +1793,10 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         originalRequest.cleanUp();
         // we keep the request in a byte array to be able to recreate it
         // no matter what to keep API backward compatibility
-//        if (originalRequestBytes == null) {
-//          originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
-//        }
+        if (originalRequestBytes == null && getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
+        	// we encode it and keep it only for the Normal Strategy as it has a CPU cost.
+        	originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+        }
         if (!getMethod().equalsIgnoreCase(Request.INVITE)
             && !getMethod().equalsIgnoreCase(Request.CANCEL))
         {
@@ -1821,7 +1823,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
    */
   @Override
   public void cleanUp() {
-    if (isReleaseReferences()) {
+    if (getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
       // release the connection associated with this transaction.
       if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
         logger.logDebug("cleanup : " + getTransactionId());
@@ -1833,7 +1835,10 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       // we keep the request in a byte array to be able to recreate it
       // no matter what to keep API backward compatibility
       if (originalRequest != null && originalRequestBytes == null) {
-//        originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+    	  if(getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
+    		  // we encode it and keep it only for the Normal Strategy as it has a CPU cost.
+    		  originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
+    	  }
         // http://java.net/jira/browse/JSIP-429
         // store the merge id from the tx to avoid reparsing of request on aggressive cleanup
         super.mergeId = ((SIPRequest) originalRequest).getMergeId();
@@ -1868,22 +1873,22 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
       logger.logDebug("removing  = " + this + " isReliable " + isReliable());
     }
-//    if (isReleaseReferences()) {
-//
-//      if (originalRequest == null && originalRequestBytes != null) {
-//        try {
-//          originalRequest = (SIPRequest) sipStack.getMessageParserFactory()
-//                                                 .createMessageParser(sipStack)
-//                                                 .parseSIPMessage(originalRequestBytes,
-//                                                                  true,
-//                                                                  false,
-//                                                                  null);
-//          // originalRequestBytes = null;
-//        } catch (ParseException e) {
-//          logger.logError("message " + originalRequestBytes + " could not be reparsed !");
-//        }
-//      }
-//    }
+    if (getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
+
+      if (originalRequest == null && originalRequestBytes != null) {
+        try {
+          originalRequest = (SIPRequest) sipStack.getMessageParserFactory()
+                                                 .createMessageParser(sipStack)
+                                                 .parseSIPMessage(originalRequestBytes,
+                                                                  true,
+                                                                  false,
+                                                                  null);
+          // originalRequestBytes = null;
+        } catch (ParseException e) {
+          logger.logError("message " + originalRequestBytes + " could not be reparsed !");
+        }
+      }
+    }
 
     sipStack.removeTransaction(this);
 
@@ -1916,7 +1921,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       }
       // Let the connection linger for a while and then close
       // it.
-      if (((SipStackImpl) getSIPStack()).isReEntrantListener() && isReleaseReferences()) {
+      if (((SipStackImpl) getSIPStack()).isReEntrantListener() && getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
         cleanUp();
       }
       // Commented out for Issue 298 : not to break backward compatibility
