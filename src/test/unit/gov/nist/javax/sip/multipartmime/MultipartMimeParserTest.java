@@ -100,6 +100,7 @@ public class MultipartMimeParserTest extends TestCase {
 		  		+ "</gml:Point>\n"
 		  	   + "</gml:location>\n"
 		  	+ "</gp:location-info>\n"
+			+ "\n"
 		  	+ "<gp:usage-rules>\n"
 		  	  + "<gp:retransmission-allowed>no</gp:retransmission-allowed>\n"
 		  	  + "<gp:retention-expiry>2007-07-27T18:00:00Z</gp:retention-expiry>\n"
