@@ -80,6 +80,7 @@ public class NioPipelineParser {
 	boolean readingMessageBodyContents = false;
 	boolean readingHeaderLines = true;
 	boolean partialLineRead = false; // if we didn't receive enough bytes for a full line we expect the line to end in the next batch of bytes
+	boolean readCRatLastChunkEnd = false; // Capture \r received at end of last chunk to process along with \n present in next chunk
 	String partialLine = "";
 	String callId;
 	
@@ -473,6 +474,11 @@ public class NioPipelineParser {
 	}
 	
 	private int readSingleByte(InputStream inputStream) throws IOException {
+		if(readCRatLastChunkEnd) {
+			readCRatLastChunkEnd = false;
+			return '\r';
+		}
+
 		sizeCounter --;
 		checkLimits();
 		return inputStream.read();
@@ -524,6 +530,12 @@ public class NioPipelineParser {
                 
             }
         }
+
+	// Capture \r appearing at end of tcp stream. Fix for https://github.com/Mobicents/jain-sip/issues/48 
+	if (counter == 0 && crlfCounter > 0) {
+		readCRatLastChunkEnd = true;
+	}
+
         if(counter == 1 && crlfCounter > 0) {
         	return new String(crlfBuffer,0,crlfCounter,"UTF-8");
         } else {
