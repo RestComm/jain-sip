@@ -36,6 +36,7 @@ import gov.nist.core.NameValueList;
 import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.DialogExt;
 import gov.nist.javax.sip.ListeningPointImpl;
+import gov.nist.javax.sip.ReleaseReferencesStrategy;
 import gov.nist.javax.sip.SipListenerExt;
 import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.SipStackImpl;
@@ -254,10 +255,6 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
 
     public final static int TERMINATED_STATE = DialogState._TERMINATED;
 
-    // the amount of time to keep this dialog around before the stack GC's it
-
-    private static final int DIALOG_LINGER_TIME = 8;
-
     protected boolean serverTransactionFlag;
 
     private transient SipProviderImpl sipProvider;
@@ -322,13 +319,12 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                                                                  // requests.
 
     // aggressive flag to optimize eagerly
-    private boolean releaseReferences;
+    private ReleaseReferencesStrategy releaseReferencesStrategy;
 
     private transient EarlyStateTimerTask earlyStateTimerTask;
 
     private int earlyDialogTimeout = 180;
 
-	private int ackSemTakenFor;
 	private Set<String> responsesReceivedInForkingCase = new HashSet<String>(0);
 
   private SIPDialog originalDialog;
@@ -780,7 +776,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             logger.logStackTrace();
         }
         addEventListener(sipStack);
-        releaseReferences = sipStack.isAggressiveCleanup();
+        releaseReferencesStrategy = sipStack.getReleaseReferencesStrategy();
     }
 
     /**
@@ -821,7 +817,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
         this.isBackToBackUserAgent = sipStack.isBackToBackUserAgent;
         addEventListener(sipStack);
-        releaseReferences = sipStack.isAggressiveCleanup();
+        releaseReferencesStrategy = sipStack.getReleaseReferencesStrategy();
     }
     
     /**
@@ -1543,8 +1539,12 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         if (state == TERMINATED_STATE) {
             this.removeEventListener(this.getSipProvider());
             if (sipStack.getTimer() != null && sipStack.getTimer().isStarted() ) { // may be null after shutdown
+            	if(sipStack.getConnectionLingerTimer() > 0) {
                 sipStack.getTimer().schedule(new LingerTimer(),
-                        DIALOG_LINGER_TIME * 1000);
+                        sipStack.getConnectionLingerTimer() * 1000);
+            	} else {
+            		new LingerTimer().runTask();
+            	}
             }
             this.stopTimer();
 
@@ -4241,7 +4241,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     // or sending an ACK
     // to save on mem
     protected void cleanUpOnAck() {
-        if (isReleaseReferences()) {
+        if (getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 logger.logDebug(
                         "cleanupOnAck : " + getDialogId());
@@ -4294,7 +4294,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
      * 
      */
     protected void cleanUp() {
-        if (isReleaseReferences()) {
+        if (getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
             cleanUpOnAck();
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 logger
@@ -4357,8 +4357,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
      * 
      * @see gov.nist.javax.sip.DialogExt#isReleaseReferences()
      */
-    public boolean isReleaseReferences() {
-        return releaseReferences;
+    public ReleaseReferencesStrategy getReleaseReferencesStrategy() {
+        return releaseReferencesStrategy;
     }
 
     /*
@@ -4366,8 +4366,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
      * 
      * @see gov.nist.javax.sip.DialogExt#setReleaseReferences(boolean)
      */
-    public void setReleaseReferences(boolean releaseReferences) {
-        this.releaseReferences = releaseReferences;
+    public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferencesStrategy) {
+        this.releaseReferencesStrategy = releaseReferencesStrategy;
     }
 
     public void setEarlyDialogTimeoutSeconds(int seconds) {

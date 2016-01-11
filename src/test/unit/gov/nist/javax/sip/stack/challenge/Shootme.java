@@ -116,11 +116,15 @@ public class Shootme implements SipListener {
                 ChallengeTest.assertNull(requestEvent.getServerTransaction());
 
                 Response challenge = protocolObjects.messageFactory
-                        .createResponse(401, request);
+                        .createResponse(407, request);
                 ToHeader toHeader = (ToHeader) challenge
                         .getHeader(ToHeader.NAME);
                 toHeader.setTag("challenge");
-                sipProvider.sendResponse(challenge); // dont create ST
+                ServerTransaction st = requestEvent.getServerTransaction();
+
+                if (st == null) 
+                    st = sipProvider.getNewServerTransaction(request);
+                st.sendResponse(challenge); // dont create ST
                 return;
             }
 

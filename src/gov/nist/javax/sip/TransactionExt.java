@@ -82,7 +82,7 @@ public interface TransactionExt extends Transaction {
     * 
     * @since 2.0
     */
-   public boolean isReleaseReferences();
+   public ReleaseReferencesStrategy getReleaseReferencesStrategy();
    
    /**
     * If set to true it will release all references that it no longer needs. This will include the reference to the
@@ -92,7 +92,7 @@ public interface TransactionExt extends Transaction {
     * 
     * @since 2.0
     */
-   public void setReleaseReferences(boolean releaseReferences);     
+   public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferenceStrategy);     
    
    /**
     * Retrieve the value of Timer T2 (in ms)

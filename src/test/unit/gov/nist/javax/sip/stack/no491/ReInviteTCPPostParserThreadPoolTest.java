@@ -99,7 +99,7 @@ public class ReInviteTCPPostParserThreadPoolTest extends ScenarioHarness impleme
 
     public void testSendInvite() throws Exception {
         int threads = 32;
-        PostParseExecutorServices.setPostParseExcutorSize(threads, 10000);
+        PostParseExecutorServices.setPostParseExcutorSize((SipStackImpl) getRiProtocolObjects().sipStack, threads, 10000);
         ((SipStackImpl)getRiProtocolObjects().sipStack).setTcpPostParsingThreadPoolSize(threads);
         ((SipStackImpl)getTiProtocolObjects().sipStack).setTcpPostParsingThreadPoolSize(threads);
         getRiProtocolObjects().start();        

@@ -29,6 +29,7 @@ import gov.nist.core.CommonLogger;
 import gov.nist.core.LogLevels;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
+import gov.nist.core.ThreadAuditor;
 import gov.nist.core.net.AddressResolver;
 import gov.nist.core.net.DefaultSecurityManagerProvider;
 import gov.nist.core.net.NetworkLayer;
@@ -512,10 +513,24 @@ import javax.sip.message.Request;
  * that allows application to see the ACK for retransmitted 200 OK requests. <b>Note that this is for test
  * purposes only</b></li>
  * 
- * * <li><b>gov.nist.javax.sip.AGGRESSIVE_CLEANUP=boolean</b> A property that will cleanup Dialog, and Transaction structures
+ * <li><b>gov.nist.javax.sip.AGGRESSIVE_CLEANUP=boolean</b> <b>Deprecated - use RELEASE_REFERENCES_STRATEGY instead</b>
+ *  A property that will cleanup Dialog, and Transaction structures
  * agrressively to improve memroy usage and performance (up to 50% gain). However one needs to be careful in its code
  * on how and when it accesses transaction and dialog data since it cleans up aggressively when transactions changes state
  * to COMPLETED or TERMINATED and for Dialog once the ACK is received/sent</li>
+ * 
+ * <li><b>gov.nist.javax.sip.RELEASE_REFERENCES_STRATEGY=String</b>
+ * A property that specify the strategy for cleaning up references within the Dialog and Transaction structures. Following options can be used
+ * <ul>
+ * <li>None: This is the default. It keeps references to request and responses as part of transactions and dialogs. This consumes the most amount of memory usage</li>
+ * <li>Normal: It removes references to request and responses in transactions and dialogs in cleaning them up but keep byte arrays of requests or responses to be able to reparse them if the application need them. This gives a 2x improvement in memory as opposed to None</li>
+ * <li>Aggressive: It removes references to request and responses in transactions and dialogs in cleaning them up and don't allow reparsing. Need careful application design. This gives a further improvements in memory as opposed to Normal Strategy and also CPU improvements.</li>
+ * </ul>
+ * </li>
+ * 
+ * <li><b>gov.nist.javax.sip.LINGER_TIMER=int</b>
+ *  A property that will specify for how many seconds the Dialog and Transaction structures will stay in memory before the stack releases them</li>
+ * 
  * 
  * <li><b>gov.nist.javax.sip.MIN_KEEPALIVE_TIME_SECONDS = integer</b> Minimum time between keep alive
  * pings (CRLF CRLF) from clients. If pings arrive with less than this frequency they will be replied
@@ -683,7 +698,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {				
 				setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
 				getTimer().start(this, configurationProperties);
-				if (getThreadAuditor().isEnabled()) {
+				if (getThreadAuditor() != null && getThreadAuditor().isEnabled()) {
 		            // Start monitoring the timer thread
 		            getTimer().schedule(new PingTimer(null), 0);
 		        }
@@ -1083,7 +1098,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		.parseInt(configurationProperties.getProperty(
 				"gov.nist.javax.sip.CONGESTION_CONTROL_TIMEOUT",
 		"8000"));
-		super.stackCongenstionControlTimeout = congetstionControlTimeout;
+		super.setStackCongestionControlTimeout(congetstionControlTimeout);
 
 		String tcpTreadPoolSize = configurationProperties
 		.getProperty("gov.nist.javax.sip.TCP_POST_PARSING_THREAD_POOL_SIZE");
@@ -1091,7 +1106,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {
 				int threads = new Integer(tcpTreadPoolSize).intValue();
 				super.setTcpPostParsingThreadPoolSize(threads);
-				PostParseExecutorServices.setPostParseExcutorSize(threads, congetstionControlTimeout);
+				PostParseExecutorServices.setPostParseExcutorSize(this, threads, congetstionControlTimeout);
 			} catch (NumberFormatException ex) {
 				if (logger.isLoggingEnabled())
 					this.logger.logError(
@@ -1239,6 +1254,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 				.getProperty("gov.nist.javax.sip.THREAD_AUDIT_INTERVAL_IN_MILLISECS");
 		if (interval != null) {
 			try {
+				threadAuditor = new ThreadAuditor();
 				// Make the monitored threads ping the auditor twice as fast as
 				// the audits
 				getThreadAuditor().setPingIntervalInMillisecs(
@@ -1356,6 +1372,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 						.toString());
 		bufferSizeInteger = new Integer(bufferSize).intValue();
 		super.setSendUdpBufferSize(bufferSizeInteger);
+		// Contribution for https://github.com/Mobicents/jain-sip/issues/40
+		super.setConnectionLingerTimer(Integer.parseInt(configurationProperties.getProperty(
+				"gov.nist.javax.sip.LINGER_TIMER", "8")));
 
 		super.isBackToBackUserAgent = Boolean
 				.parseBoolean(configurationProperties.getProperty(
@@ -1413,7 +1432,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		try {
 			setTimer((SipTimer)Class.forName(defaultTimerName).newInstance());
 			getTimer().start(this, configurationProperties);
-			if (getThreadAuditor().isEnabled()) {
+			if (getThreadAuditor() != null && getThreadAuditor().isEnabled()) {
 	            // Start monitoring the timer thread
 	            getTimer().schedule(new PingTimer(null), 0);
 	        }
@@ -1422,9 +1441,20 @@ public class SipStackImpl extends SIPTransactionStack implements
 				.logError(
 						"Bad configuration value for gov.nist.javax.sip.TIMER_CLASS_NAME", e);			
 		}
-		super.aggressiveCleanup = Boolean.parseBoolean(configurationProperties
+		boolean aggressiveCleanup = Boolean.parseBoolean(configurationProperties
 				.getProperty("gov.nist.javax.sip.AGGRESSIVE_CLEANUP",
 						Boolean.FALSE.toString()));
+		if(aggressiveCleanup) {
+			setReleaseReferencesStrategy(ReleaseReferencesStrategy.Normal);
+		}
+		
+		 String releaseReferencesStrategyString = configurationProperties
+				.getProperty("gov.nist.javax.sip.RELEASE_REFERENCES_STRATEGY");
+		 if(releaseReferencesStrategyString != null) {
+			 setReleaseReferencesStrategy(ReleaseReferencesStrategy.valueOf(releaseReferencesStrategyString));
+			 if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG))
+					logger.logDebug("Using following release references strategy " + getReleaseReferencesStrategy());
+		 }
 		
 		String valveClassName = configurationProperties.getProperty("gov.nist.javax.sip.SIP_MESSAGE_VALVE", null);
 		if(valveClassName != null && !valveClassName.equals("")) {

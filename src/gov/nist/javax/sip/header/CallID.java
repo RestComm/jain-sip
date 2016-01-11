@@ -28,6 +28,7 @@
 *******************************************************************************/
 package gov.nist.javax.sip.header;
 import javax.sip.header.CallIdHeader;
+
 import java.text.ParseException;
 
 /**
@@ -45,6 +46,9 @@ public class CallID
      * Comment for <code>serialVersionUID</code>
      */
     private static final long serialVersionUID = -6463630258703731156L;
+    
+    public final static String NAME_LOWER = NAME.toLowerCase();
+    
     /**
      * callIdentifier field
      */

@@ -55,7 +55,7 @@ public interface DialogExt extends Dialog {
    * 
    * @since 2.0
    */
-  public boolean isReleaseReferences();
+  public ReleaseReferencesStrategy getReleaseReferencesStrategy();
 
   /**
    * If set to true it will release all references that it no longer needs. This will include the
@@ -67,7 +67,7 @@ public interface DialogExt extends Dialog {
    * 
    * @since 2.0
    */
-  public void setReleaseReferences(boolean releaseReferences);
+  public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferencesStrategy);
 
   /**
    * Sets the early dialog timeout period. Overrides the value set by the stack configuration

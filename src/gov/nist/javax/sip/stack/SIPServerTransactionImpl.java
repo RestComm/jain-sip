@@ -31,6 +31,7 @@ import gov.nist.core.InternalErrorHandler;
 import gov.nist.core.LogWriter;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
+import gov.nist.javax.sip.ReleaseReferencesStrategy;
 import gov.nist.javax.sip.SIPConstants;
 import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.Utils;
@@ -382,8 +383,11 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 // of new server tx
                 SIPStackTimerTask myTimer = new LingerTimer();
 
-                sipStack.getTimer().schedule(myTimer,
-                    SIPTransactionStack.CONNECTION_LINGER_TIME * 1000);
+                if(sipStack.getConnectionLingerTimer() != 0) {
+                	sipStack.getTimer().schedule(myTimer, sipStack.getConnectionLingerTimer() * 1000);
+                } else {
+                	myTimer.runTask();
+                }
             } else {
                 // Add to the fire list -- needs to be moved
                 // outside the synchronized block to prevent
@@ -1940,7 +1944,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
             logger.logDebug("removing" + this);
 
-        if(isReleaseReferences()) {
+        if(getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
 
             // release the connection associated with this transaction.
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
@@ -1949,19 +1953,21 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             }
             // we keep the request in a byte array to be able to recreate it
             // no matter what to keep API backward compatibility            
-            if(originalRequest == null && originalRequestBytes != null) {
+            if(originalRequest == null && originalRequestBytes != null && getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
                 try {
                     originalRequest = (SIPRequest) sipStack.getMessageParserFactory().createMessageParser(sipStack).parseSIPMessage(originalRequestBytes, true, false, null);
 //                    originalRequestBytes = null;
                 } catch (ParseException e) {
                     logger.logError("message " + originalRequestBytes + "could not be reparsed !");
                 }
-            } else if (originalRequest != null && originalRequestBytes == null) {
+            } else if (originalRequest != null && originalRequestBytes == null && getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
                 originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
             }
             // http://java.net/jira/browse/JSIP-429
             // store the merge id from the tx to avoid reparsing of request on aggressive cleanup
-            super.mergeId =  ((SIPRequest)originalRequest).getMergeId();
+            if (originalRequest != null && originalRequestBytes == null) {
+            	super.mergeId =  ((SIPRequest)originalRequest).getMergeId();
+            }
             sipStack.removeTransaction(this);
             cleanUpOnTimer();
             // commented out because the application can hold on a ref to the tx
@@ -2014,7 +2020,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
 
     // clean up the state of the stx when it goes to completed or terminated to help GC
     protected void cleanUpOnTimer() {
-        if(isReleaseReferences()) {
+        if(getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None) {
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 logger.logDebug("cleanup on timer : "
                         + getTransactionId());
@@ -2046,7 +2052,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 }
                 // we keep the request in a byte array to be able to recreate it
                 // no matter what to keep API backward compatibility
-                if(originalRequestBytes == null) {
+                if(originalRequestBytes == null && getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
                     originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());
                 }
                 if(!getMethod().equalsIgnoreCase(Request.INVITE) && !getMethod().equalsIgnoreCase(Request.CANCEL)) {
@@ -2054,7 +2060,9 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 }
             }
             if(lastResponse != null) {
-                lastResponseAsBytes = lastResponse.encodeAsBytes(this.getTransport());
+            	if(getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
+            		lastResponseAsBytes = lastResponse.encodeAsBytes(this.getTransport());
+            	}
                 lastResponse = null;
             }
             pendingReliableResponseAsBytes = null;

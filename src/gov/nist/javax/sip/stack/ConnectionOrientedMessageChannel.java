@@ -280,8 +280,9 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                     || sipMessage.getCallId() == null
                     || sipMessage.getCSeq() == null
                     || sipMessage.getViaHeaders() == null) {
-                String badmsg = sipMessage.encode();
+                
                 if (logger.isLoggingEnabled()) {
+                    String badmsg = sipMessage.encode();
                     logger.logError("bad message " + badmsg);
                     logger.logError(">>> Dropped Bad Msg");
                 }

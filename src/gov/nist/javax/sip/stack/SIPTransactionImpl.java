@@ -31,6 +31,7 @@ import gov.nist.core.LogLevels;
 import gov.nist.core.LogWriter;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
+import gov.nist.javax.sip.ReleaseReferencesStrategy;
 import gov.nist.javax.sip.SIPConstants;
 import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.SipStackImpl;
@@ -178,7 +179,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     private boolean terminatedEventDelivered;      
     
     // aggressive flag to optimize eagerly
-    private boolean releaseReferences;
+    private ReleaseReferencesStrategy releaseReferencesStrategy;
     
     // caching flags
     private Boolean inviteTransaction = null;
@@ -305,10 +306,13 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             	
         		raiseErrorEvent(SIPTransactionErrorEvent.TIMEOUT_ERROR);
         	
-        		 SIPStackTimerTask myTimer = new LingerTimer();
-                 sipStack.getTimer().schedule(myTimer,
-                     SIPTransactionStack.CONNECTION_LINGER_TIME * 1000);
-                 maxTxLifeTimeListener = null;
+        		SIPStackTimerTask myTimer = new LingerTimer();
+        		if(sipStack.getConnectionLingerTimer() != 0) {
+        			sipStack.getTimer().schedule(myTimer, sipStack.getConnectionLingerTimer() * 1000);
+    	        } else {
+    	        	myTimer.runTask();
+    	        }
+                maxTxLifeTimeListener = null;
                  
             } catch (Exception ex) {
                 logger.logError("unexpected exception", ex);
@@ -352,7 +356,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         // of this transaction
         addEventListener(newParentStack);
 
-        releaseReferences = sipStack.isAggressiveCleanup();
+        releaseReferencesStrategy = sipStack.getReleaseReferencesStrategy();
     }
 
     /**
@@ -432,7 +436,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
      */
     @Override
     public Request getRequest() {
-        if(isReleaseReferences() && originalRequest == null && originalRequestBytes != null) {
+        if(getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None && originalRequest == null && originalRequestBytes != null) {
             if(logger.isLoggingEnabled(StackLogger.TRACE_WARN)) {
                 logger.logWarning("reparsing original request " + originalRequestBytes + " since it was eagerly cleaned up, but beware this is not efficient with the aggressive flag set !");                
             }
@@ -1493,20 +1497,20 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
      * @see gov.nist.javax.sip.stack.SIPTransaction#isReleaseReferences()
      */
     @Override
-    public boolean isReleaseReferences() {        
-        return releaseReferences;
+    public ReleaseReferencesStrategy getReleaseReferencesStrategy() {        
+        return releaseReferencesStrategy;
     }
 
     /*
      * (non-Javadoc)
-     * @see gov.nist.javax.sip.DialogExt#setReleaseReferences(boolean)
+     * @see gov.nist.javax.sip.DialogExt#setReleaseReferences(ReleaseReferencesStrategy)
      */
     /**
-     * @see gov.nist.javax.sip.stack.SIPTransaction#setReleaseReferences(boolean)
+     * @see gov.nist.javax.sip.stack.SIPTransaction#setReleaseReferences(ReleaseReferencesStrategy)
      */
     @Override
-    public void setReleaseReferences(boolean releaseReferences) {
-        this.releaseReferences = releaseReferences;
+    public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferencesStrategy) {
+        this.releaseReferencesStrategy = releaseReferencesStrategy;
     }
     
 
