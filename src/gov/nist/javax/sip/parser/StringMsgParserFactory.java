@@ -33,12 +33,16 @@ import gov.nist.javax.sip.stack.SIPTransactionStack;
  */
 public class StringMsgParserFactory implements MessageParserFactory {
 
+    /**
+     * msg parser is completely stateless, reuse isntance for the whole stack
+     */
+    private static StringMsgParser msgParser = new StringMsgParser();
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.parser.MessageParserFactory#createMessageParser(gov.nist.javax.sip.stack.SIPTransactionStack)
 	 */
 	public MessageParser createMessageParser(SIPTransactionStack stack) {	
-		return new StringMsgParser();
+		return msgParser;
 	}
 
 }
