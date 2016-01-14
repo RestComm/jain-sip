@@ -47,7 +47,7 @@ public abstract class ParserTestCase extends TestCase {
             Constructor constructor = parserClass.getConstructor(new Class[] {
                 String.class
             });
-            return (HeaderParser) constructor.newInstance(new String[] {
+            return (HeaderParser) constructor.newInstance(new Object[] {
                 header
             });
         } catch (Exception ex) {
