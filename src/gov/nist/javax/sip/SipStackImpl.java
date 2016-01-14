@@ -1106,7 +1106,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 			try {
 				int threads = new Integer(tcpTreadPoolSize).intValue();
 				super.setTcpPostParsingThreadPoolSize(threads);
-				PostParseExecutorServices.setPostParseExcutorSize(this, threads, congetstionControlTimeout);
+				PostParseExecutorServices.setPostParseExcutorSize( threads, congetstionControlTimeout);
 			} catch (NumberFormatException ex) {
 				if (logger.isLoggingEnabled())
 					this.logger.logError(

@@ -54,7 +54,7 @@ public class PostParseExecutorServices {
                         new NamedThreadFactory()));
             }
             /*
-            if(sipStack.getStackCongestionControlTimeout() > 0) {
+            if(queueTimeout > 0) {
             staticQueueAuditor = new BlockingQueueDispatchAuditor(staticQueue);
              staticQueueAuditor.setTimeout(queueTimeout);
              staticQueueAuditor.start(2000); 
