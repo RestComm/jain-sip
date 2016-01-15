@@ -52,14 +52,15 @@ public class PostParseExecutorServices {
                 postParseExecutors.add(new ThreadPoolExecutor(1, 1,
                         0, TimeUnit.SECONDS, staticQueue,
                         new NamedThreadFactory()));
+                if(queueTimeout > 0) {
+                    staticQueueAuditor = new BlockingQueueDispatchAuditor(staticQueue);
+                    staticQueueAuditor.setTimeout(queueTimeout);
+                    staticQueueAuditor.start(2000); 
+                }                
             }
-            /*
-            if(queueTimeout > 0) {
-            staticQueueAuditor = new BlockingQueueDispatchAuditor(staticQueue);
-             staticQueueAuditor.setTimeout(queueTimeout);
-             staticQueueAuditor.start(2000); 
-            }
-            */
+            
+
+            
         }
 
     }
