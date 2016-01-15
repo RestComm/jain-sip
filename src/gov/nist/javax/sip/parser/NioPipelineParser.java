@@ -162,7 +162,7 @@ public class NioPipelineParser {
 		
 	}
 	
-	StringBuffer message = new StringBuffer();
+	StringBuilder message = new StringBuilder();
 	byte[] messageBody = null;
 	int contentLength = 0;
 	int contentReadSoFar = 0;
@@ -265,7 +265,7 @@ public class NioPipelineParser {
 			readingHeaderLines = true;
 			readingMessageBodyContents = false;
 			final String msgLines = message.toString();
-			message = new StringBuffer();
+			message = new StringBuilder();
 			final byte[] msgBodyBytes = messageBody;
 			final int finalContentLength = contentLength;
 			
