@@ -527,7 +527,13 @@ public class NioPipelineParser {
         if(counter == 1 && crlfCounter > 0) {
         	return new String(crlfBuffer,0,crlfCounter,"UTF-8");
         } else {
-        	return new String(lineBuffer,0,counter,"UTF-8");
+        	String lineRead = new String(lineBuffer,0,counter,"UTF-8");
+                //In case \r\n are not in the same chunk, wait for the rest
+                //fixes https://github.com/RestComm/jain-sip/issues/48
+                if (crlfCounter == 1) {
+                    lineRead = lineRead + "\r";
+                }
+                return lineRead;
         }
         
     }
