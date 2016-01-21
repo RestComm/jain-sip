@@ -44,6 +44,9 @@ import gov.nist.javax.sip.message.MessageFactoryImpl;
 import gov.nist.javax.sip.message.SIPMessage;
 import gov.nist.javax.sip.message.SIPRequest;
 import gov.nist.javax.sip.message.SIPResponse;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
+import io.sipstack.netty.codec.sip.SipMessageEvent;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -70,7 +73,7 @@ import javax.sip.header.ViaHeader;
  *
  *
  */
-public abstract class MessageChannel {
+public abstract class MessageChannel extends SimpleChannelInboundHandler<SipMessageEvent>{
 
     private static StackLogger logger = CommonLogger.getLogger(MessageChannel.class);
 
@@ -540,4 +543,9 @@ public abstract class MessageChannel {
     public void setEncapsulatedClientTransaction(SIPClientTransaction transaction) {
         this.encapsulatedClientTransaction = transaction;
     }
+    
+    @Override
+    public void channelRead0(ChannelHandlerContext chc, SipMessageEvent i) throws Exception {
+        
+    }     
 }
