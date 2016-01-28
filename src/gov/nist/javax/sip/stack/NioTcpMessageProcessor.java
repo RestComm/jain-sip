@@ -45,8 +45,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  *
  */
 public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
-    private static final int MAX_CHANGE_REQS = 1000;
-    private static final int MAX_PENDING_DATA = 1000;
+    private static final int MAX_CHANGE_REQS = 10000;
+    private static final int MAX_PENDING_DATA = 10000;
     
     protected Selector selector ;
     private static StackLogger logger = CommonLogger.getLogger(NioTcpMessageProcessor.class);
