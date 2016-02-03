@@ -37,6 +37,7 @@ import gov.nist.javax.sip.header.StatusLine;
 import gov.nist.javax.sip.header.To;
 import gov.nist.javax.sip.header.Via;
 import gov.nist.javax.sip.message.SIPMessage;
+import static gov.nist.javax.sip.stack.NioTcpMessageChannel.removeMessageChannel;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.socket.SocketChannel;
@@ -96,8 +97,8 @@ public class NettyTcpMessageChannel extends NettyConnectionOrientedMessageChanne
         super(messageProcessor.getSIPStack());
         try {
             if (socketChannel.remoteAddress() != null) {
-            this.peerAddress = socketChannel.remoteAddress().getAddress();
-            this.peerPort = socketChannel.remoteAddress().getPort();
+                this.peerAddress = socketChannel.remoteAddress().getAddress();
+                this.peerPort = socketChannel.remoteAddress().getPort();
             } else {
                 try {
                     Thread.sleep(100);
@@ -105,7 +106,7 @@ public class NettyTcpMessageChannel extends NettyConnectionOrientedMessageChanne
                     Logger.getLogger(NettyTcpMessageChannel.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 this.peerAddress = socketChannel.remoteAddress().getAddress();
-                this.peerPort = socketChannel.remoteAddress().getPort();                
+                this.peerPort = socketChannel.remoteAddress().getPort();
             }
             this.socketChannel = socketChannel;
             super.mySock = socketChannel;
@@ -162,6 +163,27 @@ public class NettyTcpMessageChannel extends NettyConnectionOrientedMessageChanne
 
     @Override
     protected void close(boolean removeSocket, boolean stopKeepAliveTask) {
+        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+            logger.logDebug("Closing NioTcpMessageChannel "
+                    + this + " socketChannel = " + socketChannel);
+        }
+        removeMessageChannel(socketChannel);
+        if (socketChannel != null) {
+            socketChannel.close();
+        }
+
+        this.isRunning = false;
+        if (removeSocket) {
+            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                logger.logDebug("Removing NioTcpMessageChannel "
+                        + this + " socketChannel = " + socketChannel);
+            }
+            ((NettyTcpMessageProcessor) this.messageProcessor).nioHandler.removeSocket(socketChannel);
+            ((NettyConnectionOrientedMessageProcessor) this.messageProcessor).remove(this);
+        }
+        if (stopKeepAliveTask) {
+            cancelPingKeepAliveTimeoutTaskIfStarted();
+        }
 
     }
 
@@ -197,19 +219,13 @@ public class NettyTcpMessageChannel extends NettyConnectionOrientedMessageChanne
      */
     public void sendTCPMessage(byte message[], InetAddress receiverAddress,
             int receiverPort, boolean retry) throws IOException {
-            final Buffer b = Buffers.wrap(message);
-            final int capacity = b.capacity() + 2;
-            final ByteBuf buffer = mySock.alloc().buffer(capacity, capacity);
+        final int capacity = message.length + 2;
+        final ByteBuf buffer = mySock.alloc().buffer(capacity, capacity);
 
-            for (int i = 0; i < b.getReadableBytes(); ++i) {
-                buffer.writeByte(b.getByte(i));
-            }
-            buffer.writeByte(CR);
-            buffer.writeByte(LF);        
+        buffer.writeBytes(message);
+        buffer.writeByte(CR);
+        buffer.writeByte(LF);
         this.mySock.writeAndFlush(buffer);
-        //TODO
-        //throw new UnsupportedOperationException();
-
     }
 
     public void onNewSocket(byte[] message) {
@@ -246,7 +262,7 @@ public class NettyTcpMessageChannel extends NettyConnectionOrientedMessageChanne
                         + sipMessage.toString());
             }
 
-			// JvB: send a 400 response for requests (except ACK)
+            // JvB: send a 400 response for requests (except ACK)
             // Currently only UDP, @todo also other transports
             String msgString = sipMessage.toString();
             if (!msgString.startsWith("SIP/") && !msgString.startsWith("ACK ")) {
@@ -303,7 +319,7 @@ public class NettyTcpMessageChannel extends NettyConnectionOrientedMessageChanne
     @Override
     protected void sendMessage(byte[] msg, boolean b) throws IOException {
         //TODO
-        throw new UnsupportedOperationException();        
+        throw new UnsupportedOperationException();
     }
 
 }

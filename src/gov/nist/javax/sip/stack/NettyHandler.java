@@ -113,7 +113,7 @@ public class NettyHandler {
         }
     }
 
-    protected void removeSocket(NioSocketChannel channel) {
+    protected void removeSocket(SocketChannel channel) {
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug("Trying to remove cached socketChannel without key"
                     + this + " socketChannel = " + channel);
