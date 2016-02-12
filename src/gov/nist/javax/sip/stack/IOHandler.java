@@ -126,7 +126,9 @@ public class IOHandler {
         // writes over slow connections.
         synchronized (outputStream) {
             // outputStream.write(bytes,0,length);
-            int chunksize = 8 * 1024;
+            //int chunksize = 8 * 1024;
+				// try with smaller size
+            int chunksize = 256;
             for (int p = 0; p < length; p += chunksize) {
                 int chunk = p + chunksize < length ? chunksize : length - p;
                 outputStream.write(bytes, p, chunk);
