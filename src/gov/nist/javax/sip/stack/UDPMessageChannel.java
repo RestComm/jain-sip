@@ -594,6 +594,14 @@ public class UDPMessageChannel extends MessageChannel implements
                                     + sipResponse);
                 return;
             }
+            if (logger.isLoggingEnabled(
+                    ServerLogger.TRACE_MESSAGES)) {
+
+                this.sipStack.serverLogger.logMessage(sipResponse, this
+                        .getPeerHostPort().toString(), this.getHost() + ":"
+                        + this.myPort, false, receptionTime);
+
+            }
             ServerResponseInterface sipServerResponse = sipStack
                     .newSIPServerResponse(sipResponse, this);
             if (sipServerResponse != null) {
