@@ -259,7 +259,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 	 * @return "tcp" in this case.
 	 */
 	public String getTransport() {
-		return "TCP";
+		return this.messageProcessor.transport;
 	}
 
 	/**
@@ -340,7 +340,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 		NIOHandler nioHandler = ((NioTcpMessageProcessor) messageProcessor).nioHandler;
 		
 		SocketChannel sock = nioHandler.sendBytes(this.messageProcessor
-					.getIpAddress(), receiverAddress, receiverPort, "TCP",
+					.getIpAddress(), receiverAddress, receiverPort, this.messageProcessor.transport,
 					message, retry, this);
 
 		if (sock != socketChannel && sock != null) {
