@@ -49,7 +49,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-
+import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Low level Input output to a socket. Caches TCP connections and takes care of
  * re-connecting to the remote party if the other end drops the connection
@@ -68,6 +68,8 @@ public class NIOHandler {
     private SipStackImpl sipStack;
     
     private NioTcpMessageProcessor messageProcessor;
+    
+    private AtomicBoolean stopped=new AtomicBoolean(false);
     
     // A cache of client sockets that can be re-used for
     // sending tcp messages.
@@ -91,6 +93,9 @@ public class NIOHandler {
     }
 
     protected void putSocket(String key, SocketChannel sock) {
+    	if(stopped.get())
+    		return;
+    	
     	synchronized(socketTable) {
     		if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
     			logger.logDebug("adding socket for key " + key);
@@ -175,6 +180,10 @@ public class NIOHandler {
             InetAddress receiverAddress, int contactPort, String transport,
             byte[] bytes, boolean isClient, NioTcpMessageChannel messageChannel)
             throws IOException {
+    	
+    	if(stopped.get())
+    		return null;
+    	
         int retry_count = 0;
         int max_retry = isClient ? 2 : 1;
         // Server uses TCP transport. TCP client sockets are cached
@@ -368,6 +377,7 @@ public class NIOHandler {
     }
     
     public void stop() {
+    	stopped.set(true);
     	try {
         	// Reworked the method for https://java.net/jira/browse/JSIP-471
 			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
@@ -385,6 +395,7 @@ public class NIOHandler {
 							+ " socketChannel = " + socketChannel);
 				}
 				messageChannel.close();
+				NioTcpMessageChannel.channelMap.remove(socketChannel);
 				entriesIterator = NioTcpMessageChannel.channelMap.entrySet().iterator();
 			}
         } catch (Exception e) {
@@ -393,6 +404,9 @@ public class NIOHandler {
     }
     
     public SocketChannel createOrReuseSocket(InetAddress inetAddress, int port) throws IOException {
+    	if(stopped.get())
+    		return null;
+    	
     	String key = NIOHandler.makeKey(inetAddress, port);
     	SocketChannel channel = null;
     	keyedSemaphore.enterIOCriticalSection(key);
