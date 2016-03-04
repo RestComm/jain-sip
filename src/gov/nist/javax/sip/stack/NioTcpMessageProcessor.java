@@ -388,26 +388,30 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     	}
     	try {
     		String key = MessageChannel.getKey(targetHostPort, transport);
-    		if (messageChannels.get(key) != null) {
-    			return this.messageChannels.get(key);
-    		} else {
-    			NioTcpMessageChannel retval = new NioTcpMessageChannel(targetHostPort.getInetAddress(),
-    					targetHostPort.getPort(), sipStack, this);
-    			
-    			
-    		//	retval.getSocketChannel().register(selector, SelectionKey.OP_READ);
+		ConnectionOrientedMessageChannel retval = messageChannels.get(key);
+    		if (retval == null) {
+			// Enforce unique NioTcpMessageChannel Instance per socket https://github.com/RestComm/jain-sip/issues/67
     			synchronized(messageChannels) {
-    				this.messageChannels.put(key, retval);
-    			}
-    			retval.isCached = true;
-    			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-    				logger.logDebug("key " + key);
-    				logger.logDebug("Creating " + retval);
-    			}
-    			selector.wakeup();
-    			return retval;
+    				
+    				retval = messageChannels.get(key);
+    				
+    				if( retval == null ) {
+					retval = new NioTcpMessageChannel(targetHostPort.getInetAddress(),
+    							targetHostPort.getPort(), sipStack, this);
+    					this.messageChannels.put(key, retval);
+    						
+    					retval.isCached = true;
+    		    			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+    		    				logger.logDebug("key " + key);
+    		    				logger.logDebug("Creating " + retval);
+    		    			}
+    		    			selector.wakeup();
+				}
+			}    			
+		}    		
 
-    		}
+		return retval;
+
     	} finally {
     		if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
     			logger.logDebug("MessageChannel::createMessageChannel - exit");
@@ -418,22 +422,29 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     @Override
     public MessageChannel createMessageChannel(InetAddress targetHost, int port) throws IOException {
         String key = MessageChannel.getKey(targetHost, port, transport);
-        if (messageChannels.get(key) != null) {
-            return this.messageChannels.get(key);
-        } else {
-            NioTcpMessageChannel retval = new NioTcpMessageChannel(targetHost, port, sipStack, this);
-            
-            selector.wakeup();
- //           retval.getSocketChannel().register(selector, SelectionKey.OP_READ);
-            this.messageChannels.put(key, retval);
-            retval.isCached = true;
-            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                logger.logDebug("key " + key);
-                logger.logDebug("Creating " + retval);
-            }
-            return retval;
-        }
 
+	ConnectionOrientedMessageChannel retval = messageChannels.get(key);
+	if (retval == null) {
+		// Enforce unique NioTcpMessageChannel Instance per socket https://github.com/RestComm/jain-sip/issues/67
+		synchronized(messageChannels) {
+	
+			retval = messageChannels.get(key);
+			
+			if( retval == null ) {
+				retval = new NioTcpMessageChannel(targetHost, port, sipStack, this);
+				this.messageChannels.put(key, retval);
+
+				retval.isCached = true;
+	    			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+	    				logger.logDebug("key " + key);
+	    				logger.logDebug("Creating " + retval);
+	    			}
+	    			selector.wakeup();
+			}
+		}    			
+	}
+
+	return retval;
     }
 
     // https://java.net/jira/browse/JSIP-475
