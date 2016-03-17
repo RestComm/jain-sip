@@ -55,11 +55,6 @@ public interface SIPTransaction extends TransactionExt {
    */
   public static final int TIMER_A = 1;
 
-  /**
-   * INVITE transaction timeout timer
-   */
-  public static final int TIMER_B = 64;
-
   public static final int TIMER_J = 64;
 
   public static final int TIMER_F = 64;

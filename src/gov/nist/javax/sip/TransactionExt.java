@@ -124,8 +124,8 @@ public interface TransactionExt extends Transaction {
    public void setTimerT4(int interval);
    
    /**
-    * Sets the value of Timer D (in ms)
-    * @param interval value of Timer D (in ms)
+    * Retrieve the value of Timer D (in ms)
+    * @return value of Timer D (in ms)
     * 
     * @since 2.0
     */
@@ -137,4 +137,17 @@ public interface TransactionExt extends Transaction {
     * @since 2.0
     */
    public void setTimerD(int interval);
+
+   /**
+    * Retrieve the value of Timer B (in ms)
+    * @return value of Timer B (in ms)
+    * 
+    */
+   public int getTimerB();
+   /**
+    * Sets the value of Timer B (in ms)
+    * @param interval value of Timer B (in ms)
+    * 
+    */
+   public void setTimerB(int interval);
 }
