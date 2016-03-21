@@ -418,14 +418,26 @@ public class NIOHandler {
     			channel = null;
     		}
     		if(channel == null) { // this is where the threads will race
-    			SocketAddress sockAddr = new InetSocketAddress(inetAddress, port);
-    			channel = messageProcessor.blockingConnect((InetSocketAddress) sockAddr, 10000);
-    			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-    				logger.logDebug("create channel = " + channel + "  " + inetAddress + " " + port);
-    			if(channel != null && channel.isConnected()) {
-    				putSocket(NIOHandler.makeKey(inetAddress, port), channel);
-    				if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-    					logger.logDebug("channel cached channel = " + channel);
+    			try {
+	    			SocketAddress sockAddr = new InetSocketAddress(inetAddress, port);
+	    			channel = messageProcessor.blockingConnect((InetSocketAddress) sockAddr, this.messageProcessor
+	    					.getIpAddress(), 10000);
+	    			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+	    				logger.logDebug("create channel = " + channel + "  " + inetAddress + " " + port);
+	    			if(channel != null && channel.isConnected()) {
+	    				putSocket(NIOHandler.makeKey(inetAddress, port), channel);
+	    				if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+	    					logger.logDebug("channel cached channel = " + channel);
+	    			}
+    			} catch (SocketException e) { // We must catch the socket timeout exceptions here, any SocketException not just ConnectException
+    				// https://github.com/RestComm/jain-sip/issues/76
+    				logger.logError("Problem connecting " +
+    						inetAddress + " " + port + " " + this.messageProcessor.getIpAddress());
+    				// new connection is bad.
+    				// remove from our table the socket and its semaphore
+    				removeSocket(key);
+    				throw new SocketException(e.getClass() + " " + e.getMessage() + " " + e.getCause() + " Problem connecting " +
+    						inetAddress + " " + port + " " + this.messageProcessor.getIpAddress());
     			}
     		} 
     		return channel;
