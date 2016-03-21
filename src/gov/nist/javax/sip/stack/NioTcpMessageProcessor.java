@@ -490,10 +490,10 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     @Override
     public void stop() {
     	try {
-    		nioHandler.stop();
-    		if(selector.isOpen()) {
+    		if(selector.isOpen())
     			selector.close();
-    		}
+    		
+    		nioHandler.stop();    		
     	} catch (Exception ex) {
     		logger.logError("Problem closing channel " , ex);
     	}
