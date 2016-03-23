@@ -125,7 +125,7 @@ public class NettyTcpMessageProcessor extends NettyConnectionOrientedMessageProc
         }
     }
 
-    class MyInit extends io.netty.channel.ChannelInitializer<SocketChannel> {
+    class InboundInit extends io.netty.channel.ChannelInitializer<SocketChannel> {
 
         @Override
         public void initChannel(final SocketChannel ch) throws Exception {
@@ -148,7 +148,7 @@ public class NettyTcpMessageProcessor extends NettyConnectionOrientedMessageProc
         b.group(this.bossGroup, this.workerGroup)
                 //.channel(EpollServerSocketChannel.class)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new MyInit())
+                .childHandler(new InboundInit())
                 .option(ChannelOption.SO_BACKLOG, 128)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 10000)
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
