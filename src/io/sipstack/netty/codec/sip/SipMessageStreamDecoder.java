@@ -68,24 +68,13 @@ public class SipMessageStreamDecoder extends ByteToMessageDecoder {
                 final byte b = buffer.readByte();
                 this.message.write(b);
             }
-            /*int index = buffer.forEachByte(new ByteBufProcessor() {
-             @Override
-             public boolean process(byte value) {
-             try {
-             message.write(value);
-             return !message.isComplete();
-             } catch (Exception e) {
-             return false;
-             }
-             }
-             });*/
         } catch (final MaxMessageSizeExceededException e) {
             dropConnection(ctx, e.getMessage());
             // TODO: mark this connection as dead since the future
             // for closing this decoder may take a while to actually
             // do its job
         } catch (final IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         if (this.message.isComplete()) {

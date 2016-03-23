@@ -21,6 +21,7 @@ public class SipMessageEncoder extends MessageToByteEncoder<SIPMessage> {
     public static final byte CR = '\r';
 
     public static final byte LF = '\n';
+    
     @Override
     protected void encode(final ChannelHandlerContext ctx, final SIPMessage msg, final ByteBuf out) {
         try {
