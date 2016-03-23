@@ -35,7 +35,6 @@ import gov.nist.core.LogLevels;
 import gov.nist.core.LogWriter;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
-import gov.nist.core.ThreadAuditor;
 import gov.nist.javax.sip.SIPConstants;
 import gov.nist.javax.sip.header.CSeq;
 import gov.nist.javax.sip.header.CallID;
@@ -58,9 +57,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.text.ParseException;
-import java.util.Arrays;
 import java.util.Hashtable;
-import java.util.concurrent.TimeUnit;
 
 import javax.sip.address.Hop;
 import javax.sip.message.Response;
@@ -97,7 +94,7 @@ import javax.sip.message.Response;
  * @version 1.2 $Revision: 1.87 $ $Date: 2010-12-02 22:44:53 $
  */
 public class NettyUDPMessageChannel extends MessageChannel implements
-        ParseExceptionListener, Runnable, RawMessageChannel {
+        ParseExceptionListener,  RawMessageChannel {
     private static StackLogger logger = CommonLogger.getLogger(NettyUDPMessageChannel.class);
     /**
      * SIP Stack structure for this channel.
@@ -249,80 +246,12 @@ public class NettyUDPMessageChannel extends MessageChannel implements
     }
 
     /**
-     * Run method specified by runnnable.
-     */
-    public void run() {
-        // Assume no thread pooling (bug fix by spierhj)
-        ThreadAuditor.ThreadHandle threadHandle = null;
-
-        final UDPMessageProcessor udpMessageProcessor = (UDPMessageProcessor) messageProcessor;
-
-        while (true) {
-            // messages that we write out to him.
-            DatagramPacket packet = null;
-
-            if (sipStack.threadPoolSize != -1) {
-
-            	// Contribution for https://github.com/Mobicents/jain-sip/issues/39
-                if (threadHandle == null && sipStack.getThreadAuditor() != null) {
-                    threadHandle = sipStack.getThreadAuditor()
-                            .addCurrentThread();
-                }
-
-                // Send a heartbeat to the thread auditor
-                if (threadHandle != null) 
-                	threadHandle.ping();
-
-                try {
-                	DatagramQueuedMessageDispatch work = null;
-                	// adding condition to avoid looping and taking too much CPU if the 
-                	// auditing is not enabled
-                	if (threadHandle != null && sipStack.getThreadAuditor() !=null && sipStack.getThreadAuditor().isEnabled()) {
-                		work = udpMessageProcessor.messageQueue.poll(threadHandle
-	                        .getPingIntervalInMillisecs(), TimeUnit.MILLISECONDS);
-                	} else {
-                		work = udpMessageProcessor.messageQueue.take();
-                	}
-	                if (!udpMessageProcessor.isRunning) {
-	                    return;
-	                }
-	                if (work == null) {
-	                	continue;
-	                } else {
-	                	packet = work.packet;
-		                this.incomingPacket = work.packet;						
-	                }	                	
-                } catch (InterruptedException ex) {
-					if (!udpMessageProcessor.isRunning) {
-						return;
-					}
-				}
-            } else {
-                packet = this.incomingPacket;
-            }
-
-            // Process the packet. Catch and log any exception we may throw.
-            try {
-                processIncomingDataPacket(packet);
-            } catch (Exception e) {
-
-                logger.logError(
-                        "Error while processing incoming UDP packet" + Arrays.toString(packet.getData()), e);
-            }
-
-            if (sipStack.threadPoolSize == -1) {
-                return;
-            }
-        }
-    }
-
-    /**
      * Process an incoming datagram
      *
      * @param packet
      *            is the incoming datagram packet.
      */
-    private void processIncomingDataPacket(DatagramPacket packet)
+    public void processIncomingDataPacket(DatagramPacket packet)
             throws Exception {
         this.peerAddress = packet.getAddress();
         int packetLength = packet.getLength();
@@ -805,22 +734,11 @@ public class NettyUDPMessageChannel extends MessageChannel implements
             DatagramSocket sock;
             boolean created = false;
 
-            if (sipStack.udpFlag) {
-                // Use the socket from the message processor (for firewall
-                // support use the same socket as the message processor
-                // socket -- feature request # 18 from java.net). This also
-                // makes the whole thing run faster!
-                sock = ((UDPMessageProcessor) messageProcessor).sock;
-
-                // Bind the socket to the stack address in case there
-                // are multiple interfaces on the machine (feature reqeust
-                // by Will Scullin) 0 binds to an ephemeral port.
-                // sock = new DatagramSocket(0,sipStack.stackInetAddress);
-            } else {
+            //TODO
                 // bind to any interface and port.
                 sock = new DatagramSocket();
                 created = true;
-            }
+            
             sock.send(reply);
             if (created)
                 sock.close();
@@ -869,13 +787,9 @@ public class NettyUDPMessageChannel extends MessageChannel implements
 
             try {
                 DatagramSocket sock;
-                if (sipStack.udpFlag) {
-                    sock = ((UDPMessageProcessor) messageProcessor).sock;
-
-                } else {
+                //TODO
                     // bind to any interface and port.
                     sock = sipStack.getNetworkLayer().createDatagramSocket();
-                }
                 if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                     this.logger.logDebug(
                             "sendMessage " + peerAddress.getHostAddress() + "/"
@@ -939,7 +853,7 @@ public class NettyUDPMessageChannel extends MessageChannel implements
      */
     @Override
     public int getPort() {
-        return ((UDPMessageProcessor) messageProcessor).getPort();
+        return ((NettyUDPMessageProcessor) messageProcessor).getPort();
     }
 
     /**

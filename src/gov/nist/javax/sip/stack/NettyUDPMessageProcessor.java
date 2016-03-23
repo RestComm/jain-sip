@@ -7,17 +7,13 @@ import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.SipStackImpl;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.concurrent.Future;
 import io.sipstack.netty.codec.sip.SipMessageDatagramDecoder;
 import io.sipstack.netty.codec.sip.SipMessageEncoder;
-import io.sipstack.netty.codec.sip.SipMessageEvent;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -29,7 +25,7 @@ import java.util.concurrent.BlockingQueue;
 public class NettyUDPMessageProcessor extends MessageProcessor {
 
     private static StackLogger logger = CommonLogger.getLogger(NettyUDPMessageProcessor.class);
-    private final EventLoopGroup workerGroup = new EpollEventLoopGroup();
+    private final EventLoopGroup workerGroup = new NioEventLoopGroup();//new EpollEventLoopGroup();
     final Bootstrap b = new Bootstrap();
     private Channel bindChannel;
     /**
@@ -80,34 +76,12 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
                 .handler(new NettyUDPMessageProcessor.InboundInit());
 
     }
-    
-    class OutboundHandler extends SimpleChannelInboundHandler<SipMessageEvent> {
 
 
-        @Override
-        protected void channelRead0(ChannelHandlerContext chc, SipMessageEvent i) throws Exception {
-            
-            
-        }
-
-    }    
-    
-    class OutboundInit extends io.netty.channel.ChannelInitializer<SocketChannel> {
+    class InboundInit extends io.netty.channel.ChannelInitializer {
 
         @Override
-        public void initChannel(final SocketChannel ch) throws Exception {
-            final ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast("decoder", new SipMessageDatagramDecoder());
-            pipeline.addLast("encoder", new SipMessageEncoder());
-            NettyUDPMessageProcessor.OutboundHandler handler = new NettyUDPMessageProcessor.OutboundHandler();
-            pipeline.addLast("handler", handler);
-        }
-    }
-
-    class InboundInit extends io.netty.channel.ChannelInitializer<SocketChannel> {
-
-        @Override
-        public void initChannel(final SocketChannel ch) throws Exception {
+        public void initChannel(final Channel ch) throws Exception {
             final ChannelPipeline pipeline = ch.pipeline();
             pipeline.addLast("decoder", new SipMessageDatagramDecoder());
             pipeline.addLast("encoder", new SipMessageEncoder());
@@ -115,7 +89,7 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
                     sipStack, NettyUDPMessageProcessor.this);
             pipeline.addLast("handler", handler);
         }
-    }    
+    }       
 
     /**
      * Get port on which to listen for incoming stuff.

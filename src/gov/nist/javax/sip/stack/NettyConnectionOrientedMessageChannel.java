@@ -845,15 +845,4 @@ public abstract class NettyConnectionOrientedMessageChannel extends MessageChann
         }
     }
 
-    protected volatile Connection conn;
-
-    @Override
-    public void channelRead0(ChannelHandlerContext chc, SipMessageEvent i) throws Exception {
-        conn = i.getConnection();
-        if (i.getMessage() instanceof SIPRequest) {
-            this.processMessage((SIPRequest) i.getMessage());
-        } else {
-            this.processMessage((SIPResponse) i.getMessage());
-        }
-    }
 }

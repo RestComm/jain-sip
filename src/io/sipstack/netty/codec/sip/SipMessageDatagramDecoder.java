@@ -53,7 +53,8 @@ public final class SipMessageDatagramDecoder extends MessageToMessageDecoder<Dat
     /**
      * Contains the raw framed message.
      */
-    private RawMessage message;    
+    private RawMessage message = new RawMessage(MAX_ALLOWED_INITIAL_LINE_SIZE, MAX_ALLOWED_HEADERS_SIZE,
+                MAX_ALLOWED_CONTENT_LENGTH);    
 
     private SIPMessage toSipMessage(final RawMessage raw) throws Exception {
         Buffer msg = Buffers.wrap(raw.getInitialLine(), CRLF);
@@ -81,6 +82,7 @@ public final class SipMessageDatagramDecoder extends MessageToMessageDecoder<Dat
 
     public SipMessageDatagramDecoder() {
         this.clock = new SystemClock();
+        
     }
 
     public SipMessageDatagramDecoder(final Clock clock) {
