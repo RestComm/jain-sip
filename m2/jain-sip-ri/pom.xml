@@ -18,7 +18,7 @@
 	<url>http://code.google.com/p/jain-sip/</url>
 	<build>
 		<sourceDirectory>../../src</sourceDirectory>
-                <testSourceDirectory>../../test</testSourceDirectory>
+                <testSourceDirectory>../../src</testSourceDirectory>
                 <testResources>
                     <testResource>
                         <directory>../../</directory>
@@ -64,8 +64,8 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3.2</version>
 				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
+					<source>1.7</source>
+					<target>1.7</target>
 					<includes>
 						<include>gov/nist/javax/sip/**</include>
 						<include>gov/nist/javax/sdp/**</include>
@@ -76,6 +76,9 @@
 					<excludes>
 						<exclude>gov/nist/javax/sip/stack/sctp/**</exclude>
 					</excludes>
+                                        <testIncludes>
+                                            <include>test/**</include>
+                                        </testIncludes>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -206,7 +209,7 @@
                 <dependency>
                   <groupId>io.netty</groupId>
                   <artifactId>netty-all</artifactId>
-                  <version>4.1.0.Beta6</version>
+                  <version>4.1.0.CR2</version>
                   <scope>compile</scope>
                 </dependency>                
 
