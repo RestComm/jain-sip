@@ -7,9 +7,14 @@ import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.SipStackImpl;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollDatagramChannel;
+import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.concurrent.Future;
 import io.sipstack.netty.codec.sip.SipMessageDatagramDecoder;
@@ -25,8 +30,8 @@ import java.util.concurrent.BlockingQueue;
 public class NettyUDPMessageProcessor extends MessageProcessor {
 
     private static StackLogger logger = CommonLogger.getLogger(NettyUDPMessageProcessor.class);
-    private final EventLoopGroup workerGroup = new NioEventLoopGroup();//new EpollEventLoopGroup();
-    final Bootstrap b = new Bootstrap();
+    private final EventLoopGroup workerGroup;
+    private final Bootstrap b = new Bootstrap();
     private Channel bindChannel;
     /**
      * The Mapped port (in case STUN suport is enabled)
@@ -50,6 +55,7 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
 
 
     private int maxMessageSize = SipStackImpl.MAX_DATAGRAM_SIZE;
+    private final Class _datagramChannelClass;
 
     /**
      * Constructor.
@@ -70,9 +76,19 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
 
         this.port = port;
         
-
+	if (Epoll.isAvailable())
+	{
+            _datagramChannelClass = EpollDatagramChannel.class;
+            workerGroup = new EpollEventLoopGroup();
+	}
+	else
+	{
+            _datagramChannelClass = NioDatagramChannel.class;
+            workerGroup = new NioEventLoopGroup();
+	}        
+        
         b.group(workerGroup)
-                .channel(NioDatagramChannel.class)
+                .channel(_datagramChannelClass)
                 .handler(new NettyUDPMessageProcessor.InboundInit());
 
     }
@@ -114,6 +130,12 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
         } catch (InterruptedException ex) {
             throw new IOException(ex);
         }
+    }
+    
+    public ChannelFuture createOutboundChannel(InetAddress peerAddress,
+            int peerPort) {
+        //final InetSocketAddress socketAddress = new InetSocketAddress(this.getIpAddress(), this.getPort());
+        return b.bind(0);
     }
 
     /**
@@ -198,4 +220,7 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
         return !messageQueue.isEmpty();
     }
 
+    public Channel getBindChannel() {
+        return bindChannel;
+    }
 }
