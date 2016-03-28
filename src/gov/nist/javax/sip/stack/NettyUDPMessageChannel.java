@@ -49,13 +49,17 @@ import gov.nist.javax.sip.message.SIPRequest;
 import gov.nist.javax.sip.message.SIPResponse;
 import gov.nist.javax.sip.parser.MessageParser;
 import gov.nist.javax.sip.parser.ParseExceptionListener;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.socket.DatagramPacket;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+
 import java.text.ParseException;
 import java.util.Hashtable;
 
@@ -244,195 +248,7 @@ public class NettyUDPMessageChannel extends MessageChannel implements
                             + "/" + port);
         }
     }
-
-    /**
-     * Process an incoming datagram
-     *
-     * @param packet
-     *            is the incoming datagram packet.
-     */
-    public void processIncomingDataPacket(DatagramPacket packet)
-            throws Exception {
-        this.peerAddress = packet.getAddress();
-        int packetLength = packet.getLength();
-        // Read bytes and put it in a eueue.
-        byte[] bytes = packet.getData();
-        byte[] msgBytes = new byte[packetLength];
-        System.arraycopy(bytes, 0, msgBytes, 0, packetLength);
-
-        // Do debug logging.
-        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-            this.logger.logDebug(
-                    "UDPMessageChannel: processIncomingDataPacket : peerAddress = "
-                            + peerAddress.getHostAddress() + "/"
-                            + packet.getPort() + " Length = " + packetLength);
-
-        }
-
-        SIPMessage sipMessage = null;
-        try {
-            this.receptionTime = System.currentTimeMillis();
-            sipMessage = myParser.parseSIPMessage(msgBytes, true, false, this);
-            /*@see Issue 292 */
-            if (sipMessage instanceof SIPRequest) {
-                String sipVersion = ((SIPRequest)sipMessage).getRequestLine().getSipVersion();
-                if (! sipVersion.equals("SIP/2.0")) {
-                     Response versionNotSupported = ((SIPRequest) sipMessage).createResponse(Response.VERSION_NOT_SUPPORTED, "Bad version " + sipVersion);
-                     this.sendMessage(versionNotSupported.toString().getBytes(),peerAddress,packet.getPort(),"UDP",false);
-                     return;
-                }
-                String method = ((SIPRequest) sipMessage).getMethod();
-                String cseqMethod = ((SIPRequest) sipMessage).getCSeqHeader()
-                        .getMethod();
-
-                if (!method.equalsIgnoreCase(cseqMethod)) {
-                    SIPResponse sipResponse = ((SIPRequest) sipMessage)
-                    .createResponse(SIPResponse.BAD_REQUEST);
-                    byte[] resp = sipResponse
-                            .encodeAsBytes(this.getTransport());
-                    this.sendMessage(resp,peerAddress,packet.getPort(),"UDP",false);
-                    return;
-
-                }
-            }
-
-        } catch (ParseException ex) {
-            // myParser = null; // let go of the parser reference.
-            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                this.logger.logDebug(
-                        "Rejecting message !  " + new String(msgBytes));
-                this.logger.logDebug(
-                        "error message " + ex.getMessage());
-                this.logger.logException(ex);
-            }
-
-            // JvB: send a 400 response for requests (except ACK)
-            // Currently only UDP, @todo also other transports
-            String msgString = new String(msgBytes, 0, packetLength);
-            if (!msgString.startsWith("SIP/") && !msgString.startsWith("ACK ")) {
-
-                String badReqRes = createBadReqRes(msgString, ex);
-                if (badReqRes != null) {
-                    if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                        logger.logDebug(
-                                "Sending automatic 400 Bad Request:");
-                        logger.logDebug(badReqRes);
-                    }
-                    try {
-                        this.sendMessage(badReqRes.getBytes(), peerAddress,
-                                packet.getPort(), "UDP", false);
-                    } catch (IOException e) {
-                        this.logger.logException(e);
-                    }
-                } else {
-                    if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                        logger
-                                .logDebug(
-                                        "Could not formulate automatic 400 Bad Request");
-                    }
-                }
-            }
-
-            return;
-        }
-        // No parse exception but null message - reject it and
-        // march on (or return).
-        // exit this message processor if the message did not parse.
-
-        if (sipMessage == null) {
-            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                this.logger.logDebug(
-                        "Rejecting message !  + Null message parsed.");
-            }
-            String key = packet.getAddress().getHostAddress() + ":"
-                    + packet.getPort();
-            if (pingBackRecord.get(key) == null
-                    && sipStack.getMinKeepAliveInterval() > 0) {
-                byte[] retval = "\r\n\r\n".getBytes();
-                DatagramPacket keepalive = new DatagramPacket(retval, 0,
-                        retval.length, packet.getAddress(), packet.getPort());
-                PingBackTimerTask task = new PingBackTimerTask(packet
-                        .getAddress().getHostAddress(), packet.getPort());
-                this.pingBackRecord.put(key, task);
-                this.sipStack.getTimer().schedule(task,
-                        sipStack.getMinKeepAliveInterval() * 1000);
-                ((UDPMessageProcessor) this.messageProcessor).sock
-                        .send(keepalive);
-            } else {
-                logger.logDebug("Not sending ping back");
-            }
-            return;
-        }
-        Via topMostVia = sipMessage.getTopmostVia();
-        // Check for the required headers.
-        if (sipMessage.getFrom() == null || sipMessage.getTo() == null
-                || sipMessage.getCallId() == null
-                || sipMessage.getCSeq() == null || topMostVia == null) {
-            String badmsg = new String(msgBytes);
-            if (logger.isLoggingEnabled()) {
-                this.logger
-                        .logError("bad message " + badmsg);
-                this.logger.logError(
-                        ">>> Dropped Bad Msg " + "From = "
-                                + sipMessage.getFrom() + "To = "
-                                + sipMessage.getTo() + "CallId = "
-                                + sipMessage.getCallId() + "CSeq = "
-                                + sipMessage.getCSeq() + "Via = "
-                                + sipMessage.getViaHeaders());
-            }
-            return;
-        }
-
-        if(sipStack.sipEventInterceptor != null) {
-            sipStack.sipEventInterceptor.beforeMessage(sipMessage);
-        }
-        // For a request first via header tells where the message
-        // is coming from.
-        // For response, just get the port from the packet.
-        if (sipMessage instanceof SIPRequest) {
-            Hop hop = sipStack.addressResolver.resolveAddress(topMostVia
-                    .getHop());
-            this.peerPort = hop.getPort();
-            this.peerProtocol = topMostVia.getTransport();
-
-            this.peerPacketSourceAddress = packet.getAddress();
-            this.peerPacketSourcePort = packet.getPort();
-            try {
-                this.peerAddress = packet.getAddress();
-                // Check to see if the received parameter matches
-                // the peer address and tag it appropriately.
-
-                boolean hasRPort = topMostVia.hasParameter(Via.RPORT);
-                if (hasRPort
-                        || !hop.getHost().equals(
-                                this.peerAddress.getHostAddress())) {
-                    topMostVia.setParameter(Via.RECEIVED, this.peerAddress
-                            .getHostAddress());
-                }
-
-                if (hasRPort) {
-                    topMostVia.setParameter(Via.RPORT, Integer
-                            .toString(this.peerPacketSourcePort));
-                }
-            } catch (java.text.ParseException ex1) {
-                InternalErrorHandler.handleException(ex1);
-            }
-
-        } else {
-
-            this.peerPacketSourceAddress = packet.getAddress();
-            this.peerPacketSourcePort = packet.getPort();
-            this.peerAddress = packet.getAddress();
-            this.peerPort = packet.getPort();
-            this.peerProtocol = topMostVia.getTransport();
-        }
-
-        this.processMessage(sipMessage);
-        if(sipStack.sipEventInterceptor != null) {
-            sipStack.sipEventInterceptor.afterMessage(sipMessage);
-        }
-    }
-
+    
     /**
      * Actually proces the parsed message.
      *
@@ -728,22 +544,34 @@ public class NettyUDPMessageChannel extends MessageChannel implements
             }
 
         }
-        DatagramPacket reply = new DatagramPacket(msg, msg.length, peerAddress,
-                peerPort);
+        ByteBuf buffer = ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().alloc().buffer(msg.length + 2, msg.length + 2);
+        buffer.writeBytes(msg);
+        buffer.writeByte('\r');
+        buffer.writeByte('\n');
+        final InetSocketAddress socketAddress = new InetSocketAddress(peerAddress, peerPort);
+        final DatagramPacket reply = new DatagramPacket(buffer, socketAddress);
         try {
-            DatagramSocket sock;
-            boolean created = false;
-
-            //TODO
+            /*if (sipStack.udpFlag) {
+                ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().writeAndFlush(reply).sync();
+            } else {  */          
                 // bind to any interface and port.
-                sock = new DatagramSocket();
-                created = true;
-            
-            sock.send(reply);
-            if (created)
-                sock.close();
-        } catch (IOException ex) {
-            throw ex;
+                ChannelFuture future = ((NettyUDPMessageProcessor) messageProcessor).createOutboundChannel(peerAddress, peerPort);
+                future.addListener(new ChannelFutureListener()
+                {
+                        @Override
+                        public void operationComplete(ChannelFuture future)
+                                        throws Exception
+                        {
+                                if (future.isSuccess())
+                                {
+                                    future.channel().writeAndFlush(reply);
+                                } else {
+                                        throw new RuntimeException(future.cause());
+                                }
+                        }
+                });
+            //}
+
         } catch (Exception ex) {
             InternalErrorHandler.handleException(ex);
         }
@@ -782,24 +610,40 @@ public class NettyUDPMessageChannel extends MessageChannel implements
             }
         }
         if (peerProtocol.compareToIgnoreCase("UDP") == 0) {
-            DatagramPacket reply = new DatagramPacket(msg, msg.length,
-                    peerAddress, peerPort);
+            ByteBuf buffer = ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().alloc().buffer(msg.length + 2, msg.length + 2);
+            buffer.writeBytes(msg);
+            buffer.writeByte('\r');
+            buffer.writeByte('\n');
+            final InetSocketAddress socketAddress = new InetSocketAddress(peerAddress, peerPort);            
+            final DatagramPacket reply = new DatagramPacket(buffer, socketAddress);
 
             try {
-                DatagramSocket sock;
-                //TODO
+                /*if (sipStack.udpFlag) {
+                    ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().writeAndFlush(reply).sync();
+                } else {*/
                     // bind to any interface and port.
-                    sock = sipStack.getNetworkLayer().createDatagramSocket();
+                   ChannelFuture future = ((NettyUDPMessageProcessor) messageProcessor).createOutboundChannel(peerAddress, peerPort);
+                   future.addListener(new ChannelFutureListener()
+                   {
+                           @Override
+                           public void operationComplete(ChannelFuture future)
+                                           throws Exception
+                           {
+                                   if (future.isSuccess())
+                                   {
+                                       future.channel().writeAndFlush(reply);
+                                   } else {
+                                           throw new RuntimeException(future.cause());
+                                   }
+                           }
+                   });                
+                //}
                 if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                     this.logger.logDebug(
                             "sendMessage " + peerAddress.getHostAddress() + "/"
                                     + peerPort + "\n" + new String(msg));
                 }
-                sock.send(reply);
-                if (!sipStack.udpFlag)
-                    sock.close();
-            } catch (IOException ex) {
-                throw ex;
+
             } catch (Exception ex) {
                 InternalErrorHandler.handleException(ex);
             }
