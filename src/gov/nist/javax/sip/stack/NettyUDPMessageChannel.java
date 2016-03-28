@@ -551,9 +551,9 @@ public class NettyUDPMessageChannel extends MessageChannel implements
         final InetSocketAddress socketAddress = new InetSocketAddress(peerAddress, peerPort);
         final DatagramPacket reply = new DatagramPacket(buffer, socketAddress);
         try {
-            /*if (sipStack.udpFlag) {
-                ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().writeAndFlush(reply).sync();
-            } else {  */          
+            if (sipStack.udpFlag) {
+                ((NettyUDPMessageProcessor) messageProcessor).getOutboundChannel().writeAndFlush(reply);
+            } else {            
                 // bind to any interface and port.
                 ChannelFuture future = ((NettyUDPMessageProcessor) messageProcessor).createOutboundChannel(peerAddress, peerPort);
                 future.addListener(new ChannelFutureListener()
@@ -565,12 +565,13 @@ public class NettyUDPMessageChannel extends MessageChannel implements
                                 if (future.isSuccess())
                                 {
                                     future.channel().writeAndFlush(reply);
+                                    future.channel().close();
                                 } else {
                                         throw new RuntimeException(future.cause());
                                 }
                         }
                 });
-            //}
+            }
 
         } catch (Exception ex) {
             InternalErrorHandler.handleException(ex);
@@ -618,9 +619,9 @@ public class NettyUDPMessageChannel extends MessageChannel implements
             final DatagramPacket reply = new DatagramPacket(buffer, socketAddress);
 
             try {
-                /*if (sipStack.udpFlag) {
-                    ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().writeAndFlush(reply).sync();
-                } else {*/
+                if (sipStack.udpFlag) {
+                    ((NettyUDPMessageProcessor) messageProcessor).getOutboundChannel().writeAndFlush(reply);
+                } else {
                     // bind to any interface and port.
                    ChannelFuture future = ((NettyUDPMessageProcessor) messageProcessor).createOutboundChannel(peerAddress, peerPort);
                    future.addListener(new ChannelFutureListener()
@@ -632,12 +633,13 @@ public class NettyUDPMessageChannel extends MessageChannel implements
                                    if (future.isSuccess())
                                    {
                                        future.channel().writeAndFlush(reply);
+                                       future.channel().close();
                                    } else {
                                            throw new RuntimeException(future.cause());
                                    }
                            }
                    });                
-                //}
+                }
                 if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                     this.logger.logDebug(
                             "sendMessage " + peerAddress.getHostAddress() + "/"

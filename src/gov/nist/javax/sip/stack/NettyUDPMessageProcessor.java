@@ -6,15 +6,16 @@ import gov.nist.core.LogWriter;
 import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.SipStackImpl;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollDatagramChannel;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.DatagramChannel;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.concurrent.Future;
 import io.sipstack.netty.codec.sip.SipMessageDatagramDecoder;
@@ -79,17 +80,21 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
 	if (Epoll.isAvailable())
 	{
             _datagramChannelClass = EpollDatagramChannel.class;
-            workerGroup = new EpollEventLoopGroup();
+            workerGroup = new EpollEventLoopGroup(sipStack.threadPoolSize);
 	}
 	else
 	{
             _datagramChannelClass = NioDatagramChannel.class;
-            workerGroup = new NioEventLoopGroup();
+            workerGroup = new NioEventLoopGroup(sipStack.threadPoolSize);
 	}        
         
-        b.group(workerGroup)
+        b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
+                option(ChannelOption.SO_RCVBUF, sipStack.getReceiveUdpBufferSize()).
+                option(ChannelOption.SO_SNDBUF, sipStack.getSendUdpBufferSize()).
+                group(workerGroup)
                 .channel(_datagramChannelClass)
                 .handler(new NettyUDPMessageProcessor.InboundInit());
+        
 
     }
 
@@ -132,10 +137,22 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
         }
     }
     
+    private Channel outboundChannel;
+    
+    public synchronized Channel getOutboundChannel() throws InterruptedException {
+        //final InetSocketAddress socketAddress = new InetSocketAddress(this.getIpAddress(), this.getPort());
+        if (outboundChannel == null) {
+            outboundChannel = b.bind(0).sync().channel();
+             
+        }
+        return outboundChannel;
+    }    
+    
+    
     public ChannelFuture createOutboundChannel(InetAddress peerAddress,
             int peerPort) {
         //final InetSocketAddress socketAddress = new InetSocketAddress(this.getIpAddress(), this.getPort());
-        return b.bind(0);
+            return b.bind(0);
     }
 
     /**
