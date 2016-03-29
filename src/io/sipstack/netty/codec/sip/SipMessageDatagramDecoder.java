@@ -129,7 +129,7 @@ public final class SipMessageDatagramDecoder extends MessageToMessageDecoder<Dat
             // for closing this decoder may take a while to actually
             // do its job
         } catch (final IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
 
         if (this.message.isComplete()) {

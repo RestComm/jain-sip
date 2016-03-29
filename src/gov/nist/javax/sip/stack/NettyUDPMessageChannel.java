@@ -544,7 +544,7 @@ public class NettyUDPMessageChannel extends MessageChannel implements
             }
 
         }
-        ByteBuf buffer = ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().alloc().buffer(msg.length + 2, msg.length + 2);
+        final ByteBuf buffer = ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().alloc().buffer(msg.length + 2, msg.length + 2);
         buffer.writeBytes(msg);
         buffer.writeByte('\r');
         buffer.writeByte('\n');
@@ -611,7 +611,7 @@ public class NettyUDPMessageChannel extends MessageChannel implements
             }
         }
         if (peerProtocol.compareToIgnoreCase("UDP") == 0) {
-            ByteBuf buffer = ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().alloc().buffer(msg.length + 2, msg.length + 2);
+            final ByteBuf buffer = ((NettyUDPMessageProcessor) messageProcessor).getBindChannel().alloc().buffer(msg.length + 2, msg.length + 2);
             buffer.writeBytes(msg);
             buffer.writeByte('\r');
             buffer.writeByte('\n');
