@@ -331,9 +331,10 @@ public class SSLStateMachine {
 								+ " Packet buffer size: " + sslEngine.getSession().getPacketBufferSize()
 								+ " new buffer size: " + sslEngine.getSession().getPacketBufferSize() + dst.position());
 					}
-					ByteBuffer newBuf = channel.prepareAppDataBuffer(sslEngine.getSession().getPacketBufferSize() + dst.position());
-					dst.flip();
-					newBuf.put(dst);
+					//ByteBuffer newBuf = channel.prepareAppDataBuffer(sslEngine.getSession().getPacketBufferSize() + dst.position());
+					//dst.flip();
+					//newBuf.put(dst);
+					ByteBuffer newBuf = channel.prepareAppDataBuffer(sslEngine.getSession().getPacketBufferSize());
 					dst = newBuf;
 					if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 						logger.logDebug(" new outNetBuffer remaining: " +  dst.remaining()
