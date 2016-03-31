@@ -5,10 +5,13 @@ import gov.nist.core.HostPort;
 import gov.nist.core.LogWriter;
 import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.SipStackImpl;
+import gov.nist.javax.sip.message.SIPRequest;
+import gov.nist.javax.sip.message.SIPResponse;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.EventLoopGroup;
@@ -19,7 +22,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioDatagramChannel;
 import io.netty.util.concurrent.Future;
 import io.sipstack.netty.codec.sip.SipMessageDatagramDecoder;
-import io.sipstack.netty.codec.sip.SipMessageEncoder;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -81,6 +83,7 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
 	{
             _datagramChannelClass = EpollDatagramChannel.class;
             workerGroup = new EpollEventLoopGroup(sipStack.threadPoolSize);
+            logger.logInfo("Using Epoll polling method!!!.");
 	}
 	else
 	{
@@ -90,7 +93,7 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
         
         b.option(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT).
                 option(ChannelOption.SO_RCVBUF, sipStack.getReceiveUdpBufferSize()).
-                option(ChannelOption.SO_SNDBUF, sipStack.getSendUdpBufferSize()).
+                option(ChannelOption.SO_SNDBUF, sipStack.getSendUdpBufferSize()).             
                 group(workerGroup)
                 .channel(_datagramChannelClass)
                 .handler(new NettyUDPMessageProcessor.InboundInit());
@@ -98,14 +101,14 @@ public class NettyUDPMessageProcessor extends MessageProcessor {
 
     }
 
+    private SipMessageDatagramDecoder decoder = new SipMessageDatagramDecoder();
 
     class InboundInit extends io.netty.channel.ChannelInitializer {
 
         @Override
         public void initChannel(final Channel ch) throws Exception {
             final ChannelPipeline pipeline = ch.pipeline();
-            pipeline.addLast("decoder", new SipMessageDatagramDecoder());
-            pipeline.addLast("encoder", new SipMessageEncoder());
+            pipeline.addLast("decoder", decoder);
             NettyUDPMessageChannel handler = new NettyUDPMessageChannel(getIpAddress(), getPort(),
                     sipStack, NettyUDPMessageProcessor.this);
             pipeline.addLast("handler", handler);
