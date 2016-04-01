@@ -39,15 +39,15 @@ public class NioWebSocketMessageProcessor extends NioTcpMessageProcessor {
 
     private static StackLogger logger = CommonLogger.getLogger(NioWebSocketMessageProcessor.class);
     
-	public NioWebSocketMessageProcessor(InetAddress ipAddress,
+    public NioWebSocketMessageProcessor(InetAddress ipAddress,
 			SIPTransactionStack sipStack, int port) {
-		super(ipAddress, sipStack, port);
+		super(ipAddress, sipStack, port);		
 		transport = "WS"; // by default its WS, can be overriden if there is TLS acclereator
 	}
 	
 	@Override
 	public NioTcpMessageChannel createMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor, SocketChannel client) throws IOException {
-    	return NioWebSocketMessageChannel.create(this, client);
+		return NioWebSocketMessageChannel.create(sipStack, this, client);
     }
 	
     @Override
@@ -59,7 +59,7 @@ public class NioWebSocketMessageProcessor extends NioTcpMessageProcessor {
     		String key = MessageChannel.getKey(targetHostPort, transport);
     		if (messageChannels.get(key) != null) {
     			return this.messageChannels.get(key);
-    		} else {
+    		} else {    			
     			NioWebSocketMessageChannel retval = new NioWebSocketMessageChannel(targetHostPort.getInetAddress(),
     					targetHostPort.getPort(), sipStack, this);
     			
@@ -89,7 +89,7 @@ public class NioWebSocketMessageProcessor extends NioTcpMessageProcessor {
         String key = MessageChannel.getKey(targetHost, port, transport);
         if (messageChannels.get(key) != null) {
             return this.messageChannels.get(key);
-        } else {
+        } else {        	
             NioWebSocketMessageChannel retval = new NioWebSocketMessageChannel(targetHost, port, sipStack, this);
             
             selector.wakeup();

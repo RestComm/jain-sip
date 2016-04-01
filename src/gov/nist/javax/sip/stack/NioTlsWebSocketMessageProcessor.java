@@ -61,7 +61,7 @@ public class NioTlsWebSocketMessageProcessor extends NioWebSocketMessageProcesso
 		if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
     		logger.logDebug("NioTlsWebSocketMessageProcessor::createMessageChannel: " + nioTcpMessageProcessor + " client " + client);
     	}
-		return NioTlsWebSocketMessageChannel.create(NioTlsWebSocketMessageProcessor.this, client);		
+		return NioTlsWebSocketMessageChannel.create(sipStack, NioTlsWebSocketMessageProcessor.this, client);		
     }
 	
     @Override

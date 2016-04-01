@@ -527,7 +527,9 @@ import javax.sip.message.Request;
  * <li>Aggressive: It removes references to request and responses in transactions and dialogs in cleaning them up and don't allow reparsing. Need careful application design. This gives a further improvements in memory as opposed to Normal Strategy and also CPU improvements.</li>
  * </ul>
  * </li>
- * 
+ * <li><b>gov.nist.javax.sip.gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS=boolean</b>
+ * A property that specify wether to patch websocket client with .invalid address
+ * <ul>
  * <li><b>gov.nist.javax.sip.LINGER_TIMER=int</b>
  *  A property that will specify for how many seconds the Dialog and Transaction structures will stay in memory before the stack releases them</li>
  * 
@@ -817,7 +819,6 @@ public class SipStackImpl extends SIPTransactionStack implements
 		// http://java.net/jira/browse/JSIP-415 Prevent Bad Client or Attacker (DoS) to block the TLSMessageProcessor or TLSMessageChannel
 		super.setSslHandshakeTimeout(Long.parseLong(
 		        configurationProperties.getProperty("gov.nist.javax.sip.SSL_HANDSHAKE_TIMEOUT", "-1")));
-
 		super.setThreadPriority(Integer.parseInt(
 			        configurationProperties.getProperty("gov.nist.javax.sip.THREAD_PRIORITY","" + Thread.MAX_PRIORITY)));
 			
@@ -1335,6 +1336,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 				"gov.nist.javax.sip.RFC_2543_SUPPORT_ENABLED", "true")
 				.equalsIgnoreCase("true");
 
+		super.setPatchWebSocketHeaders(Boolean.parseBoolean(configurationProperties.getProperty(
+				"gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS", "false")));
+		
 		super.cancelClientTransactionChecked = configurationProperties
 				.getProperty(
 						"gov.nist.javax.sip.CANCEL_CLIENT_TRANSACTION_CHECKED",

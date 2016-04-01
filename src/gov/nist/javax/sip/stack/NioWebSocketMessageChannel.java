@@ -40,6 +40,7 @@ import java.net.InetAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.text.ParseException;
+import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sip.address.SipURI;
@@ -65,22 +66,26 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 	String httpMethod;
 	String httpLocation;
 	
-	public static NioWebSocketMessageChannel create(
+	private SIPTransactionStack stack;
+	
+	public static NioWebSocketMessageChannel create(SIPTransactionStack stack,
 			NioWebSocketMessageProcessor nioTcpMessageProcessor,
 			SocketChannel socketChannel) throws IOException {
 		NioWebSocketMessageChannel retval = (NioWebSocketMessageChannel) channelMap.get(socketChannel);
 		if (retval == null) {
-			retval = new NioWebSocketMessageChannel(nioTcpMessageProcessor,
+			retval = new NioWebSocketMessageChannel(stack,nioTcpMessageProcessor,
 					socketChannel);
+			
 			channelMap.put(socketChannel, retval);
 		}
 		return retval;
 	}
 	
-	protected NioWebSocketMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor,
+	protected NioWebSocketMessageChannel(SIPTransactionStack stack,NioTcpMessageProcessor nioTcpMessageProcessor,
 			SocketChannel socketChannel) throws IOException {
-		super(nioTcpMessageProcessor, socketChannel);
-
+		super(nioTcpMessageProcessor,socketChannel);
+		
+		this.stack=stack;
 		messageProcessor = nioTcpMessageProcessor;
 		myClientInputStream = socketChannel.socket().getInputStream();
 	}
@@ -96,6 +101,7 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 		if(this.socketChannel != null && this.socketChannel.isConnected() && this.socketChannel.isOpen()) {
 			nioHandler.putSocket(NIOHandler.makeKey(this.peerAddress, this.peerPort), this.socketChannel);
 		}
+		
 		sendWrapped(msg, this.peerAddress, this.peerPort, isClient);
 	}
 	
@@ -104,12 +110,13 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 		if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 			logger.logDebug("sendMessage isClient  = " + isClient + " this = " + this);
 		}
-		lastActivityTimeStamp = System.currentTimeMillis();
 		
+		lastActivityTimeStamp = System.currentTimeMillis();		
 		NIOHandler nioHandler = ((NioTcpMessageProcessor) messageProcessor).nioHandler;
 		if(this.socketChannel != null && this.socketChannel.isConnected() && this.socketChannel.isOpen()) {
 			nioHandler.putSocket(NIOHandler.makeKey(this.peerAddress, this.peerPort), this.socketChannel);
 		}
+		
 		super.sendTCPMessage(msg, this.peerAddress, this.peerPort, isClient);
 	}
 
@@ -158,7 +165,8 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 	@Override
 	public void sendMessage(SIPMessage sipMessage, InetAddress receiverAddress, int receiverPort)
             throws IOException {
-		if(sipMessage instanceof SIPRequest) {
+		if(sipMessage instanceof SIPRequest)
+		{
 			if(client && httpClientRequestSent.compareAndSet(false, true)) {
 				SIPRequest request = (SIPRequest) sipMessage;
 				SipURI requestUri = (SipURI) request.getRequestURI();
@@ -172,6 +180,7 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 						"Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n" + 
 						"Sec-WebSocket-Protocol: sip\r\n" + 
 						"Sec-WebSocket-Version: 13\r\n\r\n";
+					
 				super.sendTCPMessage(http.getBytes(), receiverAddress, receiverPort, false);
 				try {
 					Thread.sleep(150);
@@ -181,6 +190,7 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 				}
 			}
 		}
+		
 		super.sendMessage(sipMessage, receiverAddress, receiverPort);
     }
 	
@@ -188,7 +198,9 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 			SIPTransactionStack sipStack,
 			NioTcpMessageProcessor nioTcpMessageProcessor) throws IOException {
 		super(inetAddress, port, sipStack, nioTcpMessageProcessor);
+		
 		client = true;
+		this.stack=sipStack;
 		this.codec = new WebSocketCodec(false, true);
 	}
 	
@@ -239,6 +251,7 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 				}
 				nioParser.addBytes(decodedMsg);
 				logger.logDebug("Nio websocket bytes were added " + decodedMsg.length);
+
 			} while (decodedMsg != null);
 			
 		}
@@ -247,5 +260,77 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 	@Override
 	public String getTransport() {
 		return this.messageProcessor.transport;
+	}
+
+	@Override
+	public void onNewSocket(byte[] message) {
+		super.onNewSocket(message);
+		
+	}
+	
+    /**
+     * Call back method. When the parser finshes parsing a message let the channel see it and decide
+     * if it want to create some address mappings (for Websocket or otherwise).
+     * 
+     * @param message
+     * @throws Exception 
+     */
+	@Override
+    public void processMessage(SIPMessage message) throws Exception {		
+		if(stack.isPatchWebSocketHeaders())
+		{
+			if(message instanceof Request) {
+	    		// Commented out for https://java.net/jira/browse/JSIP-504 Contribution by Michael Groshans
+			/*Request request = (Request) message;
+	    		if(request.getMethod().equals(Request.REGISTER)) {
+	    			ContactHeader contact = (ContactHeader) request.getHeader(ContactHeader.NAME);
+	    			URI uri = contact.getAddress().getURI();
+	    			if(uri.isSipURI()) {
+	    				SipURI sipUri = (SipURI) uri;
+	    				String host = sipUri.getHost();
+	    				NioTcpMessageProcessor processor = (NioTcpMessageProcessor) this.messageProcessor;
+	    				HostPort hostPort = new HostPort();
+	    				hostPort.setHost(new Host(host));
+	    				hostPort.setPort(5060);
+	    				processor.assignChannelToDestination(hostPort, this);
+	    			}
+	    		}*/
+	    		ContactHeader contact = (ContactHeader)message.getHeader(ContactHeader.NAME);
+	        	RecordRouteHeader rr = (RecordRouteHeader)message.getHeader(RecordRouteHeader.NAME);
+	        	ViaHeader via = message.getTopmostViaHeader();
+	        	
+	        	if(rr == null) {
+	        		if(contact != null) {
+	        			rewriteUri((SipURI) contact.getAddress().getURI());
+	        		}
+	        	} else {
+	        		rewriteUri((SipURI) rr.getAddress().getURI()); // not needed but just in case some clients does it
+	        	}
+	        	
+	        	String viaHost = via.getHost();
+	        	if(viaHost.endsWith(".invalid")) {
+	        		via.setHost(getPeerAddress());
+	        		via.setPort(getPeerPort());
+	        	}
+	    	} else {
+	    		ContactHeader contact = (ContactHeader)message.getHeader(ContactHeader.NAME);
+	        	if(contact != null) {
+	        		rewriteUri((SipURI) contact.getAddress().getURI());
+	        	}
+	    	}
+		}
+		super.processMessage(message);
+    }
+	
+	public void rewriteUri(SipURI uri) {
+		try {
+			String uriHost = uri.getHost();
+			if(uriHost.endsWith(".invalid")) {
+				uri.setHost(getPeerAddress());
+			}
+		} catch (ParseException e) {
+			logger.logError("Cant parse address", e);
+		}
+		uri.setPort(getPeerPort());
 	}
 }
