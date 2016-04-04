@@ -1337,7 +1337,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 				.equalsIgnoreCase("true");
 
 		super.setPatchWebSocketHeaders(Boolean.parseBoolean(configurationProperties.getProperty(
-				"gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS", "false")));
+				"gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS", "true")));
 		
 		super.cancelClientTransactionChecked = configurationProperties
 				.getProperty(
