@@ -220,6 +220,7 @@ public class Shootme   implements SipListener {
             if ( sendRinging ) {
                 ringingResponse.addHeader(contactHeader);
                 Thread.sleep(this.ringingDelay / 2);
+                ((ViaHeader) ringingResponse.getHeader(ViaHeader.NAME)).removeParameter("rport");
                 st.sendResponse(ringingResponse);
             }
             Dialog dialog =  st.getDialog();
@@ -257,6 +258,7 @@ public class Shootme   implements SipListener {
                 ContactHeader contactHeader = headerFactory
                         .createContactHeader(address);
                 okResponse.addHeader(contactHeader);
+                ((ViaHeader) okResponse.getHeader(ViaHeader.NAME)).removeParameter("rport");
                 inviteTid.sendResponse(okResponse);
                 logger.info("shootme: Dialog state after OK: "
                         + inviteTid.getDialog().getState());
@@ -281,6 +283,7 @@ public class Shootme   implements SipListener {
             logger.info("shootme:  dialogState = " + requestEvent.getDialog().getState());
             Response response = messageFactory.createResponse(200, request);
             if ( serverTransactionId != null) {
+            	((ViaHeader) response.getHeader(ViaHeader.NAME)).removeParameter("rport");
                 serverTransactionId.sendResponse(response);
             }
             logger.info("shootme:  dialogState = " + requestEvent.getDialog().getState());
