@@ -98,7 +98,7 @@ import javax.sip.message.Response;
  */
 public class UDPMessageChannel extends MessageChannel implements
         ParseExceptionListener, Runnable, RawMessageChannel {
-    private static StackLogger logger = CommonLogger.getLogger(UDPMessageChannel.class);
+    private static final StackLogger logger = CommonLogger.getLogger(UDPMessageChannel.class);
     /**
      * SIP Stack structure for this channel.
      */
@@ -485,8 +485,17 @@ public class UDPMessageChannel extends MessageChannel implements
                 this.peerAddress = packet.getAddress();
                 // Check to see if the received parameter matches
                 // the peer address and tag it appropriately.
-
+                
                 boolean hasRPort = topMostVia.hasParameter(Via.RPORT);
+                if(!hasRPort && topMostVia.getPort() != peerPacketSourcePort) {
+                	// https://github.com/RestComm/jain-sip/issues/79
+                	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                        logger.logDebug(
+                                "setting rport since viaPort " + topMostVia.getPort() + " different than peerPacketSourcePort " 
+                                + peerPacketSourcePort + " so that the response can be routed back");
+                    }
+                	hasRPort = true;
+                }
                 if (hasRPort
                         || !hop.getHost().equals(
                                 this.peerAddress.getHostAddress())) {

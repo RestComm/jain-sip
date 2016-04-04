@@ -345,7 +345,17 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                     // InetAddress sentByAddress =
                     // InetAddress.getByName(hop.getHost());
                     // JvB: if sender added 'rport', must always set received
-                    if (v.hasParameter(Via.RPORT)
+                	boolean hasRPort = v.hasParameter(Via.RPORT);
+                    if(!hasRPort && v.getPort() != peerPort) {
+                    	// https://github.com/RestComm/jain-sip/issues/79
+                    	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                    		logger.logDebug(
+                                    "setting rport since viaPort " + v.getPort() + " different than peerPacketSourcePort "
+                                    + peerPort + " so that the response can be routed back");
+                        }
+                    	hasRPort = true;
+                    }
+                    if (hasRPort
                             || !hop.getHost().equals(
                                     this.peerAddress.getHostAddress())) {
                         v.setParameter(Via.RECEIVED, this.peerAddress
