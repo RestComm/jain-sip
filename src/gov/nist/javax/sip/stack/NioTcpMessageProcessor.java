@@ -384,70 +384,75 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     	super(ipAddress, port, "TCP", sipStack);
     	nioHandler = new NIOHandler(sipStack, this);
     }
+    
+    
+    ConnectionOrientedMessageChannel constructMessageChannel (InetAddress targetHost, int port) throws IOException {
+        return new NioTcpMessageChannel(targetHost,
+                                port, sipStack, this);
+    }
+        
+    /**
+     * This private version is thread safe using proper critical session.
+     * 
+     * We don't use putIfAbset from CHM since creating a channel instance itself
+     * is quite heavy. See https://github.com/RestComm/jain-sip/issues/80.
+     * 
+     * Using synchronized at method level, instead of any internal att, 
+     * as we had in non Nio impl. This is better than use sync section with 
+     * non-volatile variable. 
+     * @param key
+     * @param targetHost
+     * @param port
+     * @return
+     * @throws IOException 
+     */
+    private synchronized MessageChannel createMessageChannel(String key, InetAddress targetHost, int port)  throws IOException {
+        ConnectionOrientedMessageChannel retval = messageChannels.get(key);
+        //once locked, we need to check condition again
+        if( retval == null ) {
+                retval = constructMessageChannel(targetHost,
+                                port);
+                this.messageChannels.put(key, retval);
+                retval.isCached = true;
+                if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                        logger.logDebug("key " + key);
+                        logger.logDebug("Creating " + retval);
+                }
+                selector.wakeup();
+        }  		
+        return retval;      
+    }     
 
     @Override
     public MessageChannel createMessageChannel(HostPort targetHostPort) throws IOException {
     	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
     		logger.logDebug("NioTcpMessageProcessor::createMessageChannel: " + targetHostPort);
     	}
+        MessageChannel retval = null;
     	try {
     		String key = MessageChannel.getKey(targetHostPort, transport);
-		ConnectionOrientedMessageChannel retval = messageChannels.get(key);
+		retval = messageChannels.get(key);
+                //here we use double-checked locking trying to reduce contention	
     		if (retval == null) {
-			// Enforce unique NioTcpMessageChannel Instance per socket https://github.com/RestComm/jain-sip/issues/67
-    			synchronized(messageChannels) {
-    				
-    				retval = messageChannels.get(key);
-    				
-    				if( retval == null ) {
-					retval = new NioTcpMessageChannel(targetHostPort.getInetAddress(),
-    							targetHostPort.getPort(), sipStack, this);
-    					this.messageChannels.put(key, retval);
-    						
-    					retval.isCached = true;
-    		    			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-    		    				logger.logDebug("key " + key);
-    		    				logger.logDebug("Creating " + retval);
-    		    			}
-    		    			selector.wakeup();
-				}
-			}    			
+                    retval = createMessageChannel(key, 
+                            targetHostPort.getInetAddress(), targetHostPort.getPort());  			
 		}    		
-
-		return retval;
-
     	} finally {
     		if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-    			logger.logDebug("MessageChannel::createMessageChannel - exit");
+    			logger.logDebug("MessageChannel::createMessageChannel - exit " + retval);
     		}
     	}
+        return retval;
     }
 
     @Override
     public MessageChannel createMessageChannel(InetAddress targetHost, int port) throws IOException {
         String key = MessageChannel.getKey(targetHost, port, transport);
-
-	ConnectionOrientedMessageChannel retval = messageChannels.get(key);
+	MessageChannel retval = messageChannels.get(key);
+        //here we use double-checked locking trying to reduce contention	
 	if (retval == null) {
-		// Enforce unique NioTcpMessageChannel Instance per socket https://github.com/RestComm/jain-sip/issues/67
-		synchronized(messageChannels) {
-	
-			retval = messageChannels.get(key);
-			
-			if( retval == null ) {
-				retval = new NioTcpMessageChannel(targetHost, port, sipStack, this);
-				this.messageChannels.put(key, retval);
-
-				retval.isCached = true;
-	    			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-	    				logger.logDebug("key " + key);
-	    				logger.logDebug("Creating " + retval);
-	    			}
-	    			selector.wakeup();
-			}
-		}    			
+            retval = createMessageChannel(key, targetHost, port);
 	}
-
 	return retval;
     }
 
