@@ -399,28 +399,34 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
      * 
      * Using synchronized at method level, instead of any internal att, 
      * as we had in non Nio impl. This is better than use sync section with 
-     * non-volatile variable. 
+     * non-volatile variable.
+     * 
+     * Sync is based in channel key, so different ip/port combination doesn't
+     * block each other. The internal Map supports concurrent access, since its
+     * ConcHashMap impl...
      * @param key
      * @param targetHost
      * @param port
      * @return
      * @throws IOException 
      */
-    private synchronized MessageChannel createMessageChannel(String key, InetAddress targetHost, int port)  throws IOException {
-        ConnectionOrientedMessageChannel retval = messageChannels.get(key);
-        //once locked, we need to check condition again
-        if( retval == null ) {
-                retval = constructMessageChannel(targetHost,
-                                port);
-                this.messageChannels.put(key, retval);
-                retval.isCached = true;
-                if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                        logger.logDebug("key " + key);
-                        logger.logDebug("Creating " + retval);
-                }
-                selector.wakeup();
-        }  		
-        return retval;      
+    private MessageChannel createMessageChannel(String key, InetAddress targetHost, int port)  throws IOException {
+        synchronized (key) {
+            ConnectionOrientedMessageChannel retval = messageChannels.get(key);
+            //once locked, we need to check condition again
+            if( retval == null ) {
+                    retval = constructMessageChannel(targetHost,
+                                    port);
+                    this.messageChannels.put(key, retval);
+                    retval.isCached = true;
+                    if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                            logger.logDebug("key " + key);
+                            logger.logDebug("Creating " + retval);
+                    }
+                    selector.wakeup();
+            }  		
+            return retval;
+        }
     }     
 
     @Override
