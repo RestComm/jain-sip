@@ -487,6 +487,7 @@ public class UDPMessageChannel extends MessageChannel implements
                 // the peer address and tag it appropriately.
                 
                 boolean hasRPort = topMostVia.hasParameter(Via.RPORT);
+           if(sipStack.isPatchRport())
                 if(!hasRPort && topMostVia.getPort() != peerPacketSourcePort) {
                 	// https://github.com/RestComm/jain-sip/issues/79
                 	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {

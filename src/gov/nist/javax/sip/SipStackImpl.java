@@ -527,8 +527,11 @@ import javax.sip.message.Request;
  * <li>Aggressive: It removes references to request and responses in transactions and dialogs in cleaning them up and don't allow reparsing. Need careful application design. This gives a further improvements in memory as opposed to Normal Strategy and also CPU improvements.</li>
  * </ul>
  * </li>
- * <li><b>gov.nist.javax.sip.gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS=boolean</b>
+ * <li><b>gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS=boolean</b>
  * A property that specify wether to patch websocket client with .invalid address
+ * <ul>
+ * <li><b>gov.nist.javax.sip.ALWAYS_ADD_RPORT=boolean</b>
+ * A property that specify wether to putch the rport if the peer packet source port is different than the via header one
  * <ul>
  * <li><b>gov.nist.javax.sip.LINGER_TIMER=int</b>
  *  A property that will specify for how many seconds the Dialog and Transaction structures will stay in memory before the stack releases them</li>
@@ -1338,6 +1341,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 
 		super.setPatchWebSocketHeaders(Boolean.parseBoolean(configurationProperties.getProperty(
 				"gov.nist.javax.sip.PATCH_SIP_WEBSOCKETS_HEADERS", "true")));
+		
+		super.setPatchRport(Boolean.parseBoolean(configurationProperties.getProperty(
+				"gov.nist.javax.sip.ALWAYS_ADD_RPORT", "false")));
 		
 		super.cancelClientTransactionChecked = configurationProperties
 				.getProperty(
