@@ -11,7 +11,7 @@
 
 	<groupId>javax.sip</groupId>
 	<artifactId>jain-sip-ri</artifactId>
-	<version>1.2.X-SNAPSHOT</version>
+	<version>1.2.279</version>
 	<packaging>jar</packaging>
 
 	<name>jain-sip-ri</name>
