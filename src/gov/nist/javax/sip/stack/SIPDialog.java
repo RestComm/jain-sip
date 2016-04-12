@@ -3255,7 +3255,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
 
     }
-
+    
     /**
      * Set the last response for this dialog. This method is called for updating
      * the dialog state when a response is either sent or received from within a
@@ -3290,6 +3290,10 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             String cseqMethod = sipResponse.getCSeqHeader().getMethod();
             this.lastResponseMethod = cseqMethod;
             long responseCSeqNumber = sipResponse.getCSeq().getSeqNumber();
+            
+            boolean is100ClassResponse = statusCode / 100 == 1;
+            boolean is200ClassResponse = statusCode / 100 == 2;
+            
             this.lastResponseCSeqNumber = responseCSeqNumber;
             if(Request.INVITE.equals(cseqMethod)) {
             	this.lastInviteResponseCSeqNumber = responseCSeqNumber;
@@ -3351,7 +3355,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             if (transaction == null || transaction instanceof ClientTransaction) {
                 if (SIPTransactionStack.isDialogCreated(cseqMethod)) {
                     // Make a final tag assignment.
-                    if (getState() == null && (statusCode / 100 == 1)) {
+                    if (getState() == null && is100ClassResponse) {
                         /*
                          * Guard aginst slipping back into early state from
                          * confirmed state.
@@ -3368,7 +3372,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                         }
                     } else if (getState() != null
                             && getState().equals(DialogState.EARLY)
-                            && statusCode / 100 == 1) {
+                            && is100ClassResponse) {
                         /*
                          * This case occurs for forked dialog responses. The To
                          * tag can change as a result of the forking. The remote
@@ -3382,7 +3386,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                             sipStack.putDialog(this);
                             this.addRoute(sipResponse);
                         }
-                    } else if (statusCode / 100 == 2) {
+                    } else if (is200ClassResponse) {
                         // This is a dialog creating method (such as INVITE).
                         // 2xx response -- set the state to the confirmed
                         // state. To tag is MANDATORY for the response.
@@ -3401,8 +3405,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                                         .getState() == DialogState.CONFIRMED
                                         && cseqMethod
                                                 .equals(Request.SUBSCRIBE)
-                                        && this.pendingRouteUpdateOn202Response && sipResponse
-                                        .getStatusCode() == Response.ACCEPTED))) {
+                                        && this.pendingRouteUpdateOn202Response && 
+                                is200ClassResponse))) {
                             if (this.getState() != DialogState.CONFIRMED) {
                                 setRemoteTag(sipResponse.getToTag());
                                 this
@@ -3425,7 +3429,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                              */
 
                             if (cseqMethod.equals(Request.SUBSCRIBE)
-                                    && sipResponse.getStatusCode() == Response.ACCEPTED
+                                    && is200ClassResponse
                                     && this.pendingRouteUpdateOn202Response) {
                                 setRemoteTag(sipResponse.getToTag());
                                 this.addRoute(sipResponse);
@@ -3498,7 +3502,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                 } else if (cseqMethod.equals(Request.NOTIFY)
                         && (this.getMethod().equals(Request.SUBSCRIBE) || this
                                 .getMethod().equals(Request.REFER))
-                        && sipResponse.getStatusCode() / 100 == 2
+                        && is200ClassResponse
                         && this.getState() == null) {
                     // This is a notify response.
                     this.setDialogId(sipResponse.getDialogId(true));
@@ -3506,7 +3510,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                     this.setState(SIPDialog.CONFIRMED_STATE);
 
                 } else if (cseqMethod.equals(Request.BYE)
-                        && statusCode / 100 == 2 && isTerminatedOnBye()) {
+                        && is200ClassResponse && isTerminatedOnBye()) {
                     // Dialog will be terminated when the transction is
                     // terminated.
                     setState(SIPDialog.TERMINATED_STATE);
@@ -3515,7 +3519,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                 // Processing Server Dialog.
 
                 if (cseqMethod.equals(Request.BYE)
-                        && statusCode / 100 == 2 && this.isTerminatedOnBye()) {
+                        && is200ClassResponse && this.isTerminatedOnBye()) {
                     /*
                      * Only transition to terminated state when 200 OK is
                      * returned for the BYE. Other status codes just result in
@@ -3533,8 +3537,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                         doPutDialog = true;
                     }
 
-                    if (statusCode / 100 != 2) {
-                        if (statusCode / 100 == 1) {
+                    if (!is200ClassResponse) {
+                        if (is100ClassResponse) {
                             if (doPutDialog) {
 
                                 setState(SIPDialog.EARLY_STATE);
