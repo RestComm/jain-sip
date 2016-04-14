@@ -109,6 +109,7 @@ public class NioTlsMessageChannel extends NioTcpMessageChannel implements NioTls
 
         // http://java.net/jira/browse/JSIP-451 - josemrecio
     	sslStateMachine.sslEngine.setEnabledProtocols(((SipStackImpl)sipStack).getEnabledProtocols());
+        sslStateMachine.sslEngine.setEnabledCipherSuites(((SipStackImpl)sipStack).getEnabledCipherSuites());
     	// Added for https://java.net/jira/browse/JSIP-483 
 		if(getHandshakeCompletedListener() == null) {
 			HandshakeCompletedListenerImpl listner = new HandshakeCompletedListenerImpl(this, getSocketChannel());
