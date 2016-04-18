@@ -573,6 +573,14 @@ import javax.sip.message.Request;
  *  It's advisable not to use SSL protocols because of http://googleonlinesecurity.blogspot.fr/2014/10/this-poodle-bites-exploiting-ssl-30.html 
  * </li>
  * 
+ *  <li><b>gov.nist.javax.sip.gov.nist.javax.sip.ENABLED_CIPHER_SUITES = String </b>
+ *  Comma-separated list of suites to use when creating outgoing TLS connections.
+ *  The default is "TLS_RSA_WITH_AES_128_CBC_SHA, SSL_RSA_WITH_3DES_EDE_CBC_SHA,
+			TLS_DH_anon_WITH_AES_128_CBC_SHA,
+			SSL_DH_anon_WITH_3DES_EDE_CBC_SHA".
+ * </li>
+ * 
+ * 
  * <li><b>gov.nist.javax.sip.TLS_SECURITY_POLICY = String </b> The fully qualified path
  * name of a TLS Security Policy implementation that is consulted for certificate verification
  * of outbund TLS connections.
@@ -1334,6 +1342,30 @@ public class SipStackImpl extends SIPTransactionStack implements
 			}
 			this.enabledProtocols = protocols;
 		}
+                
+		String cipherSuitesStr = configurationProperties.getProperty(
+				"gov.nist.javax.sip.ENABLED_CIPHER_SUITES");
+		if (cipherSuitesStr != null)
+		{
+			// https://github.com/RestComm/jain-sip/issues/85 
+			// accepts suites list enclosed in "" and separated by spaces and/or commas 
+			StringTokenizer st = new StringTokenizer(cipherSuitesStr, "\" ,");
+			String[] newCipherSuites = new String[st.countTokens()];
+			
+			if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG))
+	            logger.logDebug(
+	                "Cipher Suites = ");
+			int i=0;
+			while (st.hasMoreTokens()) {
+				newCipherSuites[i] = st.nextToken();
+				if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
+	                logger.logDebug(
+	                    "Cipher Suite = " + newCipherSuites[i]);
+				}
+				i++;
+			}
+                        this.cipherSuites = newCipherSuites;
+		}                
 
 		super.rfc2543Supported = configurationProperties.getProperty(
 				"gov.nist.javax.sip.RFC_2543_SUPPORT_ENABLED", "true")
