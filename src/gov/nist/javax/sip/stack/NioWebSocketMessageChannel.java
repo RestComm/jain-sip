@@ -279,6 +279,7 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
     public void processMessage(SIPMessage message) throws Exception {		
 		if(stack.isPatchWebSocketHeaders())
 		{
+			logger.logDebug("Patching WebSocket headers");
 			if(message instanceof Request) {
 	    		// Commented out for https://java.net/jira/browse/JSIP-504 Contribution by Michael Groshans
 			/*Request request = (Request) message;
