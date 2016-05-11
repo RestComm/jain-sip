@@ -149,6 +149,11 @@ public class HandshakeCompletedListenerImpl implements HandshakeCompletedListene
     	private HandshakeWatchdog(Socket socket) {
     		this.socket = socket;
     	}
+        
+        @Override
+        public Object getThreadHash() {
+            return null;
+        }         
     	
 		@Override
 		public void runTask() {

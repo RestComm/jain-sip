@@ -261,6 +261,16 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             }
 
         }
+        
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }        
 
     }
 
@@ -312,6 +322,16 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             }
 
         }
+        
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }        
 
     }
 
@@ -350,6 +370,16 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             }
 
         }
+        
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }        
     }
 
     class TransactionTimer extends SIPStackTimerTask {
@@ -398,6 +428,16 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 originalRequest.cleanUp();
             }
         }
+        
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }        
 
     }
 
@@ -1617,6 +1657,16 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                                originalRequest.cleanUp();
                             }
                         }
+                        
+                        @Override
+                        public Object getThreadHash() {
+                            Request request = getRequest();
+                            if (request != null && request instanceof SIPRequest) {
+                                return ((SIPRequest)request).getCallIdHeader().getCallId();
+                            } else {
+                                return null;
+                            }
+                        }                        
                     };
                     if(time > 0) {
                         sipStack.getTimer().schedule(task, time * T1 * baseTimerInterval);

@@ -32,6 +32,8 @@
  */
 package gov.nist.javax.sip.stack;
 
+import gov.nist.javax.sip.ThreadAffinityIdentifier;
+
 
 /**
  * A subclass of TimerTask which runs TimerTask code within a try/catch block to
@@ -41,7 +43,7 @@ package gov.nist.javax.sip.stack;
  * @author Brett Buckingham
  *
  */
-public abstract class SIPStackTimerTask {
+public abstract class SIPStackTimerTask implements ThreadAffinityIdentifier {
 	// the underlying timer task that was scheduled in the Stack SIP timer
 	Object timerTask = null; 
     // Implements code to be run when the SIPStackTimerTask is executed.

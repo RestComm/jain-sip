@@ -36,6 +36,7 @@ import gov.nist.core.InternalErrorHandler;
 import gov.nist.core.LogWriter;
 import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
+import gov.nist.javax.sip.ThreadAffinityTask;
 import gov.nist.javax.sip.address.AddressImpl;
 import gov.nist.javax.sip.header.ContentLength;
 import gov.nist.javax.sip.header.ContentType;
@@ -221,7 +222,7 @@ public abstract class MessageChannel {
                             hopAddr, hop.getPort());
                     if (messageChannel instanceof RawMessageChannel) {
                         final RawMessageChannel channel = (RawMessageChannel) messageChannel;
-                        Runnable processMessageTask = new Runnable() {
+                        ThreadAffinityTask processMessageTask = new ThreadAffinityTask() {
 
                             public void run() {
                                 try {
@@ -231,6 +232,10 @@ public abstract class MessageChannel {
                                         logger.logError("Error self routing message cause by: ", ex);
                                     }
                                 }
+                            }
+                            
+                            public Object getThreadHash() {
+                                return sipMessage.getCallId().getCallId();
                             }
                         };
                         getSIPStack().getSelfRoutingThreadpoolExecutor().execute(processMessageTask);

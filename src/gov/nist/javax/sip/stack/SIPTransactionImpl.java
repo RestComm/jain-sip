@@ -35,6 +35,7 @@ import gov.nist.javax.sip.ReleaseReferencesStrategy;
 import gov.nist.javax.sip.SIPConstants;
 import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.SipStackImpl;
+import gov.nist.javax.sip.ThreadAffinityTask;
 import gov.nist.javax.sip.address.AddressFactoryImpl;
 import gov.nist.javax.sip.header.Via;
 import gov.nist.javax.sip.message.SIPMessage;
@@ -288,6 +289,16 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         public void runTask() {
             cleanUp();
         }
+
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }
     }
     
     /**
@@ -316,6 +327,16 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
                  
             } catch (Exception ex) {
                 logger.logError("unexpected exception", ex);
+            }
+        }
+
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
             }
         }
     }
@@ -812,7 +833,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             		if (channel instanceof TCPMessageChannel) {
             			try {
 
-            				Runnable processMessageTask = new Runnable() {
+            				ThreadAffinityTask processMessageTask = new ThreadAffinityTask() {
 
             					public void run() {
             						try {
@@ -825,6 +846,10 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             							}
             						}
             					}
+                                                
+                                                public Object getThreadHash() {
+                                                    return messageToSend.getCallId().getCallId();
+                                                }
             				};
             				getSIPStack().getSelfRoutingThreadpoolExecutor().execute(processMessageTask);
 
@@ -841,7 +866,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             		if (channel instanceof TLSMessageChannel) {
             			try {
 
-            				Runnable processMessageTask = new Runnable() {
+            				ThreadAffinityTask processMessageTask = new ThreadAffinityTask() {
 
             					public void run() {
             						try {
@@ -853,6 +878,10 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             							}
             						}
             					}
+                                                
+                                                public Object getThreadHash() {
+                                                    return messageToSend.getCallId().getCallId();
+                                                }
             				};
             				getSIPStack().getSelfRoutingThreadpoolExecutor().execute(processMessageTask);
 
@@ -866,7 +895,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
                     if (channel instanceof RawMessageChannel) {
                         try {
                         	
-                        	Runnable processMessageTask = new Runnable() {
+                        	ThreadAffinityTask processMessageTask = new ThreadAffinityTask() {
     							
     							public void run() {
     								try {
@@ -877,6 +906,10 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     						        	}
     								}
     							}
+                                                        
+                                                        public Object getThreadHash() {
+                                                            return messageToSend.getCallId().getCallId();
+                                                        }
     						};
     						getSIPStack().getSelfRoutingThreadpoolExecutor().execute(processMessageTask);
 						} catch (Exception e) {

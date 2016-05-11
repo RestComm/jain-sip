@@ -38,6 +38,11 @@ class CredentialsCache {
             this.callId = callId;
             this.userName = userName;
         }
+        
+        @Override
+        public Object getThreadHash() {
+            return null;
+        }         
 
         public void runTask() {
             authorizationHeaders.remove(callId);

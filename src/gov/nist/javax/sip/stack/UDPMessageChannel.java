@@ -37,6 +37,7 @@ import gov.nist.core.ServerLogger;
 import gov.nist.core.StackLogger;
 import gov.nist.core.ThreadAuditor;
 import gov.nist.javax.sip.SIPConstants;
+import gov.nist.javax.sip.ThreadAffinityTask;
 import gov.nist.javax.sip.header.CSeq;
 import gov.nist.javax.sip.header.CallID;
 import gov.nist.javax.sip.header.ContentLength;
@@ -154,6 +155,11 @@ public class UDPMessageChannel extends MessageChannel implements
             this.ipAddress = ipAddress;
             this.port = port;
         }
+        
+        @Override
+        public Object getThreadHash() {
+            return null;
+        }         
 
         public void runTask() {
             pingBackRecord.remove(ipAddress + ":" + port);
@@ -735,7 +741,7 @@ public class UDPMessageChannel extends MessageChannel implements
                     if (messageChannel instanceof RawMessageChannel) {
 
                         final RawMessageChannel channel = (RawMessageChannel) messageChannel;
-                        Runnable processMessageTask = new Runnable() {
+                        ThreadAffinityTask processMessageTask = new ThreadAffinityTask() {
                             public void run() {
                                 try {
                                     ((RawMessageChannel) channel)
@@ -750,6 +756,10 @@ public class UDPMessageChannel extends MessageChannel implements
                                                         ex);
                                     }
                                 }
+                            }
+                            
+                            public Object getThreadHash() {
+                                return sipMessage.getCallId().getCallId();
                             }
                         };
                         getSIPStack().getSelfRoutingThreadpoolExecutor()

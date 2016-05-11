@@ -261,6 +261,16 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       }
 
     }
+    
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }    
 
   }
 
@@ -284,6 +294,16 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
       }
     }
+    
+        @Override
+        public Object getThreadHash() {
+            Request request = getRequest();
+            if (request != null && request instanceof SIPRequest) {
+                return ((SIPRequest)request).getCallIdHeader().getCallId();
+            } else {
+                return null;
+            }
+        }    
 
   }
 
@@ -691,6 +711,16 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
               fireTimeoutTimer();
               cleanUpOnTerminated();
             }
+            
+            @Override
+            public Object getThreadHash() {
+                Request request = getRequest();
+                if (request != null && request instanceof SIPRequest) {
+                    return ((SIPRequest)request).getCallIdHeader().getCallId();
+                } else {
+                    return null;
+                }
+            }            
           };
           if (time > 0) {
             sipStack.getTimer().schedule(task, time * baseTimerInterval);

@@ -393,7 +393,7 @@ public abstract class SIPTransactionStack implements
     
     public SIPEventInterceptor sipEventInterceptor;
 
-    protected static Executor selfRoutingThreadpoolExecutor;
+    protected static ScheduledExecutorService selfRoutingThreadpoolExecutor;
 
     private int threadPriority = Thread.MAX_PRIORITY;
 
@@ -418,29 +418,13 @@ public abstract class SIPTransactionStack implements
     
     protected SocketTimeoutAuditor socketTimeoutAuditor = null;
 
-    private static class SameThreadExecutor implements Executor {
-
-        public void execute(Runnable command) {
-            command.run(); // Just run the command is the same thread
-        }
-
-    }
-
-    public Executor getSelfRoutingThreadpoolExecutor() {
+    
+    public ScheduledExecutorService getSelfRoutingThreadpoolExecutor() {
         if(selfRoutingThreadpoolExecutor == null) {
             if(this.threadPoolSize<=0) {
-                selfRoutingThreadpoolExecutor = new SameThreadExecutor();
+                selfRoutingThreadpoolExecutor = new ThreadAffinityExecutor(16);
             } else {
-                selfRoutingThreadpoolExecutor = Executors.newFixedThreadPool(this.threadPoolSize, new ThreadFactory() {
-                    private int threadCount = 0;
-
-                    public Thread newThread(Runnable pRunnable) {
-                    	Thread thread = new Thread(pRunnable, String.format("%s-%d",
-                                        "SelfRoutingThread", threadCount++));
-                    	thread.setPriority(threadPriority);
-                    	return thread;
-                    }
-                });
+                selfRoutingThreadpoolExecutor = new ThreadAffinityExecutor(this.threadPoolSize);
             }
         }
         return selfRoutingThreadpoolExecutor;
@@ -469,6 +453,11 @@ public abstract class SIPTransactionStack implements
         public PingTimer(ThreadAuditor.ThreadHandle a_oThreadHandle) {
             threadHandle = a_oThreadHandle;
         }
+        
+        @Override
+        public Object getThreadHash() {
+            return null;
+        }         
 
         public void runTask() {
             // Check if we still have a timer (it may be null after shutdown)
@@ -500,6 +489,11 @@ public abstract class SIPTransactionStack implements
         public RemoveForkedTransactionTimerTask(String forkId) {
             this.forkId = forkId;
         }
+        
+        @Override
+        public Object getThreadHash() {
+            return null;
+        }         
 
         @Override
         public void runTask() {
@@ -1097,10 +1091,10 @@ public abstract class SIPTransactionStack implements
                     if (!this.isDeliverUnsolicitedNotify() ) {
                         ct.acquireSem();
                     }
-                    retval = ct;
+                           retval = ct;
                     return ct;
-                }
-            }
+                           }
+                       }
 
             return retval;
         } finally {

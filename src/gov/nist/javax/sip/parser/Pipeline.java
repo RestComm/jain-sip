@@ -66,6 +66,11 @@ public class Pipeline extends InputStream {
         protected MyTimer(Pipeline pipeline) {
             this.pipeline = pipeline;
         }
+        
+        @Override
+        public Object getThreadHash() {
+            return null;
+        }         
 
         public void runTask() {
             if (this.isCancelled) {
