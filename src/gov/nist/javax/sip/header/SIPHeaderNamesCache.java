@@ -1,15 +1,16 @@
 package gov.nist.javax.sip.header;
 
-import java.util.HashMap;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author yanick.belanger
  */
 public abstract class SIPHeaderNamesCache
 {
-    private static final HashMap lowercaseMap = new HashMap();
+    private static final Map lowercaseMap = new ConcurrentHashMap();
 
     static {
         Field[] fields = SIPHeaderNames.class.getFields();
@@ -30,7 +31,10 @@ public abstract class SIPHeaderNamesCache
     public static String toLowerCase(String headerName) {
         String lowerCase = (String) lowercaseMap.get(headerName);
         if (lowerCase == null) {
-            return headerName.toLowerCase().intern();
+            lowerCase = headerName.toLowerCase().intern();
+            lowercaseMap.put(headerName, lowerCase);
+            lowercaseMap.put(lowerCase, lowerCase);
+            return lowerCase;
         }
         else {
             return lowerCase;
