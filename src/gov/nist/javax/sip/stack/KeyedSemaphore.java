@@ -30,35 +30,33 @@ import gov.nist.core.StackLogger;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class KeyedSemaphore {
-	ConcurrentHashMap<String, Semaphore> map = new ConcurrentHashMap<String, Semaphore>();
-	static StackLogger logger = CommonLogger.getLogger(KeyedSemaphore.class);
+public final class KeyedSemaphore {
+	private final ConcurrentHashMap<String, Lock> map = new ConcurrentHashMap<String, Lock>();
+	private static final StackLogger logger = CommonLogger.getLogger(KeyedSemaphore.class);
 	
     public void leaveIOCriticalSection(String key) {
-        Semaphore creationSemaphore = map.get(key);
-        if (creationSemaphore != null) {
-            creationSemaphore.release();
+        Lock creationLock = map.get(key);
+        if (creationLock != null) {
+            creationLock.unlock();
         }
     }
     
     public void remove(String key) {
-    	if ( map.get(key) != null ) {
-        	map.get(key).release();
-        	map.remove(key);
-        }
-    }
+        map.remove(key);
+    }   
     
     public void enterIOCriticalSection(String key) throws IOException {
         // http://dmy999.com/article/34/correct-use-of-concurrenthashmap
-        Semaphore creationSemaphore = map.get(key);
-        if(creationSemaphore == null) {
-            Semaphore newCreationSemaphore = new Semaphore(1, true);
-            creationSemaphore = map.putIfAbsent(key, newCreationSemaphore);
-            if(creationSemaphore == null) {
-                creationSemaphore = newCreationSemaphore;       
+        Lock creationLock = map.get(key);
+        if(creationLock == null) {
+            Lock newCreationLock = new ReentrantLock(true);
+            creationLock = map.putIfAbsent(key, newCreationLock);
+            if(creationLock == null) {
+                creationLock = newCreationLock;       
                 if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
                     logger.logDebug("new Semaphore added for key " + key);
                 }
@@ -66,7 +64,7 @@ public class KeyedSemaphore {
         }
         
         try {
-            boolean retval = creationSemaphore.tryAcquire(10, TimeUnit.SECONDS);
+            boolean retval = creationLock.tryLock(10, TimeUnit.SECONDS);
             if (!retval) {
                 throw new IOException("Could not acquire IO Semaphore'" + key
                         + "' after 10 seconds -- giving up ");
