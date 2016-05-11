@@ -279,8 +279,13 @@ public class SIPRequest extends SIPMessage implements javax.sip.message.Request,
             if (getHeader(SubscriptionStateHeader.NAME) == null)
                 throw new ParseException(prefix + SubscriptionStateHeader.NAME, 0);
 
-            if (getHeader(EventHeader.NAME) == null)
+            //https://github.com/RestComm/jain-sip/issues/74
+            //Event header mandatory just for in-dialog NOTIFY
+            if (getFromHeader().getTag()!=null &&
+                    getToHeader().getTag() != null && getHeader(EventHeader.NAME) == null)
+            {
                 throw new ParseException(prefix + EventHeader.NAME, 0);
+            }
 
         } else if (getMethod().equals(Request.PUBLISH)) {
             /*
