@@ -43,11 +43,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.Semaphore;
-import java.util.concurrent.TimeUnit;
 
 /**
  * This is a FSM that can parse a single stream of messages with they bodies and 
@@ -75,6 +70,7 @@ public class NioPipelineParser {
     private int sizeCounter;
     private SIPTransactionStack sipStack;
     private MessageParser smp = null;
+
     boolean isRunning = false;
 	boolean currentStreamEnded = false;
 	boolean readingMessageBodyContents = false;
@@ -83,32 +79,7 @@ public class NioPipelineParser {
 	String partialLine = "";
 	String callId;
 	
-	private ConcurrentHashMap<String, CallIDOrderingStructure> messagesOrderingMap = new ConcurrentHashMap<String, CallIDOrderingStructure>();
-	   
-	class CallIDOrderingStructure {
-        private Semaphore semaphore;
-        private Queue<UnparsedMessage> messagesForCallID;
-        
-        public CallIDOrderingStructure() {
-            semaphore = new Semaphore(1, true);
-            messagesForCallID = new ConcurrentLinkedQueue<UnparsedMessage>();
-        }        
 
-        /**
-         * @return the semaphore
-         */
-        public Semaphore getSemaphore() {
-            return semaphore;
-        }
-       
-        /**
-         * @return the messagesForCallID
-         */
-        public Queue<UnparsedMessage> getMessagesForCallID() {
-            return messagesForCallID;
-        }
-    }
-	
 	public static class UnparsedMessage {
 		String lines;
 		byte[] body;
@@ -123,45 +94,19 @@ public class NioPipelineParser {
 	}
 	
     public class Dispatch implements Runnable, QueuedMessageDispatchBase{
-    	CallIDOrderingStructure callIDOrderingStructure;
     	String callId;
+        UnparsedMessage unparsedMessage;
     	long time;
-    	public Dispatch(CallIDOrderingStructure callIDOrderingStructure, String callId) {
-    		this.callIDOrderingStructure = callIDOrderingStructure;
+    	public Dispatch(UnparsedMessage unparsedMsg, String callId) {
+    		this.unparsedMessage = unparsedMsg;
     		this.callId = callId;
     		time = System.currentTimeMillis();
     	}
         public void run() {   
-        	
-            // we acquire it in the thread to avoid blocking other messages with a different call id
-            // that could be processed in parallel                                    
-            Semaphore semaphore = callIDOrderingStructure.getSemaphore();
-            final Queue<UnparsedMessage> messagesForCallID = callIDOrderingStructure.getMessagesForCallID();
-            try {                                                                                
-                boolean acquired = semaphore.tryAcquire(30, TimeUnit.SECONDS);
-                if(!acquired) {
-                	if (logger.isLoggingEnabled(StackLogger.TRACE_WARN)) {
-                		logger.logWarning("Semaphore acquisition for callId " + callId + " wasn't successful so don't process message, returning");
-                	}
-                	// https://java.net/jira/browse/JSIP-499 don't process the message if the semaphore wasn't acquired
-                	return;
-                } else {
-	                if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-	                	logger.logDebug("semaphore acquired for message " + callId + " acquired");
-	                }
-                }
-            } catch (InterruptedException e) {
-            	logger.logError("Semaphore acquisition for callId " + callId + " interrupted, couldn't process message, returning", e);
-            	// https://java.net/jira/browse/JSIP-499 don't process the message if the semaphore wasn't acquired
-            	return;
-            }
-            
-            UnparsedMessage unparsedMessage = null;
+            logger.logInfo("serving msg on call id " + callId);
             SIPMessage parsedSIPMessage = null;
-            boolean messagePolled = false;
             try {
-            	synchronized(smp) {
-            		unparsedMessage = messagesForCallID.peek();
+
             		if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
             			logger.logDebug( "\nUnparsed message before parser is:\n" + unparsedMessage);
             		}
@@ -175,16 +120,13 @@ public class NioPipelineParser {
         			} else if(unparsedMessage.body.length > 0) {
         				parsedSIPMessage.setMessageContent(unparsedMessage.body);
         			}
-            	}
+
             	if(sipStack.sipEventInterceptor != null
             			// https://java.net/jira/browse/JSIP-503
                 		&& parsedSIPMessage != null) {
             		sipStack.sipEventInterceptor.beforeMessage(parsedSIPMessage);
             	}
 
-            	// once acquired we get the first message to process
-            	messagesForCallID.poll();
-            	messagePolled = true;
             	if(parsedSIPMessage != null) { // https://java.net/jira/browse/JSIP-503
             		sipMessageListener.processMessage(parsedSIPMessage);
             	}
@@ -198,28 +140,8 @@ public class NioPipelineParser {
             	logger.logError("Error occured processing message " + message, e);
                 // We do not break the TCP connection because other calls use the same socket here
             } finally {            
-            	if(!messagePolled) {
-            		// https://java.net/jira/browse/JSIP-503 we poll the message only if it 
-            		// wasn't polled in case of some exception by example while parsing or before processing the message
-            		// as in the interceptor can cause the poll not to be called
-            		messagesForCallID.poll(); // move on to the next one
-            	}
-                if(messagesForCallID.size() <= 0) {
-                    messagesOrderingMap.remove(callId);
-                    if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-                    	logger.logDebug("CallIDOrderingStructure removed for callId " + callId);
-                    }
-                }
                 if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
                 	logger.logDebug("releasing semaphore for message " + parsedSIPMessage);
-                }
-                //release the semaphore so that another thread can process another message from the call id queue in the correct order
-                // or a new message from another call id queue
-                semaphore.release(); 
-                if(messagesOrderingMap.isEmpty()) {
-                    synchronized (messagesOrderingMap) {
-                        messagesOrderingMap.notify();
-                    }
                 }
                 if(sipStack.sipEventInterceptor != null
                 		// https://java.net/jira/browse/JSIP-503
@@ -240,7 +162,7 @@ public class NioPipelineParser {
 		
 	}
 	
-	StringBuffer message = new StringBuffer();
+	StringBuilder message = new StringBuilder();
 	byte[] messageBody = null;
 	int contentLength = 0;
 	int contentReadSoFar = 0;
@@ -250,7 +172,7 @@ public class NioPipelineParser {
 	 *  For TCP the key things to identify are message lines for the headers, parse the Content-Length header
 	 *  and then read the message body (aka message content). For TCP the Content-Length must be 100% accurate.
 	 */
-	private void readStream(InputStream inputStream) throws IOException {
+	public void readStream(InputStream inputStream) throws IOException {
 		boolean isPreviousLineCRLF = false;
 		while(true) { // We read continiously from the bytes we receive and only break where there are no more bytes in the inputStream passed to us
 			if(currentStreamEnded) break; // The stream ends when we have read all bytes in the chunk NIO passed to us
@@ -343,47 +265,28 @@ public class NioPipelineParser {
 			readingHeaderLines = true;
 			readingMessageBodyContents = false;
 			final String msgLines = message.toString();
-			message = new StringBuffer();
-			final byte[] msgBodyBytes = messageBody;
-			final int finalContentLength = contentLength;
+			message = new StringBuilder();
+			final byte[] msgBodyBytes = messageBody;			
 			
-			
-			if(PostParseExecutorServices.getPostParseExecutor() != null) {
+			if(sipStack.getSelfRoutingThreadpoolExecutor() != null) {
 				final String callId = this.callId;
 				if(callId == null || callId.trim().length() < 1) {
 					// http://code.google.com/p/jain-sip/issues/detail?id=18
 					// NIO Message with no Call-ID throws NPE
 					throw new IOException("received message with no Call-ID");
 				}
-                // http://dmy999.com/article/34/correct-use-of-concurrenthashmap
-                CallIDOrderingStructure orderingStructure = messagesOrderingMap.get(callId);
-                if(orderingStructure == null) {
-                    CallIDOrderingStructure newCallIDOrderingStructure = new CallIDOrderingStructure();
-                    orderingStructure = messagesOrderingMap.putIfAbsent(callId, newCallIDOrderingStructure);
-                    if(orderingStructure == null) {
-                        orderingStructure = newCallIDOrderingStructure;       
-                        if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-                            logger.logDebug("new CallIDOrderingStructure added for message " + message);
-                        }
-                    }
-                }
-                final CallIDOrderingStructure callIDOrderingStructure = orderingStructure;                                 
-                // we add the message to the pending queue of messages to be processed for that call id here 
-                // to avoid blocking other messages with a different call id
-                // that could be processed in parallel
-                callIDOrderingStructure.getMessagesForCallID().offer(new UnparsedMessage(msgLines, msgBodyBytes));                                                                                   
-                
-                PostParseExecutorServices.getPostParseExecutor().execute(new Dispatch(callIDOrderingStructure, callId)); // run in executor thread
+                                                                                
+                sipStack.getSelfRoutingThreadpoolExecutor().execute(new Dispatch(new UnparsedMessage(msgLines, msgBodyBytes), callId)); // run in executor thread
 			} else {
 				SIPMessage sipMessage = null;
-				synchronized(smp) {
+				
 					try {
 						sipMessage = smp.parseSIPMessage(msgLines.getBytes(), false, false, null);
 						sipMessage.setMessageContent(msgBodyBytes);
 					} catch (ParseException e) {
 						logger.logError("Parsing problem", e);
 					}
-				}
+				
 				this.contentLength = 0;
 				processSIPMessage(sipMessage);
 			}
