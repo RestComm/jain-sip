@@ -95,7 +95,7 @@ JAIN-SIP: Joint Spec Leads -- Phelim O'Doherty (BEA) and M. Ranganathan (NIST).
 JAIN-SDP: The SDP API spec lead is Kelvin Porter from Cisco.
 
 Sample Sequence diagram on how a request is processed:
-```html
+
 <img src='http://g.gravizo.com/g?
 @startuml;
 autonumber;
@@ -135,7 +135,6 @@ deactivate NISTSIPMessageHandImpl;
 deactivate UDPMessageChannel;
 @enduml
 '>
-```
 
 Implementation Lead:
 ---------------------
