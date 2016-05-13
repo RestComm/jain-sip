@@ -1,4 +1,3 @@
-mark
 @startuml
 autonumber
 actor UAC
@@ -38,4 +37,3 @@ deactivate EventScanner
 deactivate NISTSIPMessageHandImpl
 deactivate UDPMessageChannel
 @enduml
-mark
