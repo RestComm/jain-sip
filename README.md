@@ -98,46 +98,6 @@ Sample Sequence diagram on how a request is processed:
 
 <img src='http://g.gravizo.com/g?%40startuml%3B%0Aautonumber%3B%0Aactor%20UAC%3B%0Aboundary%20UDPMessageProcessor%3B%0Acontrol%20UDPMessageChannel%3B%0Acontrol%20NISTSIPMessageHandImpl%3B%0Acontrol%20EventScanner%3B%0Alegend%20left%3B%0A%20%20Handling%20incoming%20UDP%20request%3B%0Aendlegend%3B%0Anote%20right%20of%20UDPMessageProcessor%20%23aqua%3B%0A%09NIST%20SIP%20abstraction%20that%20maps%20to%20SIPListener%3B%0Aend%20note%3B%0Anote%20right%20of%20NISTSIPMessageFactoryImpl%20%23aqua%3B%0A%09Created%20on%20stack%20init%3B%0Aend%20note%3B%0AUAC%20-%3E%20UDPMessageProcessor%20%3A%20INVITE%3B%0Acreate%20UDPMessageChannel%3B%0AUDPMessageProcessor%20-%3E%20UDPMessageChannel%3B%0Aactivate%20UDPMessageChannel%3B%0AUDPMessageChannel%20-%3E%20StringMsgParser%20%3A%20parseSIPMessage%3B%0AUDPMessageChannel%20-%3E%20SIPTransactionStack%3A%20nesSIPServerRequest%3B%0Aactivate%20SIPTransactionStack%3B%0ASIPTransactionStack%20-%3E%20SIPTransactionStack%20%3A%20createTransaction%3B%0ASIPTransactionStack%20-%3E%20NISTSIPMessageFactoryImpl%20%3A%20newSIPServerRequest%3B%0Acreate%20NISTSIPMessageHandImpl%3B%0Adeactivate%20SIPTransactionStack%3B%0AUDPMessageChannel%20-%3E%20NISTSIPMessageHandImpl%20%3A%20processRequest%3B%0Aactivate%20NISTSIPMessageHandImpl%3B%0ANISTSIPMessageHandImpl%20%20-%3E%20SIPTransactionStack%20%3A%20getDialog%3B%0ANISTSIPMessageHandImpl%20%20-%3E%20EventScanner%20%3A%20deliverEvent%3B%0Aactivate%20EventScanner%3B%0AEventScanner%20-%3E%20SIPListener%20%3A%20processRequest%3B%0Adeactivate%20EventScanner%3B%0Adeactivate%20NISTSIPMessageHandImpl%3B%0Adeactivate%20UDPMessageChannel%3B%0A%40enduml'>
 
-<img src='http://g.gravizo.com/g?
-@startuml;
-autonumber;
-actor UAC;
-boundary UDPMessageProcessor;
-control UDPMessageChannel;
-control NISTSIPMessageHandImpl;
-control EventScanner;
-legend left;
-  Handling incoming UDP request;
-endlegend;
-note right of UDPMessageProcessor %23aqua;
-	NIST SIP abstraction that maps to SIPListener;
-end note;
-note right of NISTSIPMessageFactoryImpl %23aqua;
-	Created on stack init;
-end note;
-UAC -> UDPMessageProcessor : INVITE;
-create UDPMessageChannel;
-UDPMessageProcessor -> UDPMessageChannel;
-activate UDPMessageChannel;
-UDPMessageChannel -> StringMsgParser : parseSIPMessage;
-UDPMessageChannel -> SIPTransactionStack: nesSIPServerRequest;
-activate SIPTransactionStack;
-SIPTransactionStack -> SIPTransactionStack : createTransaction;
-SIPTransactionStack -> NISTSIPMessageFactoryImpl : newSIPServerRequest;
-create NISTSIPMessageHandImpl;
-deactivate SIPTransactionStack;
-UDPMessageChannel -> NISTSIPMessageHandImpl : processRequest;
-activate NISTSIPMessageHandImpl;
-NISTSIPMessageHandImpl  -> SIPTransactionStack : getDialog;
-NISTSIPMessageHandImpl  -> EventScanner : deliverEvent;
-activate EventScanner;
-EventScanner -> SIPListener : processRequest;
-deactivate EventScanner;
-deactivate NISTSIPMessageHandImpl;
-deactivate UDPMessageChannel;
-@enduml;
-'>
-
 Implementation Lead:
 ---------------------
 "M. Ranganathan" <mranga@nist.gov>
