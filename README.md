@@ -1,0 +1,192 @@
+
+JAIN-SIP 1.2 Reference Implementation
+--------------------------------------
+CONTENTS
+-------
+See docs/index.html
+
+BUILD Notes
+-----------
+Platforms:
+---------
+You need to install J2SE JDK 1.5 or above. You can
+get the SDK from http://www.javasoft.com
+
+
+
+Dependencies
+------------
+
+1. You need to install ant and the junit extension for ant on your machine.
+2. You need to have junit.jar in your classpath.
+3. You need to have log4j.jar in your classpath (included in this distribution).
+
+There are versions of the dependent libraries in the lib directory.  
+For your build environment, please edit ant-build-config.properties.
+
+YOU DO NOT need jdom.jar and ant.jar. These are strictly for buildng 
+the ant tools.
+
+Building It from Scratch
+-------------------------
+The distribution is pre-built but should you feel inclined to make changes,
+or run the examples, you may wish to rebuild everything.
+
+ant make 
+
+Builds everything.
+
+
+Building the TCK
+----------------
+
+Edit tck.properties and set the claspath to your implementation.
+
+ant runtck 
+
+(builds a jar file containing the TCK and runs it).
+
+Look in test-reports  to see the results of your run.
+
+Extensions
+----------
+
+IMS Headers, headers in gov.nist.javax.sip.extension and all the classes
+that are suffixed with "Ext" in their name can be used without concern as
+they will be included in the next generation of the API. These will not 
+change as a rule.
+
+You should refrain from using any other internal classes. These are subject
+to change without notice.
+
+----------------------------------------------------------------------------
+Running the examples
+
+Please ensure that the directory  classes  (relative to where you have
+built the distribution) is included in the  classpath. Ant targets
+are provided in each example directory to run the examples.
+
+How to get Source Code Refreshes
+--------------------------------
+
+Cruise Control Snapshot
+-----------------------
+http://hudson.jboss.org/hudson/view/Mobicents/job/jain-sip/
+
+
+----------------------------------------------------------------------------
+SVN Access
+----------
+
+https://svn.java.net/svn/jsip~svn/
+
+Please sign up as a java.net user in order to get svn access.
+
+
+----------------------------------------------------------------------------
+
+Credits
+--------
+
+Architecture / API design:
+-------------------------
+
+JAIN-SIP: Joint Spec Leads -- Phelim O'Doherty (BEA) and M. Ranganathan (NIST). 
+JAIN-SDP: The SDP API spec lead is Kelvin Porter from Cisco.
+
+Sample Sequence diagram on how a request is processed:
+
+![Alt text](http://g.gravizo.com/g?
+@startuml;
+autonumber;
+actor UAC;
+boundary UDPMessageProcessor;
+control UDPMessageChannel;
+control NISTSIPMessageHandImpl;
+control EventScanner;
+legend left;
+  Handling incoming UDP request;
+endlegend;
+note right of UDPMessageProcessor #aqua;
+	NIST SIP abstraction that maps to SIPListener;
+end note;
+note right of NISTSIPMessageFactoryImpl #aqua;
+	Created on stack init;
+end note;
+UAC -> UDPMessageProcessor : INVITE;
+create UDPMessageChannel;
+UDPMessageProcessor -> UDPMessageChannel;
+activate UDPMessageChannel;
+UDPMessageChannel -> StringMsgParser : parseSIPMessage;
+UDPMessageChannel -> SIPTransactionStack: nesSIPServerRequest;
+activate SIPTransactionStack;
+SIPTransactionStack -> SIPTransactionStack : createTransaction;
+SIPTransactionStack -> NISTSIPMessageFactoryImpl : newSIPServerRequest;
+create NISTSIPMessageHandImpl;
+deactivate SIPTransactionStack;
+UDPMessageChannel -> NISTSIPMessageHandImpl : processRequest;
+activate NISTSIPMessageHandImpl;
+NISTSIPMessageHandImpl  -> SIPTransactionStack : getDialog;
+NISTSIPMessageHandImpl  -> EventScanner : deliverEvent;
+activate EventScanner;
+EventScanner -> SIPListener : processRequest;
+deactivate EventScanner;
+deactivate NISTSIPMessageHandImpl;
+deactivate UDPMessageChannel;
+@enduml
+)
+
+
+![Alt text](http://g.gravizo.com/g?
+@startuml;
+actor User;
+participant "First Class" as A;
+participant "Second Class" as B;
+participant "Last Class" as C;
+User -> A: DoWork;
+activate A;
+A -> B: Create Request;
+activate B;
+B -> C: DoWork;
+activate C;
+C --> B: WorkDone;
+destroy C;
+B --> A: Request Created;
+deactivate B;
+A --> User: Done;
+deactivate A;
+@enduml
+)
+
+Implementation Lead:
+---------------------
+"M. Ranganathan" <mranga@nist.gov>
+
+Implementation Team ( version 1.2)
+----------------------------------
+"M. Ranganathan" <mranga@nist.gov>
+"Jeroen van Bemmel" <jeroen@zonnet.nl>
+
+TCK (version 1.2)
+----------------
+M. Ranganathan  <mranga@nist.gov>
+Jeroen van Bemmel <jeroen@zonnet.nl>
+
+
+
+---------------------------------------------------------------------------
+LICENSE
+-------
+
+The implementation is public domain although the API itself is'nt. 
+See the license directory in this distribution for definitive information.
+
+----------------------------------------------------------------------------
+
+Substantial input by early adopters and fearless users.
+
+See List of Contributions at:
+
+file:./www/README.html
+
+----------------------------------------------------------------------------
