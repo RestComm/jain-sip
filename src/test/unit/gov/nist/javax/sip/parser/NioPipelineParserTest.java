@@ -17,6 +17,9 @@ public class NioPipelineParserTest extends ScenarioHarness {
 
     private static NioPipelineParser parser;
     private static AsserterListener listener;
+    
+    //TODO replace by AssertUntil
+    private static final int ASSERTION_WAIT = 100;
 
     public NioPipelineParserTest() {
         super("NioPipelineParserTest", true);
@@ -30,7 +33,6 @@ public class NioPipelineParserTest extends ScenarioHarness {
         defaultProperties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "DEBUG");
         defaultProperties.setProperty("gov.nist.javax.sip.DEBUG_LOG", "server_debug_ViaRPortTest.txt");
         defaultProperties.setProperty("gov.nist.javax.sip.SERVER_LOG", "server_log_ViaRPortTest.txt");
-        //do not set pool size, so test is sync
         //defaultProperties.setProperty("gov.nist.javax.sip.TCP_POST_PARSING_THREAD_POOL_SIZE", "64");
         defaultProperties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
         SipFactory sipFactory = SipFactory.getInstance();
@@ -91,18 +93,21 @@ public class NioPipelineParserTest extends ScenarioHarness {
     public void testNormalBodySeparation() throws Exception {
         parser.addBytes((HEADER_CHUNK + "\r\n").getBytes());
         parser.addBytes(BODY_CHUNK.getBytes());
+        Thread.sleep(ASSERTION_WAIT);
         Assert.assertEquals(1, listener.getProcessedMsgs());
     }
     
     public void testHeaderSeparationAtChunkEnd() throws Exception {
         parser.addBytes((HEADER_CHUNK + HEADER1).getBytes());
         parser.addBytes((HEADER2 + "\r\n" + BODY_CHUNK).getBytes());
+        Thread.sleep(ASSERTION_WAIT);        
         Assert.assertEquals(1, listener.getProcessedMsgs());
     }    
 
     public void testBodySeparationAtChunkEnd() throws Exception {
         parser.addBytes((HEADER_CHUNK + "\r").getBytes());
         parser.addBytes(("\n" + BODY_CHUNK).getBytes());
+        Thread.sleep(ASSERTION_WAIT);        
         Assert.assertEquals(1, listener.getProcessedMsgs());
     }
 
