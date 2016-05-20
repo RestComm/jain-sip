@@ -110,7 +110,8 @@ public class NioPipelineParser {
             		if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
             			logger.logDebug( "\nUnparsed message before parser is:\n" + unparsedMessage);
             		}
-        			parsedSIPMessage = smp.parseSIPMessage(unparsedMessage.lines.getBytes(), false, false, null);        		
+                    byte[] lineBytes = unparsedMessage.lines.getBytes("UTF-8");
+                    parsedSIPMessage = smp.parseSIPMessage(lineBytes, false, false, null);        		
         			if(parsedSIPMessage == null) {
         				// https://java.net/jira/browse/JSIP-503
         				if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
@@ -281,7 +282,8 @@ public class NioPipelineParser {
 				SIPMessage sipMessage = null;
 				
 					try {
-						sipMessage = smp.parseSIPMessage(msgLines.getBytes(), false, false, null);
+                        byte[] msgBytes = msgLines.getBytes("UTF-8");
+                        sipMessage = smp.parseSIPMessage(msgBytes, false, false, null);
 						sipMessage.setMessageContent(msgBodyBytes);
 					} catch (ParseException e) {
 						logger.logError("Parsing problem", e);
