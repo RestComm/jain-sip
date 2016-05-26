@@ -1038,6 +1038,18 @@ public abstract class SIPTransactionStack implements
      * "active" or "pending", it creates a new subscription and a new dialog
      * (unless they have already been created by a matching response, as
      * described above).
+     * 
+     * Due to different app chaining scenarios (ie B2BUA to Proxy), the RFC matching
+     * is not enough alone. It maybe several transactions matches the defined
+     * criteria. For that reason, some complementary conditions are included. These
+     * conditions will be used as a way to prioritize two matched transactions. In case,
+     * just one transaction matches the RFC criteria, these additional conditions
+     * will be ignored, and the regular logic will be used. Additional conditions are
+     * to match notMsg.reqURI with ct.origReq.contact, and prefer transactions with dialogs.
+     * See https://github.com/RestComm/jain-sip/issues/60 for more info.
+     * Complementary are also used to stop the searching, and return the matched tx. This
+     * is because we are iterating the whole client transaction table, which may be
+     * big effort. 
      *
      * @param notifyMessage
      * @return -- the matching ClientTransaction with semaphore aquired or null
@@ -1047,10 +1059,15 @@ public abstract class SIPTransactionStack implements
             SIPRequest notifyMessage, ListeningPointImpl listeningPoint) {
         SIPClientTransaction retval = null;
         try {
+            //https://github.com/RestComm/jain-sip/issues/60
+            //take into account dialogId, so we can try and match the proper TX
+            String dialogId = notifyMessage.getDialogId(true);
             Iterator it = clientTransactionTable.values().iterator();
-            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 logger.logDebug("ct table size = "
                         + clientTransactionTable.size());
+            }
+
             String thisToTag = notifyMessage.getTo().getTag();
             if (thisToTag == null) {
                 return retval;
@@ -1081,6 +1098,12 @@ public abstract class SIPTransactionStack implements
                     logger.logDebug("thisToTag = " + thisToTag);
                     logger.logDebug("hisEvent = " + hisEvent);
                     logger.logDebug("eventHdr " + eventHdr);
+                    logger.logDebug("ct.req.contact = " + ct.getOriginalRequestContact());
+                    if (ct.getOriginalRequest() != null)
+                    	logger.logDebug("ct.req.reqURI = " + ct.getOriginalRequest().getRequestURI());
+                    logger.logDebug("msg.Contact= " + notifyMessage.getContactHeader());
+                    logger.logDebug("msg.reqURI " + notifyMessage.getRequestURI());
+                    
                 }
 
                 if (  fromTag.equalsIgnoreCase(thisToTag)
@@ -1091,10 +1114,23 @@ public abstract class SIPTransactionStack implements
                     if (!this.isDeliverUnsolicitedNotify() ) {
                         ct.acquireSem();
                     }
-                           retval = ct;
-                    return ct;
-                           }
+                    if (retval == null) {
+                        //take first matching tx, just in case
+                        retval = ct;                    	
+                    }
+                    //https://github.com/RestComm/jain-sip/issues/60
+                    //Now check complementary conditions, to override selected ct, and break
+                   if (notifyMessage.getRequestURI().equals(ct.getOriginalRequest().getContactHeader().getAddress().getURI()) &&
+                		   (ct.getDefaultDialog() != null || ct.getDialog(dialogId) != null)){
+                       if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                           logger.logDebug("Tx compl conditions met." + ct);
                        }
+                       retval = ct;
+                       break;
+                   }
+
+                }
+            }
 
             return retval;
         } finally {

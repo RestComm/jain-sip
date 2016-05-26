@@ -1192,8 +1192,12 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                     if (subscriptionDialog != null
                             && subscriptionDialog.getDialogId() == null) {
                         subscriptionDialog.setDialogId(dialogId);
-
+                        if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
+                            logger.logDebug(
+                                "Dialog id set on default dialog.");
+                        }
                     } else {
+                        //try searching dialogId only if default dialog is null
                         subscriptionDialog = pendingSubscribeClientTx
                                 .getDialog(dialogId);
                     }
@@ -1201,8 +1205,8 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                         logger.logDebug(
                                 "PROCESSING NOTIFY Subscribe DIALOG "
                                         + subscriptionDialog);
-                    }
-
+                    }                    
+                    
                     // The user could have createed a dialog before sending out
                     // the SUBSCRIBE on the subscribe tx.
                     if (subscriptionDialog == null
@@ -1246,7 +1250,7 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                     }
                 } else {
                     // The subscription default dialog is our dialog.
-                    // Found a subscrbe dialog for the NOTIFY
+                    // Found a subscribe dialog for the NOTIFY
                     // So map the tx.
                     transaction.setDialog(subscriptionDialog, dialogId);
                     dialog = subscriptionDialog;
