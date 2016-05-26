@@ -24,6 +24,7 @@
 
 package test.unit.gov.nist.javax.sip.parser.ims;
 
+import gov.nist.javax.sip.parser.HeaderParser;
 import gov.nist.javax.sip.parser.ims.PAssertedIdentityParser;
 import test.unit.gov.nist.javax.sip.parser.ParserTestCase;
 
@@ -40,6 +41,30 @@ public class PAssertedIdentityParserTest extends ParserTestCase
         };
 
         super.testParser(PAssertedIdentityParser.class,preferredID);
+    }
+    
+    public void testInvalidHeaderParam() {
+    	
+        String[] preferredIDs =  {
+         "P-Asserted-Identity:sip:33296112233@provider.com;user=phone\n",
+        		
+         "P-Asserted-Identity: <sip:alice@atlanta.com>, <tel:+1-201-555-0123>;user=phone\n"
+
+        };
+
+        for (String preferredID :preferredIDs) {
+	        try {        
+	        	  
+	          
+	            System.out.println("preferredID:"+preferredID);
+	            HeaderParser hp = createParser(PAssertedIdentityParser.class, preferredID);
+	            hp.parse();
+	            fail("Header:"+ preferredID + " cannot be parse, wrong in pattern");
+	       
+		    } catch (java.text.ParseException ex) {
+		        
+		    } 
+        }
     }
 
 }
