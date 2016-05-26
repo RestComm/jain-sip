@@ -67,9 +67,9 @@ public class AddressParametersParser extends ParametersParser {
 
 
             }  else {
-            	lexer.SPorHT();            	
-            	if (this.lexer.lookAhead(0) == ';') {
-            		if (this.allowParameters == false) {
+            	if (this.allowParameters == false) {
+            	   lexer.SPorHT();            	
+            	   if (this.lexer.lookAhead(0) == ';') {            		
                 		throw new ParseException(this.lexer.getBuffer() +  "is not valid. This Header Field cannot has Parameters" , this.lexer.getPtr());
                 	}
             	}
