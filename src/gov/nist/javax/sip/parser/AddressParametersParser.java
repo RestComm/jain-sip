@@ -39,6 +39,8 @@ import java.text.ParseException;
  */
 public class AddressParametersParser extends ParametersParser {
 
+	protected boolean allowParameters = true;
+	
     protected AddressParametersParser(Lexer lexer) {
         super(lexer);
     }
@@ -64,7 +66,15 @@ public class AddressParametersParser extends ParametersParser {
                  super.parseNameValueList(addressParametersHeader);
 
 
-            }  else super.parse(addressParametersHeader);
+            }  else {
+            	if (this.allowParameters == false) {
+            	   lexer.SPorHT();            	
+            	   if (this.lexer.lookAhead(0) == ';') {            		
+                		throw new ParseException(this.lexer.getBuffer() +  "is not valid. This header doesn't allow parameters" , this.lexer.getPtr());
+                	}
+            	}
+            	super.parse(addressParametersHeader);
+            }
 
         } catch (ParseException ex) {
             throw ex;

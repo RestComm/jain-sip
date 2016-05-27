@@ -55,11 +55,13 @@ public class PAssertedIdentityParser
      */
     public PAssertedIdentityParser(String assertedIdentity) {
         super(assertedIdentity);
+        this.allowParameters = false;
 
     }
 
     protected PAssertedIdentityParser(Lexer lexer) {
         super(lexer);
+        this.allowParameters = false;
 
     }
 
