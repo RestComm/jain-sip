@@ -186,6 +186,10 @@ public class TelURLImpl
     public void setParameter(String name, String value) {
         telephoneNumber.setParameter(name, value);
     }
+    
+    public void setQuotedParameter(String name, String value) {
+        telephoneNumber.setQuotedParameter(name, value);
+    }
 
     public Iterator<String> getParameterNames() {
         return telephoneNumber.getParameterNames();

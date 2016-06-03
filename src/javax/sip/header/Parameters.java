@@ -1,8 +1,8 @@
 /**
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Unpublished - rights reserved under the Copyright Laws of the United States.
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
- * Copyright © 2005 BEA Systems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2005 BEA Systems, Inc. All rights reserved.
  *
  * Use is subject to license terms.
  *
@@ -53,6 +53,18 @@ public interface Parameters {
      * unexpectedly while parsing the parameter name or value.
      */
     public void setParameter(String name, String value) throws ParseException;
+    
+    /**
+     * Sets the value of the specified parameter. If the parameter already had
+     * a value it will be overwritten. A zero-length String indicates flag
+     * parameter.
+     *
+     * @param name - a String specifying the parameter name
+     * @param value - a String specifying the parameter value
+     * @throws ParseException which signals that an error has been reached
+     * unexpectedly while parsing the parameter name or value.
+     */
+    public void setQuotedParameter(String name, String value) throws ParseException;
 
     /**
      * Returns an Iterator over the names (Strings) of all parameters present
