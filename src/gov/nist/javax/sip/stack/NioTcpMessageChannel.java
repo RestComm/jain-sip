@@ -84,41 +84,37 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 	public static void removeMessageChannel(SocketChannel socketChannel) {
 		channelMap.remove(socketChannel);
 	}
-	
+        
+        private static final int BUF_SIZE = 4096;        
+        private final ByteBuffer byteBuffer  = ByteBuffer.allocateDirect(BUF_SIZE);
+                
 	public void readChannel() {
                 if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                     logger.logDebug("NioTcpMessageChannel::readChannel");
                 }
-		int bufferSize = 4096;
-		byte[] msg = new byte[bufferSize];
+                
 		this.isRunning = true;
 		try {
-			ByteBuffer byteBuffer  = ByteBuffer.wrap(msg);
 			int nbytes = this.socketChannel.read(byteBuffer);
-			byteBuffer.flip();
-			msg = new byte[byteBuffer.remaining()];
-			byteBuffer.get(msg);
-			boolean streamError = nbytes == -1;
-			nbytes = msg.length;
-			byteBuffer.clear();
 			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 				logger.logDebug("Read " + nbytes + " from socketChannel");
-			}
-			
+			}                        
+			boolean streamError = nbytes == -1;                        
 			if(streamError) 
 				throw new IOException("End-of-stream read (-1). " +
 					"This is usually an indication we are stuck and it is better to disconnect.");
-			
 			// This prevents us from getting stuck in a selector thread spinloop when socket is constantly ready for reading but there are no bytes.
 			if(nbytes == 0) 
 				throw new IOException("The socket is giving us empty TCP packets. " +
-					"This is usually an indication we are stuck and it is better to disconnect.");
-			
+					"This is usually an indication we are stuck and it is better to disconnect.");                        
+                        
+			byteBuffer.flip();
+			byte[] msg = new byte[byteBuffer.remaining()];
+			byteBuffer.get(msg);
+			byteBuffer.clear();
+
 			// Otherwise just add the bytes to queue
-			
-			byte[] bytes = new byte[nbytes];
-			System.arraycopy(msg, 0, bytes, 0, nbytes);
-			addBytes(bytes);
+			addBytes(msg);
 			lastActivityTimeStamp = System.currentTimeMillis();
 
 		} catch (Exception ex) { // https://java.net/jira/browse/JSIP-464 make sure to close connections on all exceptions to avoid the stack to hang
