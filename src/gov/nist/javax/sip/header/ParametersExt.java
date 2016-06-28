@@ -23,6 +23,8 @@
 */
 package gov.nist.javax.sip.header;
 
+import java.text.ParseException;
+
 import javax.sip.header.Parameters;
 
 /**
@@ -46,5 +48,24 @@ public interface ParametersExt extends Parameters {
      * @since 2.0
      */
     public String getParameter(String name, boolean stripQuotes);
-
+    /**
+     * Sets the value of the specified parameter. If the parameter already had
+     *
+     * a value it will be overwritten. A zero-length String indicates flag
+     *
+     * parameter.
+     *
+     *
+     *
+     * @param name - a String specifying the parameter name
+     *
+     * @param value - a String specifying the parameter value
+     *
+     * @throws ParseException which signals that an error has been reached
+     *
+     * unexpectedly while parsing the parameter name or value.
+     *
+     */
+    public void setQuotedParameter(String name, String value)
+        throws ParseException;
 }
