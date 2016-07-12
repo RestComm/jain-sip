@@ -50,6 +50,7 @@ import gov.nist.javax.sip.stack.SIPTransactionStack;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.text.ParseException;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -98,6 +99,7 @@ public final class PipelinedMsgParser implements Runnable {
     private SIPTransactionStack sipStack;
     private MessageParser smp = null;
     private ConcurrentHashMap<String, CallIDOrderingStructure> messagesOrderingMap = new ConcurrentHashMap<String, CallIDOrderingStructure>();
+    private Charset utf8Charset = Charset.availableCharsets().get("UTF-8");
     boolean isRunning = false;
     
     /**
@@ -459,7 +461,7 @@ public final class PipelinedMsgParser implements Runnable {
                     if (stackLogger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
                         stackLogger.logDebug("About to parse : " + inputBuffer.toString());
                     }
-                    sipMessage = smp.parseSIPMessage(inputBuffer.toString().getBytes(), false, false, sipMessageListener);
+                    sipMessage = smp.parseSIPMessage(inputBuffer.toString().getBytes(utf8Charset), false, false, sipMessageListener);
                     if (sipMessage == null) {
                         this.rawInputStream.stopTimer();
                         continue;
