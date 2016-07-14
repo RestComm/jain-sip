@@ -65,6 +65,8 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.InetAddress;
+import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -694,6 +696,14 @@ public class SipStackImpl extends SIPTransactionStack implements
 		this.eventScanner = new EventScanner(this);
 		this.listeningPoints = new Hashtable<String, ListeningPointImpl>();
 		this.sipProviders = Collections.synchronizedList(new LinkedList<SipProviderImpl>());
+		try {
+			Charset charset = Charset.forName("UTF-8");
+			if (charset == null) {
+				throw new UnsupportedCharsetException("Unsupported charset UTF-8");
+			}
+		} catch (Exception e) {
+			logger.logWarning("UTF-8 charset cannot be used this system. This will lead to unpredictable behavior when parsing SIP messages: " + e.getMessage());
+		}
 
 	}
 

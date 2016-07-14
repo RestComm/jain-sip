@@ -464,7 +464,7 @@ public final class PipelinedMsgParser implements Runnable {
                     try {
                         inputBufferBytes = inputBuffer.toString().getBytes("UTF-8");
                     } catch (UnsupportedEncodingException e) {
-                        // log the lack of UTF8 support here?
+                        // fall back to default encoding. The lack of UTF8 support has been logged at SIP stack startup
                         inputBufferBytes = inputBuffer.toString().getBytes();
                     }
                     sipMessage = smp.parseSIPMessage(inputBufferBytes, false, false, sipMessageListener);
