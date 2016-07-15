@@ -50,6 +50,7 @@ import gov.nist.javax.sip.stack.SIPTransactionStack;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.text.ParseException;
 import java.util.Queue;
 import java.util.concurrent.BlockingQueue;
@@ -459,7 +460,14 @@ public final class PipelinedMsgParser implements Runnable {
                     if (stackLogger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
                         stackLogger.logDebug("About to parse : " + inputBuffer.toString());
                     }
-                    sipMessage = smp.parseSIPMessage(inputBuffer.toString().getBytes(), false, false, sipMessageListener);
+                    byte[] inputBufferBytes;
+                    try {
+                        inputBufferBytes = inputBuffer.toString().getBytes("UTF-8");
+                    } catch (UnsupportedEncodingException e) {
+                        // fall back to default encoding. The lack of UTF8 support has been logged at SIP stack startup
+                        inputBufferBytes = inputBuffer.toString().getBytes();
+                    }
+                    sipMessage = smp.parseSIPMessage(inputBufferBytes, false, false, sipMessageListener);
                     if (sipMessage == null) {
                         this.rawInputStream.stopTimer();
                         continue;
