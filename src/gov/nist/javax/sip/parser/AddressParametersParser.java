@@ -54,7 +54,7 @@ public class AddressParametersParser extends ParametersParser {
         dbg_enter("AddressParametersParser.parse");
         try {
             AddressParser addressParser = new AddressParser(this.getLexer());
-            AddressImpl addr = addressParser.address(false);
+            AddressImpl addr = addressParser.address(true);
             addressParametersHeader.setAddress(addr);
             lexer.SPorHT();
             char la = this.lexer.lookAhead(0);
