@@ -69,21 +69,11 @@ are provided in each example directory to run the examples.
 How to get Source Code Refreshes
 --------------------------------
 
-Cruise Control Snapshot
+Continuous Integration
 -----------------------
-http://hudson.jboss.org/hudson/view/Mobicents/job/jain-sip/
+https://mobicents.ci.cloudbees.com/job/JAIN-SIP/
 
 
-----------------------------------------------------------------------------
-SVN Access
-----------
-
-https://svn.java.net/svn/jsip~svn/
-
-Please sign up as a java.net user in order to get svn access.
-
-
-----------------------------------------------------------------------------
 
 Credits
 --------
