@@ -1,5 +1,5 @@
 custom_mark
-@startuml
-UAC -> UDPMessageProcessor : INVITE
-@enduml
+@startuml;
+UAC -> UDPMessageProcessor : INVITE;
+@enduml;
 custom_mark
