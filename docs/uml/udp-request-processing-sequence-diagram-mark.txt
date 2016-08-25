@@ -1,41 +1,5 @@
 custom_mark
 @startuml
-autonumber
-actor UAC
-boundary UDPMessageProcessor 
-control UDPMessageChannel
-control NISTSIPMessageHandImpl
-control EventScanner 
-
-legend left
-  Handling incoming UDP request
-endlegend
-note right of UDPMessageProcessor #aqua
-	NIST SIP abstraction that maps to SIPListener
-end note 
-note right of NISTSIPMessageFactoryImpl #aqua
-	Created on stack init 
-end note
-
 UAC -> UDPMessageProcessor : INVITE
-create UDPMessageChannel 
-UDPMessageProcessor -> UDPMessageChannel
-activate UDPMessageChannel
-UDPMessageChannel -> StringMsgParser : parseSIPMessage
-UDPMessageChannel -> SIPTransactionStack: nesSIPServerRequest
-activate SIPTransactionStack
-SIPTransactionStack -> SIPTransactionStack : createTransaction
-SIPTransactionStack -> NISTSIPMessageFactoryImpl : newSIPServerRequest
-create NISTSIPMessageHandImpl
-deactivate SIPTransactionStack
-UDPMessageChannel -> NISTSIPMessageHandImpl : processRequest
-activate NISTSIPMessageHandImpl
-NISTSIPMessageHandImpl  -> SIPTransactionStack : getDialog
-NISTSIPMessageHandImpl  -> EventScanner : deliverEvent
-activate EventScanner 
-EventScanner -> SIPListener : processRequest
-deactivate EventScanner 
-deactivate NISTSIPMessageHandImpl
-deactivate UDPMessageChannel
 @enduml
 custom_mark
