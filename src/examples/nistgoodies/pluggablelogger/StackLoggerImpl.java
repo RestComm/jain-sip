@@ -75,6 +75,11 @@ public class StackLoggerImpl implements StackLogger {
        logger.debug(string);
 
     }
+    
+    public void logDebug(String string, Exception ex) {
+        logger.debug(string, ex);
+
+     }
 
     public void logError(String string) {
         logger.error(string);

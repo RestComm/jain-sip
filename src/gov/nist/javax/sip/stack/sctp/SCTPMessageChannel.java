@@ -236,9 +236,8 @@ final class SCTPMessageChannel extends MessageChannel
             this.processMessage( m, rxTime );
             rxTime = 0;    // reset for next message
         } catch (ParseException e) {
-            logger.logException( e );
             if ( logger.isLoggingEnabled( LogWriter.TRACE_DEBUG ) ) {
-                logger.logDebug( "Invalid message bytes=" + msg.length + ":" + new String(msg) );
+                logger.logDebug( "Invalid message bytes=" + msg.length + ":" + new String(msg), e);
             }
             this.close();
             throw new IOException( "Error parsing incoming SCTP message", e );

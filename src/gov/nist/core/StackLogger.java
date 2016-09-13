@@ -43,6 +43,15 @@ public interface StackLogger extends LogLevels {
      *            message to log into the log file.
      */
     public void logDebug(String message);
+    
+    /**
+     * Log a message into the log file.
+     *
+     * @param message
+     *            message to log into the log file.
+     * @param ex 
+     */
+    public void logDebug(String message, Exception ex);
     /**
      * Log a message into the log file.
      *

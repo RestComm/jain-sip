@@ -465,7 +465,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
                 originalRequest = (SIPRequest) sipStack.getMessageParserFactory().createMessageParser(sipStack).parseSIPMessage(originalRequestBytes, true, false, null);
 //                originalRequestBytes = null;
             } catch (ParseException e) {
-                logger.logError("message " + originalRequestBytes + " could not be reparsed !");
+                logger.logWarning("message " + originalRequestBytes + " could not be reparsed !");
             }
         }   
         return (Request) originalRequest;

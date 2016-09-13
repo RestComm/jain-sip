@@ -2008,7 +2008,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                     originalRequest = (SIPRequest) sipStack.getMessageParserFactory().createMessageParser(sipStack).parseSIPMessage(originalRequestBytes, true, false, null);
 //                    originalRequestBytes = null;
                 } catch (ParseException e) {
-                    logger.logError("message " + originalRequestBytes + "could not be reparsed !");
+                    logger.logWarning("message " + originalRequestBytes + "could not be reparsed !");
                 }
             } else if (originalRequest != null && originalRequestBytes == null && getReleaseReferencesStrategy() == ReleaseReferencesStrategy.Normal) {
                 originalRequestBytes = originalRequest.encodeAsBytes(this.getTransport());

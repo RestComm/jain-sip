@@ -390,10 +390,7 @@ public class UDPMessageChannel extends MessageChannel implements
             // myParser = null; // let go of the parser reference.
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 this.logger.logDebug(
-                        "Rejecting message !  " + new String(msgBytes));
-                this.logger.logDebug(
-                        "error message " + ex.getMessage());
-                this.logger.logException(ex);
+                        "Rejecting message !  " + new String(msgBytes), ex);
             }
 
             // JvB: send a 400 response for requests (except ACK)
