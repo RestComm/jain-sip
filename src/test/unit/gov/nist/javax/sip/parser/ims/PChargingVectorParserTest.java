@@ -26,9 +26,6 @@ public class PChargingVectorParserTest extends ParserTestCase {
            hp.parse();
            fail("Header:"+ preferredID + " cannot be parse, wrong in pattern");
            
-        } catch (java.text.ParseException ex) {
-            assertTrue(!ex.getMessage().contains("This header doesn't allow parameters"));
-        } 
-        
+        } catch (java.text.ParseException ex) {} 
     }
 }

@@ -246,9 +246,6 @@ public class LexerCore extends StringTokenizer {
                 this.currentMatch.tokenValue = id;
                 this.currentMatch.tokenType = ID_NO_WHITESPACE;
             } else if (tok == IPV6){
-                // IPv6 address rules
-                if (!startsIp())
-                    throw new ParseException(buffer + "\nIP expected", ptr);
                 String ip = getNextIp();
                 this.currentMatch = new Token();
                 this.currentMatch.tokenValue = ip;
@@ -378,15 +375,6 @@ public class LexerCore extends StringTokenizer {
         try {
             char nextChar = lookAhead(0);
             return isTokenChar(nextChar);
-        } catch (ParseException ex) {
-            return false;
-        }
-    }
-    
-    public boolean startsIp() {
-        try {
-            char nextChar = lookAhead(0);
-            return isIPV6addressChar(nextChar);
         } catch (ParseException ex) {
             return false;
         }
