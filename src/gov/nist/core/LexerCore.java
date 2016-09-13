@@ -44,6 +44,7 @@ public class LexerCore extends StringTokenizer {
     public static final int START = 2048;
     public static final int END = START + 2048;
     // IMPORTANT -- This should be < END
+    public static final int IPV6 = END - 4;
     public static final int ID_NO_WHITESPACE = END - 3;
     public static final int ID = END - 1;
     public static final int SAFE = END - 2;
@@ -160,6 +161,12 @@ public class LexerCore extends StringTokenizer {
     public String getNextId() {
         return ttoken();
     }
+    
+    /** Get the next ip.
+     */
+    public String getNextIp() {
+        return tIpv6address();
+    }
 
     public String getNextIdNoWhiteSpace() {
         return ttokenNoWhiteSpace();
@@ -238,7 +245,15 @@ public class LexerCore extends StringTokenizer {
                 this.currentMatch = new Token();
                 this.currentMatch.tokenValue = id;
                 this.currentMatch.tokenType = ID_NO_WHITESPACE;
-            } else {
+            } else if (tok == IPV6){
+                // IPv6 address rules
+                if (!startsIp())
+                    throw new ParseException(buffer + "\nIP expected", ptr);
+                String ip = getNextIp();
+                this.currentMatch = new Token();
+                this.currentMatch.tokenValue = ip;
+                this.currentMatch.tokenType = IPV6;
+            }else {
                 String nexttok = getNextId();
                 Integer cur = currentLexer.get(Utils.toUpperCase(nexttok));
 
@@ -333,11 +348,45 @@ public class LexerCore extends StringTokenizer {
         }
     }
 
+    /**
+     * JvB: utility function added to validate tokens
+     *
+     * @see RFC3261 section 25.1:
+     * IPv6reference  =  "[" IPv6address "]"
+       IPv6address    =  hexpart [ ":" IPv4address ]
+       hexpart        =  hexseq / hexseq "::" [ hexseq ] / "::" [ hexseq ]
+       hexseq         =  hex4 *( ":" hex4)
+       hex4           =  1*4HEXDIG
+
+     * @param c - character to check
+     * @return true iff character c is a valid ipv6address character as per RFC3261
+     */
+    public static final boolean isIPV6addressChar( char c){
+        if ( isHexDigit(c) ) return true;
+        else switch (c)
+        {
+            case '[':
+            case ']':
+            case ':':
+                return true;
+            default:
+                return false;
+        }
+    }
 
     public boolean startsId() {
         try {
             char nextChar = lookAhead(0);
             return isTokenChar(nextChar);
+        } catch (ParseException ex) {
+            return false;
+        }
+    }
+    
+    public boolean startsIp() {
+        try {
+            char nextChar = lookAhead(0);
+            return isIPV6addressChar(nextChar);
         } catch (ParseException ex) {
             return false;
         }
@@ -411,6 +460,23 @@ public class LexerCore extends StringTokenizer {
             return null;
         }
     }
+    
+    public String tIpv6address() {
+        int startIdx = ptr;
+        try {
+            while (hasMoreChars()) {
+                char nextChar = lookAhead(0);
+                if ( isIPV6addressChar(nextChar) ) {
+                    consume(1);
+                } else {
+                    break;
+                }
+            }
+            return String.valueOf(buffer, startIdx, ptr - startIdx);
+        } catch (ParseException ex) {
+            return null;
+        }
+    }
 
     public String ttokenNoWhiteSpace() {
         int startIdx = ptr;
@@ -418,7 +484,7 @@ public class LexerCore extends StringTokenizer {
             while (hasMoreChars()) {
                 char nextChar = lookAhead(0);
                 if ( nextChar == ' ' || nextChar == '\n' || nextChar == '\t' ) {
-			break;
+                    break;
                 } else {
                      consume(1);
                 }
