@@ -353,6 +353,7 @@ public class SipProviderImpl implements javax.sip.SipProvider, gov.nist.javax.si
                             //+ sipRequest.getFirstLine()
           				  + listeningPoint
                             + " for transport " + transport);
+      // https://github.com/RestComm/jain-sip/issues/114
       if(listeningPoint == null) {
     	  listeningPoint = (ListeningPointImpl) this
     		        .getListeningPoint(sipRequest.getTopmostVia().getTransport());
