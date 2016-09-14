@@ -425,8 +425,8 @@ public class TLSMessageChannel extends ConnectionOrientedMessageChannel {
     public void handleException(ParseException ex, SIPMessage sipMessage,
             Class hdrClass, String header, String message)
             throws ParseException {
-        if (logger.isLoggingEnabled())
-            logger.logException(ex);
+    	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            logger.logDebug("Parsing Exception: " , ex);
         // Log the bad message for later reference.
         if ((hdrClass != null)
                 && (hdrClass.equals(From.class) || hdrClass.equals(To.class)

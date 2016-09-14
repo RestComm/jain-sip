@@ -675,8 +675,8 @@ public class UDPMessageChannel extends MessageChannel implements
     public void handleException(ParseException ex, SIPMessage sipMessage,
             Class hdrClass, String header, String message)
             throws ParseException {
-        if (logger.isLoggingEnabled())
-            this.logger.logException(ex);
+        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            logger.logDebug("Parsing Exception: " , ex);
         // Log the bad message for later reference.
         if ((hdrClass != null)
                 && (hdrClass.equals(From.class) || hdrClass.equals(To.class)
@@ -686,10 +686,10 @@ public class UDPMessageChannel extends MessageChannel implements
                         || hdrClass.equals(ContentLength.class)
                         || hdrClass.equals(RequestLine.class) || hdrClass
                         .equals(StatusLine.class))) {
-            if (logger.isLoggingEnabled()) {
-                logger.logError("BAD MESSAGE!");
-                logger.logError(message);
+            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                logger.logDebug("BAD MESSAGE! " + message);
             }
+            
             throw ex;
         } else {
             sipMessage.addUnparsed(header);

@@ -1915,7 +1915,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
                                                                   null);
           // originalRequestBytes = null;
         } catch (ParseException e) {
-          logger.logWarning("message " + originalRequestBytes + " could not be reparsed !");
+        	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+        		logger.logDebug("message " + originalRequestBytes + " could not be reparsed !", e);
+        	}
         }
       }
     }

@@ -358,8 +358,8 @@ final class SCTPMessageChannel extends MessageChannel
     public void handleException(ParseException ex, SIPMessage sipMessage,
             Class hdrClass, String header, String message)
             throws ParseException {
-        if (getSIPStack().isLoggingEnabled())
-            this.logger.logException(ex);
+    	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            logger.logDebug("Parsing Exception: " , ex);
         // Log the bad message for later reference.
         if ((hdrClass != null)
                 && (hdrClass.equals(From.class) || hdrClass.equals(To.class)
@@ -368,8 +368,33 @@ final class SCTPMessageChannel extends MessageChannel
                         || hdrClass.equals(CallID.class)
                         || hdrClass.equals(RequestLine.class) || hdrClass
                         .equals(StatusLine.class))) {
-            logger.logError("BAD MESSAGE!");
-            logger.logError(message);
+        	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+        		logger.logError("BAD MESSAGE!" + message);
+        	
+        	// JvB: send a 400 response for requests (except ACK)
+			// Currently only UDP, @todo also other transports
+			String msgString = sipMessage.toString();
+			if (!msgString.startsWith("SIP/") && !msgString.startsWith("ACK ")) {
+				if (channel != null) {
+					if (logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
+						logger
+								.logError("Malformed mandatory headers: closing socket! :"
+										+ channel.toString());
+					}
+
+					try {
+						channel.close();
+
+					} catch (IOException ie) {
+						if (logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
+							logger.logError("Exception while closing socket! :"
+									+ channel.toString() + ":" + ie.toString());
+						}
+
+					}
+				}
+			}
+        				
             throw ex;
         } else {
             sipMessage.addUnparsed(header);
