@@ -44,7 +44,6 @@ public class LexerCore extends StringTokenizer {
     public static final int START = 2048;
     public static final int END = START + 2048;
     // IMPORTANT -- This should be < END
-    public static final int IPV6 = END - 4;
     public static final int ID_NO_WHITESPACE = END - 3;
     public static final int ID = END - 1;
     public static final int SAFE = END - 2;
@@ -52,6 +51,7 @@ public class LexerCore extends StringTokenizer {
     public static final int WHITESPACE = END + 1;
     public static final int DIGIT = END + 2;
     public static final int ALPHA = END + 3;
+    public static final int IPV6 = END + 4;
     public static final int BACKSLASH = (int) '\\';
     public static final int QUOTE = (int) '\'';
     public static final int AT = (int) '@';
@@ -345,32 +345,6 @@ public class LexerCore extends StringTokenizer {
         }
     }
 
-    /**
-     * JvB: utility function added to validate tokens
-     *
-     * @see RFC3261 section 25.1:
-     * IPv6reference  =  "[" IPv6address "]"
-       IPv6address    =  hexpart [ ":" IPv4address ]
-       hexpart        =  hexseq / hexseq "::" [ hexseq ] / "::" [ hexseq ]
-       hexseq         =  hex4 *( ":" hex4)
-       hex4           =  1*4HEXDIG
-
-     * @param c - character to check
-     * @return true iff character c is a valid ipv6address character as per RFC3261
-     */
-    public static final boolean isIPV6addressChar( char c){
-        if ( isHexDigit(c) ) return true;
-        else switch (c)
-        {
-            case '[':
-            case ']':
-            case ':':
-                return true;
-            default:
-                return false;
-        }
-    }
-
     public boolean startsId() {
         try {
             char nextChar = lookAhead(0);
@@ -450,17 +424,12 @@ public class LexerCore extends StringTokenizer {
     }
     
     public String tIpv6address() {
-        int startIdx = ptr;
         try {
-            while (hasMoreChars()) {
-                char nextChar = lookAhead(0);
-                if ( isIPV6addressChar(nextChar) ) {
-                    consume(1);
-                } else {
-                    break;
-                }
-            }
-            return String.valueOf(buffer, startIdx, ptr - startIdx);
+            String hostName = String.valueOf(buffer, ptr, buffer.length - ptr - 1 );
+            HostNameParser hnp = new HostNameParser(hostName);
+            HostPort hp = hnp.hostPort(true);
+            ptr = ptr + hp.getHost().hostname.length();
+            return hp.getHost().hostname;
         } catch (ParseException ex) {
             return null;
         }

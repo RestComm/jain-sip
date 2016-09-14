@@ -10,7 +10,7 @@ public class PChargingVectorParserTest extends ParserTestCase {
         String[] preferredID =  {
                 "P-Charging-Vector: icid-value=value1;orig-ioi=value2;icid-generated-at=value3\n",
 
-                "P-Charging-Vector: icid-value=[2a02:ed0:1000:3033::249];orig-ioi=1223abc4;icid-generated-at=[2a02:ed0:1000:3033::249]\n",
+                "P-Charging-Vector: icid-value=[2a02:ed0:1000:3033::249];orig-ioi=1223abc4;icid-generated-at=[2a02:ed0:1000:3033::250]\n",
                 
                 };
         
