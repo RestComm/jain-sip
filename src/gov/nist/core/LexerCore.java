@@ -245,12 +245,7 @@ public class LexerCore extends StringTokenizer {
                 this.currentMatch = new Token();
                 this.currentMatch.tokenValue = id;
                 this.currentMatch.tokenType = ID_NO_WHITESPACE;
-            } else if (tok == IPV6){
-                String ip = getNextIp();
-                this.currentMatch = new Token();
-                this.currentMatch.tokenValue = ip;
-                this.currentMatch.tokenType = IPV6;
-            }else {
+            } else {
                 String nexttok = getNextId();
                 Integer cur = currentLexer.get(Utils.toUpperCase(nexttok));
 
@@ -283,6 +278,11 @@ public class LexerCore extends StringTokenizer {
                 this.currentMatch.tokenType = tok;
                 consume(1);
 
+            } else if (tok == IPV6){
+                String ip = getNextIp();
+                this.currentMatch = new Token();
+                this.currentMatch.tokenValue = ip;
+                this.currentMatch.tokenType = IPV6;
             }
 
         } else {
