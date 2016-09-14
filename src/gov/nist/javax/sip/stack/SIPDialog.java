@@ -4409,8 +4409,17 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     public void checkRetransmissionForForking(SIPResponse response) {
         final int statusCode = response.getStatusCode();
         final String responseMethod = response.getCSeqHeader().getMethod();
-        final long responseCSeqNumber = response.getCSeq().getSeqNumber();   
-        boolean isRetransmission = !responsesReceivedInForkingCase.add(statusCode + "/" + responseCSeqNumber + "/" + responseMethod);            
+        final long responseCSeqNumber = response.getCSeq().getSeqNumber();
+        /*From RFC3262, 1 Introduction: Each provisional response is given a sequence number, carried in the
+        RSeq header field in the response.  The PRACK messages contain an
+        RAck header field, which indicates the sequence number of the
+        provisional response that is being acknowledged.*/
+        RSeq rseq = (RSeq) response.getHeader(RSeqHeader.NAME);
+        String retransCondition =(statusCode + "/" + responseCSeqNumber + "/" + responseMethod);
+        if(rseq != null) {
+            retransCondition = retransCondition + "/" + rseq.getSeqNumber();
+        }
+        boolean isRetransmission = !responsesReceivedInForkingCase.add(retransCondition);
         response.setRetransmission(isRetransmission);            
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug(
