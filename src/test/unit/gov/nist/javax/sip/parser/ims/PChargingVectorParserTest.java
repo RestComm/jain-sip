@@ -24,7 +24,7 @@ public class PChargingVectorParserTest extends ParserTestCase {
         try {                  
            HeaderParser hp = createParser(PChargingVectorParser.class, preferredID);
            hp.parse();
-           fail("Header:"+ preferredID + " cannot be parse, wrong in pattern");
+           fail("Header:"+ preferredID + "Invalid IPv6 parsing expected to fail");
            
         } catch (java.text.ParseException ex) {} 
     }
