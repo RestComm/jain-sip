@@ -284,7 +284,6 @@ public class LexerCore extends StringTokenizer {
                 this.currentMatch.tokenValue = ip;
                 this.currentMatch.tokenType = IPV6;
             }
-
         } else {
             // This is a direct character spec.
             char ch = (char) tok;
