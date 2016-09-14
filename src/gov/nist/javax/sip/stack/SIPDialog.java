@@ -4409,8 +4409,13 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     public void checkRetransmissionForForking(SIPResponse response) {
         final int statusCode = response.getStatusCode();
         final String responseMethod = response.getCSeqHeader().getMethod();
-        final long responseCSeqNumber = response.getCSeq().getSeqNumber();   
-        boolean isRetransmission = !responsesReceivedInForkingCase.add(statusCode + "/" + responseCSeqNumber + "/" + responseMethod);            
+        final long responseCSeqNumber = response.getCSeq().getSeqNumber();
+        RSeq rseq = (RSeq) response.getHeader(RSeqHeader.NAME);
+        String responseRSeqNumber = "";
+        if(rseq != null) {
+            responseRSeqNumber = "/" + rseq.getSeqNumber();
+        }
+        boolean isRetransmission = !responsesReceivedInForkingCase.add(statusCode + "/" + responseCSeqNumber + "/" + responseMethod + responseRSeqNumber);
         response.setRetransmission(isRetransmission);            
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug(
