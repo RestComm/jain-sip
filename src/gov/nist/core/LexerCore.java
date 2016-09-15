@@ -427,7 +427,8 @@ public class LexerCore extends StringTokenizer {
             String hostName = String.valueOf(buffer, ptr, buffer.length - ptr - 1 );
             HostNameParser hnp = new HostNameParser(hostName);
             HostPort hp = hnp.hostPort(true);
-            ptr = ptr + hp.getHost().hostname.length();
+            int length = hp.getHost().hostname.length();
+            consume(length);
             return hp.getHost().hostname;
         } catch (ParseException ex) {
             return null;
