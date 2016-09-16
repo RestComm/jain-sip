@@ -12,6 +12,8 @@ public class PChargingVectorParserTest extends ParserTestCase {
 
                 "P-Charging-Vector: icid-value=[2a02:ed0:1000:3033::249];orig-ioi=1223abc4;icid-generated-at=[2a02:ed0:1000:3033::250]\n",
                 
+                "P-Charging-Vector: icid-value=[2a02:ed0:1000:3033::249];orig-ioi=1223abc4;icid-generated-at=[2a02:ed0:1000:3033::250]"
+                
                 };
         
         super.testParser(PChargingVectorParser.class, preferredID);

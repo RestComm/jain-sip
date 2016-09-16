@@ -424,7 +424,7 @@ public class LexerCore extends StringTokenizer {
     
     public String tIpv6address() {
         try {
-            String hostName = String.valueOf(buffer, ptr, buffer.length - ptr - 1 );
+            String hostName = String.valueOf(buffer, ptr, buffer.length - ptr );
             HostNameParser hnp = new HostNameParser(hostName);
             HostPort hp = hnp.hostPort(true);
             int length = hp.getHost().hostname.length();
