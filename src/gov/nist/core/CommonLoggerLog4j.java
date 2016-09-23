@@ -130,6 +130,14 @@ public class CommonLoggerLog4j implements StackLogger {
 
     }
     
+    /*
+     * (non-Javadoc)
+     * @see gov.nist.core.StackLogger#logDebug(java.lang.String, java.lang.Exception)
+     */
+    public void logDebug(String message, Exception ex) {
+        logger.debug(message, ex);
+    }
+    
     /**
      * Log a message into the log file.
      *

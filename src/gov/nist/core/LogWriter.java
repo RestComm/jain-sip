@@ -218,6 +218,22 @@ public class LogWriter implements StackLogger {
 
     }
     
+    /*
+     * (non-Javadoc)
+     * @see gov.nist.core.StackLogger#logDebug(java.lang.String, java.lang.Exception)
+     */
+    public void logDebug(String message, Exception ex) {
+    	if (needsLogging) {
+            String newMessage = this.enhanceMessage(message);
+            if ( this.lineCount == 0) {
+                getLogger().debug("BUILD TIMESTAMP = " + this.buildTimeStamp);
+                getLogger().debug("Config Propeties = " + this.configurationProperties);
+            }
+            countLines(newMessage);
+            getLogger().debug(newMessage, ex);
+        }
+    }
+    
     /**
      * Log a message into the log file.
      *

@@ -1514,6 +1514,10 @@ public abstract class SIPTransactionStack implements
         	// https://java.net/jira/browse/JSIP-511
         	// catching all exceptions so it doesn't make JAIN SIP to fail
         	try {	
+        		if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                    logger.logDebug(
+                            "Checking SIP message valve " + sipMessageValve + " for Request = " + requestReceived.getFirstLine());
+                }
 	            if(!sipMessageValve.processRequest(
 	                    requestReceived, requestMessageChannel)) {
 	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
