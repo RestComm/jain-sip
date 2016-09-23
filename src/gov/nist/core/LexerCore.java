@@ -51,6 +51,7 @@ public class LexerCore extends StringTokenizer {
     public static final int WHITESPACE = END + 1;
     public static final int DIGIT = END + 2;
     public static final int ALPHA = END + 3;
+    public static final int IPV6 = END + 4;
     public static final int BACKSLASH = (int) '\\';
     public static final int QUOTE = (int) '\'';
     public static final int AT = (int) '@';
@@ -159,6 +160,12 @@ public class LexerCore extends StringTokenizer {
      */
     public String getNextId() {
         return ttoken();
+    }
+    
+    /** Get the next ip.
+     */
+    public String getNextIp() {
+        return tIpv6address();
     }
 
     public String getNextIdNoWhiteSpace() {
@@ -271,8 +278,12 @@ public class LexerCore extends StringTokenizer {
                 this.currentMatch.tokenType = tok;
                 consume(1);
 
+            } else if (tok == IPV6){
+                String ip = getNextIp();
+                this.currentMatch = new Token();
+                this.currentMatch.tokenValue = ip;
+                this.currentMatch.tokenType = IPV6;
             }
-
         } else {
             // This is a direct character spec.
             char ch = (char) tok;
@@ -332,7 +343,6 @@ public class LexerCore extends StringTokenizer {
                 return false;
         }
     }
-
 
     public boolean startsId() {
         try {
@@ -411,6 +421,19 @@ public class LexerCore extends StringTokenizer {
             return null;
         }
     }
+    
+    public String tIpv6address() {
+        try {
+            String hostName = String.valueOf(buffer, ptr, buffer.length - ptr );
+            HostNameParser hnp = new HostNameParser(hostName);
+            HostPort hp = hnp.hostPort(true);
+            int length = hp.getHost().hostname.length();
+            consume(length);
+            return hp.getHost().hostname;
+        } catch (ParseException ex) {
+            return null;
+        }
+    }
 
     public String ttokenNoWhiteSpace() {
         int startIdx = ptr;
@@ -418,7 +441,7 @@ public class LexerCore extends StringTokenizer {
             while (hasMoreChars()) {
                 char nextChar = lookAhead(0);
                 if ( nextChar == ' ' || nextChar == '\n' || nextChar == '\t' ) {
-			break;
+                    break;
                 } else {
                      consume(1);
                 }

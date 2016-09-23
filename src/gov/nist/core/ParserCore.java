@@ -65,10 +65,21 @@ public abstract class ParserCore {
                 lexer.SPorHT();
                 String str = null;
                 boolean isFlag = false;
-                if (lexer.lookAhead(0) == '\"')  {
+                char c = lexer.lookAhead(0);
+                if (c == '\"')  {
                      str = lexer.quotedString();
                      quoted = true;
-                } else {
+                } else if (c == '['){
+                    lexer.match(LexerCore.IPV6);
+                    Token value = lexer.getNextToken();
+                    str = value.tokenValue;
+
+                    // JvB: flag parameters must be empty string!
+                    if (str==null) {
+                        str = "";
+                        isFlag = true;
+                    }
+                }else {
                    lexer.match(LexerCore.ID);
                    Token value = lexer.getNextToken();
                    str = value.tokenValue;
