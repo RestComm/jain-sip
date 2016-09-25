@@ -493,8 +493,8 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                 final String lastTransactionMethod = lastTransaction.getMethod();
                 if (lastTransaction instanceof SIPServerTransaction) {
                     // Handle Pseudo State Trying on Server Transaction
-                    if ((lastTransaction.getInternalState() == TransactionState._PROCEEDING
-                                    || lastTransaction.getInternalState() == TransactionState._TRYING)
+                    if ((lastTransaction.getInternalState() == TransactionState.PROCEEDING.getValue()
+                                    || lastTransaction.getInternalState() == TransactionState.TRYING.getValue())
                             && lastTransactionMethod.equals(Request.INVITE)) {
                         this
                                 .sendRequestPendingResponse(sipRequest,
@@ -503,8 +503,8 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                     }
                 } else if (lastTransaction instanceof SIPClientTransaction) {
                     if (lastTransactionMethod.equals(Request.INVITE)
-                            && lastTransaction.getInternalState() != TransactionState._TERMINATED
-                            && lastTransaction.getInternalState() != TransactionState._COMPLETED) {
+                            && lastTransaction.getInternalState() != TransactionState.TERMINATED.getValue()
+                            && lastTransaction.getInternalState() != TransactionState.COMPLETED.getValue()) {
                         this
                                 .sendRequestPendingResponse(sipRequest,
                                         transaction);
@@ -775,7 +775,7 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                         .getSeqNumber()) {
                     this.sendServerInternalErrorResponse(sipRequest,
                             transaction);
-                } else if (transaction.getInternalState() == TransactionState._PROCEEDING) {
+                } else if (transaction.getInternalState() == TransactionState.PROCEEDING.getValue()) {
                        this.sendTryingResponse(sipRequest,
                             transaction);
                 }
@@ -852,7 +852,7 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                 // much that the Listener can do so just do the
                 // default action and avoid bothering the listener.
                 if (st != null
-                        && st.getInternalState() == TransactionState._TERMINATED) {
+                        && st.getInternalState() == TransactionState.TERMINATED.getValue()) {
                     // If transaction already exists but it is
                     // too late to cancel the transaction then
                     // just respond OK to the CANCEL and bail.
@@ -952,9 +952,9 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                     && sipProvider.isDialogErrorsAutomaticallyHandled()
                     && dialog.isSequenceNumberValidation()
                     && lastTransaction.isInviteTransaction()
-                    && lastTransaction.getInternalState() != TransactionState._COMPLETED
-                    && lastTransaction.getInternalState() != TransactionState._TERMINATED
-                    && lastTransaction.getInternalState() != TransactionState._CONFIRMED) {
+                    && lastTransaction.getInternalState() != TransactionState.COMPLETED.getValue()
+                    && lastTransaction.getInternalState() != TransactionState.TERMINATED.getValue()
+                    && lastTransaction.getInternalState() != TransactionState.CONFIRMED.getValue()) {
 
                 if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
                     logger.logDebug(
@@ -997,8 +997,8 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                     && lastTransaction instanceof ServerTransaction
                     && sipRequest.getCSeq().getSeqNumber() > lastTransaction.getCSeq()
                     // Handle Pseudo State Trying on Server Transaction
-                    && (lastTransaction.getInternalState() == TransactionState._PROCEEDING
-                                    || lastTransaction.getInternalState() == TransactionState._TRYING)) {
+                    && (lastTransaction.getInternalState() == TransactionState.PROCEEDING.getValue()
+                                    || lastTransaction.getInternalState() == TransactionState.TRYING.getValue())) {
                 // Note that the completed state will be reached when we have
                 // sent an error response and the terminated state will be reached when we
                 // have sent an OK response. We do not need to wait till the ACK to be seen.

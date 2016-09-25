@@ -2089,7 +2089,7 @@ public abstract class SIPTransactionStack implements
 
         if (transactionErrorEvent.getErrorID() == SIPTransactionErrorEvent.TRANSPORT_ERROR) {
             // Kill scanning of this transaction.
-            transaction.setState(TransactionState._TERMINATED);
+            transaction.setState(TransactionState.TERMINATED.getValue());
             if (transaction instanceof SIPServerTransaction) {
                 // let the reaper get him
                 ((SIPServerTransaction) transaction).setCollectionTime(0);

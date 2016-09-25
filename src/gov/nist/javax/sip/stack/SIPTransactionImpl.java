@@ -560,23 +560,23 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     @Override
     public void setState(int newState) {
         // PATCH submitted by sribeyron
-        if (currentState == TransactionState._COMPLETED) {
-            if (newState != TransactionState._TERMINATED
-                    && newState != TransactionState._CONFIRMED)
-                newState = TransactionState._COMPLETED;
+        if (currentState == TransactionState.COMPLETED.getValue()) {
+            if (newState != TransactionState.TERMINATED.getValue()
+                    && newState != TransactionState.CONFIRMED.getValue())
+                newState = TransactionState.COMPLETED.getValue();
         }
-        if (currentState == TransactionState._CONFIRMED) {
-            if (newState != TransactionState._TERMINATED)
-                newState = TransactionState._CONFIRMED;
+        if (currentState == TransactionState.CONFIRMED.getValue()) {
+            if (newState != TransactionState.TERMINATED.getValue())
+                newState = TransactionState.CONFIRMED.getValue();
         }
-        if (currentState != TransactionState._TERMINATED) {
+        if (currentState != TransactionState.TERMINATED.getValue()) {
             currentState = newState;
         }
         else
             newState = currentState;
         // END OF PATCH
         
-        if(newState == TransactionState._COMPLETED) {
+        if(newState == TransactionState.COMPLETED.getValue()) {
         	enableTimeoutTimer(TIMER_H); // timer H must be started around now
         }
         
@@ -601,10 +601,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
      */
     @Override
     public TransactionState getState() {
-    	if(currentState < 0) {
-    		return null;
-    	}
-        return TransactionState.getObject(this.currentState);
+        return TransactionState.valueOf(this.currentState);
     }
 
     /**
@@ -703,7 +700,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
      */
     @Override
     public boolean isTerminated() {
-        return currentState == TransactionState._TERMINATED;
+        return currentState == TransactionState.TERMINATED.getValue();
     }
 
     /**
@@ -1002,7 +999,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             eventListeners.clear();
 
             // Errors always terminate a transaction
-            this.setState(TransactionState._TERMINATED);
+            this.setState(TransactionState.TERMINATED.getValue());
 
             if (this instanceof SIPServerTransaction && this.isByeTransaction()
                     && this.getDialog() != null)
@@ -1265,7 +1262,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
      */
     @Override
     public void raiseIOExceptionEvent() {
-        setState(TransactionState._TERMINATED);
+        setState(TransactionState.TERMINATED.getValue());
         String host = getPeerAddress();
         int port = getPeerPort();
         String transport = getTransport();

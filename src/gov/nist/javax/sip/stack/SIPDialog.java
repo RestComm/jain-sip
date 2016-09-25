@@ -247,13 +247,13 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     protected CallIdHeader callIdHeader;
     protected String callIdHeaderString;
 
-    public final static int NULL_STATE = -1;
+    public final static int NULL_STATE = DialogState.NULL_STATE.getValue();
 
-    public final static int EARLY_STATE = DialogState._EARLY;
+    public final static int EARLY_STATE = DialogState.EARLY.getValue();
 
-    public final static int CONFIRMED_STATE = DialogState._CONFIRMED;
+    public final static int CONFIRMED_STATE = DialogState.CONFIRMED.getValue();
 
-    public final static int TERMINATED_STATE = DialogState._TERMINATED;
+    public final static int TERMINATED_STATE = DialogState.TERMINATED.getValue();
 
     protected boolean serverTransactionFlag;
 
@@ -1241,7 +1241,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         
         if (!ackRequest.getMethod().equals(Request.ACK))
             throw new SipException("Bad request method -- should be ACK");
-        if (this.getState() == null
+        if (this.getState() == DialogState.NULL_STATE
                 || this.getState().getValue() == EARLY_STATE) {
             if (logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                 logger.logError(
@@ -1550,8 +1550,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                     logger.logDebug("SIPDialog::setState:" +	
                             this + "  old dialog state is " + this.getState());
                     logger.logDebug("SIPDialog::setState:" +
-                            this + "  New dialog state is "
-                                    + DialogState.getObject(state));
+                            this + "  New dialog state is " 
+                                    + DialogState.valueOf(state));
                 }
 
         }
@@ -2309,9 +2309,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
      * @see javax.sip.Dialog#getState()
      */
     public DialogState getState() {
-        if (this.dialogState == NULL_STATE)
-            return null; // not yet initialized
-        return DialogState.getObject(this.dialogState);
+        return DialogState.valueOf(this.dialogState);
     }
 
     /**
@@ -2378,7 +2376,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         if (method.equals(Request.CANCEL))
             throw new SipException("Dialog.createRequest(): Invalid request");
 
-        if (this.getState() == null
+        if (this.getState() == DialogState.NULL_STATE
                 || (this.getState().getValue() == TERMINATED_STATE && !method
                         .equalsIgnoreCase(Request.BYE))
                 || (this.isServer()
@@ -2832,7 +2830,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                  * ISSUE 182.
                  */
                 if (isTerminatedOnBye()) {
-                    this.setState(DialogState._TERMINATED);
+                    this.setState(TERMINATED_STATE);
                 }
             }
         } catch (IOException ex) {
@@ -2973,7 +2971,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     public Request createPrack(Response relResponse)
             throws DialogDoesNotExistException, SipException {
 
-        if (this.getState() == null
+        if (this.getState() == DialogState.NULL_STATE
                 || this.getState().equals(DialogState.TERMINATED))
             throw new DialogDoesNotExistException(
                     "Dialog not initialized or terminated");
@@ -3380,7 +3378,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
             if (transaction == null || transaction instanceof ClientTransaction) {
                 if (SIPTransactionStack.isDialogCreated(cseqMethod)) {
                     // Make a final tag assignment.
-                    if (getState() == null && is100ClassResponse) {
+                    if (getState() == DialogState.NULL_STATE && is100ClassResponse) {
                         /*
                          * Guard aginst slipping back into early state from
                          * confirmed state.
@@ -3475,7 +3473,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
 
                     } else if (statusCode >= 300
                             && statusCode <= 699
-                            && (getState() == null || (cseqMethod
+                            && (getState() == DialogState.NULL_STATE || (cseqMethod
                                     .equals(getMethod()) && getState()
                                     .getValue() == SIPDialog.EARLY_STATE))) {
                         /*
@@ -3528,7 +3526,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                         && (this.getMethod().equals(Request.SUBSCRIBE) || this
                                 .getMethod().equals(Request.REFER))
                         && is200ClassResponse
-                        && this.getState() == null) {
+                        && this.getState() == DialogState.NULL_STATE) {
                     // This is a notify response.
                     this.setDialogId(sipResponse.getDialogId(true));
                     sipStack.putDialog(this);

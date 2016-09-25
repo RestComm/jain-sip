@@ -364,7 +364,7 @@ public class Shootist implements SipListener {
             Dialog dialog = inviteTid.getDialog();
 
             TestHarness.assertTrue("Initial dialog state should be null",
-                    dialog.getState() == null);
+                    dialog.getState() == DialogState.NULL_STATE);
 
             // send the request out.
             inviteTid.sendRequest();

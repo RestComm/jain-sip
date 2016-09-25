@@ -420,7 +420,7 @@ public class Shootist  implements SipListener {
             this.dialog = this.inviteTid.getDialog();
             // Note that the response may have arrived right away so
             // we cannot check after the message is sent.
-            ReInviteTest.assertTrue(this.dialog.getState() == null);
+            ReInviteTest.assertTrue(this.dialog.getState() == DialogState.NULL_STATE);
 
             // send the request out.
             this.inviteTid.sendRequest();

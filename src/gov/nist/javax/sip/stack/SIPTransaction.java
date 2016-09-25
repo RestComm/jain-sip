@@ -69,7 +69,7 @@ public interface SIPTransaction extends TransactionExt {
   /**
    * Initialized but no state assigned.
    */
-  public static final TransactionState INITIAL_STATE = null;
+  public static final TransactionState INITIAL_STATE = TransactionState.NULL_STATE;
   /**
    * Trying state.
    */

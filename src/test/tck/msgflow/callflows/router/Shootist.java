@@ -287,7 +287,7 @@ public class Shootist implements SipListener {
             inviteTid = sipProvider.getNewClientTransaction(request);
             dialog = inviteTid.getDialog();
             AbstractRouterTestCase.assertTrue("dialog state ",
-                    dialog!= null && dialog.getState() == null);
+                    dialog!= null && dialog.getState() == DialogState.NULL_STATE);
 
             // send the request out.
             inviteTid.sendRequest();

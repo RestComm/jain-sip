@@ -206,7 +206,7 @@ public class Referee implements SipListener {
             /*
              * The REFER MUST be answered first.
              */
-            TestHarness.assertNull( dialog.getState() );
+            TestHarness.assertTrue( dialog.getState() == DialogState.NULL_STATE );
             st.sendResponse(response);
             TestHarness.assertEquals( DialogState.CONFIRMED, dialog.getState() );
 

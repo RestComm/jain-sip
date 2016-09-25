@@ -117,7 +117,7 @@ class NistSipMessageFactoryImpl implements StackMessageFactory {
                             "Dropping response - null transaction state");
                 return null;
                 // Ignore 1xx
-            } else if (TransactionState._COMPLETED == tr.getInternalState()
+            } else if (TransactionState.COMPLETED.getValue() == tr.getInternalState()
                     && sipResponse.getStatusCode() / 100 == 1) {
                 if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG))
                     logger.logDebug(

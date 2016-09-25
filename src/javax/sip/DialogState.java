@@ -1,8 +1,8 @@
 /**
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Unpublished - rights reserved under the Copyright Laws of the United States.
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
- * Copyright © 2005 BEA Systems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2005 BEA Systems, Inc. All rights reserved.
  *
  * Use is subject to license terms.
  *
@@ -42,168 +42,53 @@ import java.io.*;
  * @author BEA Systems, NIST 
  * @version 1.2
  */
-public final class DialogState implements Serializable{
-
-    /**
-     * Constructor for the DialogState
-     *
-     * @param dialogState  The integer value for the DialogueState
-     */
-    private DialogState(int dialogState) {
-        m_dialogState = dialogState;
-        m_dialogStateArray[m_dialogState] = this;
-    }
-
-    /**
-     * This method returns the object value of the DialogState
-     *
-     * @return  The DialogState Object
-     * @param dialogState The integer value of the DialogState
-     */
-    public static DialogState getObject(int dialogState){
-        if (dialogState >= 0 && dialogState < m_size) {
-            return m_dialogStateArray[dialogState];
-        } else {
-            throw new IllegalArgumentException("Invalid dialogState value");
-        }
-    }
-
-    /**
-     * This method returns the integer value of the DialogState
-     *
-     * @return The integer value of the DialogState
-     */
-    public int getValue() {
-        return m_dialogState;
-    }
-
-
-    /**
-     * Returns the designated type as an alternative object to be used when
-     * writing an object to a stream.
-     *
-     * This method would be used when for example serializing DialogState.EARLY
-     * and deserializing it afterwards results again in DialogState.EARLY.
-     * If you do not implement readResolve(), you would not get
-     * DialogState.EARLY but an instance with similar content.
-     *
-     * @return the DialogState
-     * @exception ObjectStreamException
-     */
-    private Object readResolve() throws ObjectStreamException {
-        return m_dialogStateArray[m_dialogState];
-    }
-
-    
-    /**
-     * Compare this dialog state for equality with another.
-     * 
-     * @since 1.2
-     * @param obj the object to compare this with.
-     * @return <code>true</code> if <code>obj</code> is an instance of this class
-     * representing the same dialog state as this, <code>false</code> otherwise.
-     */
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-
-        return (obj instanceof DialogState) && ((DialogState)obj).m_dialogState == m_dialogState;
-    }
-
-    /**
-     * Get a hash code value for this dialog state.
-     * 
-     * @since 1.2
-     * @return a hash code value.
-     */
-    public int hashCode() {
-        return m_dialogState;
-    }        
-    
-    
-    /**
-     * This method returns a string version of this class.
-     * @return The string version of the DialogState
-     */
-    public String toString() {
-        String text = "";
-        switch (m_dialogState) {
-            case _EARLY:
-                text = "Early Dialog";
-                break;
-            case _CONFIRMED:
-                text = "Confirmed Dialog";
-                break;
-            case _COMPLETED:
-                text = "Completed Dialog";
-                break;    
-            case _TERMINATED:
-                text = "Terminated Dialog";
-                break;                  
-            default:
-                text = "Error while printing Dialog State";
-                break;
-        }
-        return text;
-    }
-
-    // internal variables
-    private int m_dialogState;
-    private static int m_size = 4;
-    private static DialogState[] m_dialogStateArray = new DialogState[m_size];
-        
-    /**
-     * This constant value indicates the internal value of the "Early" 
-     * constant.
-     * <br>This constant has an integer value of 0.
-     */    
-    public static final int _EARLY = 0;
-
-    /**
-     * This constant value indicates that the dialog state is "Early".
-     */        
-    public final static DialogState EARLY = new DialogState(_EARLY);
-    
-    /**
-     * This constant value indicates the internal value of the "Confirmed" 
-     * constant.
-     * <br>This constant has an integer value of 1.
-     */    
-    public static final int _CONFIRMED = 1;
-
-    /**
-     * This constant value indicates that the dialog state is "Confirmed".
-     */        
-    public final static DialogState CONFIRMED = new DialogState(_CONFIRMED);
-    
-    /**
-     * This constant value indicates the internal value of the "Completed" 
-     * constant.
-     * <br>This constant has an integer value of 2.
-     * @deprecated Since v1.2. This state does not exist in a dialog.
-     */    
-    public static final int _COMPLETED = 2;
-    
+public enum DialogState{
+    // Initial Value
+    NULL_STATE(-1),
+    // This constant value indicates the internal value of the "Early". 
+    EARLY(0),
+    // This constant value indicates that the dialog state is "Confirmed".
+    CONFIRMED(1),
     /**
      * This constant value indicates that the dialog state is "Completed".
      * @deprecated Since v1.2. This state does not exist in a dialog.
-     */        
-    public final static DialogState COMPLETED = new DialogState(_COMPLETED);
-
-    /**
-     * This constant value indicates the internal value of the "Terminated" 
-     * constant.
-     * <br>This constant has an integer value of 3.
-     */    
-    public static final int _TERMINATED = 3;
+     */
+    COMPLETED(2),
+    // This constant value indicates the internal value of the "Terminated". 
+    TERMINATED(3);
+    
+    // internal variable
+    private int intValue = -1;
+    
+    /*
+     * This method is private method for setting value of each Dialog State.
+     */
+    private DialogState(int value){
+        intValue = value;
+    }
     
     /**
-     * This constant value indicates that the dialog state is "Terminated".
-     */        
-    public final static DialogState TERMINATED = new DialogState(_TERMINATED);    
+     * This method return a integer value of this dialog state
+     * @return The integer value of the dialog state
+     */
+    public int getValue(){
+        return intValue;
+    }
     
-
+    /**
+     * This method return a DialogState value of this dialog state
+     * @return The DialogState value of the dialog state
+     */
+    public static DialogState valueOf (int value){
+        DialogState ret = NULL_STATE;
+        for (DialogState s : DialogState.values()){
+            if (s.getValue() == value){
+                ret = s;
+            }
+        }
+        return ret;
+    }
 }
-
 
 
 
