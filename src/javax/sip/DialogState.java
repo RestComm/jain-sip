@@ -44,35 +44,25 @@ import java.io.*;
  */
 public enum DialogState{
     // Initial Value
-    NULL_STATE(-1),
+    NULL_STATE,
     // This constant value indicates the internal value of the "Early". 
-    EARLY(0),
+    EARLY,
     // This constant value indicates that the dialog state is "Confirmed".
-    CONFIRMED(1),
+    CONFIRMED,
     /**
      * This constant value indicates that the dialog state is "Completed".
      * @deprecated Since v1.2. This state does not exist in a dialog.
      */
-    COMPLETED(2),
+    COMPLETED,
     // This constant value indicates the internal value of the "Terminated". 
-    TERMINATED(3);
-    
-    // internal variable
-    private int intValue = -1;
-    
-    /*
-     * This method is private method for setting value of each Dialog State.
-     */
-    private DialogState(int value){
-        intValue = value;
-    }
-    
-    /**
+    TERMINATED;
+
+	/**
      * This method return a integer value of this dialog state
      * @return The integer value of the dialog state
      */
     public int getValue(){
-        return intValue;
+        return this.ordinal() - 1;
     }
     
     /**
@@ -80,13 +70,8 @@ public enum DialogState{
      * @return The DialogState value of the dialog state
      */
     public static DialogState valueOf (int value){
-        DialogState ret = NULL_STATE;
-        for (DialogState s : DialogState.values()){
-            if (s.getValue() == value){
-                ret = s;
-            }
-        }
-        return ret;
+        int position = value + 1;
+        return DialogState.values()[position];
     }
 }
 

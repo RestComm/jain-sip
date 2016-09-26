@@ -215,33 +215,26 @@ import java.io.*;
 
  */
 public enum TransactionState{
-    NULL_STATE(-1),
+    NULL_STATE,
     // This constant value indicates the internal value of the "Calling" 
-    CALLING(0),
+    CALLING,
     // This constant value indicates the internal value of the "Trying" 
-    TRYING(1),
+    TRYING,
     // This constant value indicates the internal value of the "Proceeding" 
-    PROCEEDING(2),
+    PROCEEDING,
     // This constant value indicates the internal value of the "Completed" 
-    COMPLETED(3),
+    COMPLETED,
     // This constant value indicates the internal value of the "Confirmed" 
-    CONFIRMED(4),
+    CONFIRMED,
     // This constant value indicates the internal value of the "Terminated" 
-    TERMINATED(5);
-    
-    // Internal Variable
-    private int intValue = -1;
-    
-    private TransactionState(int value){
-        intValue = value;
-    }
+    TERMINATED;
     
     /**
      * This method return a integer value of this transaction state
      * @return The integer value of the transaction state
      */
     public int getValue(){
-        return intValue;
+        return this.ordinal() - 1;
     }
     
     /**
@@ -249,12 +242,7 @@ public enum TransactionState{
      * @return The DialogState value of the dialog state
      */
     public static TransactionState valueOf(int value){
-        TransactionState ret = NULL_STATE;
-        for(TransactionState s: TransactionState.values()){
-            if (s.getValue() == value){
-                ret = s;
-            }
-        }
-        return ret;
+        int position = value + 1;
+        return TransactionState.values()[position];
     }
 }
