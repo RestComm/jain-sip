@@ -377,7 +377,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
                                                .startsWith(SIPConstants.BRANCH_MAGIC_COOKIE_LOWER_CASE);
 
     transactionMatches = false;
-    if (TransactionState._COMPLETED == this.getInternalState()) {
+    if (TransactionState.COMPLETED.getValue() == this.getInternalState()) {
       if (rfc3261Compliant) {
         transactionMatches = getBranch().equalsIgnoreCase(topMostViaHeader.getBranch())
                              && getMethod().equals(messageToTest.getCSeq().getMethod());
@@ -435,8 +435,8 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         logger.logDebug("TransactionState " + this.getState());
       }
       // If this is the first request for this transaction,
-      if (TransactionState._PROCEEDING == getInternalState()
-          || TransactionState._CALLING == getInternalState())
+      if (TransactionState.PROCEEDING.getValue() == getInternalState()
+          || TransactionState.CALLING.getValue() == getInternalState())
       {
 
         // If this is a TU-generated ACK request,
@@ -445,9 +445,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
           // Send directly to the underlying
           // transport and close this transaction
           if (isReliable()) {
-            this.setState(TransactionState._TERMINATED);
+            this.setState(TransactionState.TERMINATED.getValue());
           } else {
-            this.setState(TransactionState._COMPLETED);
+            this.setState(TransactionState.COMPLETED.getValue());
           }
           cleanUpOnTimer();
           // BUGBUG -- This suppresses sending the ACK uncomment this
@@ -472,13 +472,13 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
           // Set state first to avoid race condition..
 
           if (transactionRequest.getMethod().equals(Request.INVITE)) {
-            this.setState(TransactionState._CALLING);
+            this.setState(TransactionState.CALLING.getValue());
           } else if (transactionRequest.getMethod().equals(Request.ACK)) {
             // Acks are never retransmitted.
-            this.setState(TransactionState._TERMINATED);
+            this.setState(TransactionState.TERMINATED.getValue());
             cleanUpOnTimer();
           } else {
-            this.setState(TransactionState._TRYING);
+            this.setState(TransactionState.TRYING.getValue());
           }
           if (!isReliable()) {
             enableRetransmissionTimer();
@@ -496,7 +496,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
 
       } catch (IOException e) {
 
-        this.setState(TransactionState._TERMINATED);
+        this.setState(TransactionState.TERMINATED.getValue());
         throw e;
 
       }
@@ -525,7 +525,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       return;
 
     // Ignore 1xx
-    if ((TransactionState._COMPLETED == this.getInternalState() || TransactionState._TERMINATED == this.getInternalState())
+    if ((TransactionState.COMPLETED.getValue() == this.getInternalState() || TransactionState.TERMINATED.getValue() == this.getInternalState())
         && transactionResponse.getStatusCode() / 100 == 1)
     {
       return;
@@ -556,7 +556,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     } catch (IOException ex) {
       if (logger.isLoggingEnabled())
         logger.logException(ex);
-      this.setState(TransactionState._TERMINATED);
+      this.setState(TransactionState.TERMINATED.getValue());
       raiseErrorEvent(SIPTransactionErrorEvent.TRANSPORT_ERROR);
     }
   }
@@ -626,9 +626,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
                                           SIPDialog sipDialog) throws IOException
   {
     int statusCode = transactionResponse.getStatusCode();
-    if (TransactionState._TRYING == this.getInternalState()) {
+    if (TransactionState.TRYING.getValue() == this.getInternalState()) {
       if (statusCode / 100 == 1) {
-        this.setState(TransactionState._PROCEEDING);
+        this.setState(TransactionState.PROCEEDING.getValue());
         enableRetransmissionTimer(getTimerT2());
         enableTimeoutTimer(TIMER_F);
         // According to RFC, the TU has to be informed on
@@ -640,10 +640,10 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
       } else if (200 <= statusCode && statusCode <= 699) {
         if (!isReliable()) {
-          this.setState(TransactionState._COMPLETED);
+          this.setState(TransactionState.COMPLETED.getValue());
           scheduleTimerK(timerK);
         } else {
-          this.setState(TransactionState._TERMINATED);
+          this.setState(TransactionState.TERMINATED.getValue());
         }
         // Send the response up to the TU.
         if (respondTo != null) {
@@ -651,12 +651,12 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         } else {
           this.semRelease();
         }
-        if (isReliable() && TransactionState._TERMINATED == getInternalState()) {
+        if (isReliable() && TransactionState.TERMINATED.getValue() == getInternalState()) {
           cleanUpOnTerminated();
         }
         cleanUpOnTimer();
       }
-    } else if (TransactionState._PROCEEDING == this.getInternalState()) {
+    } else if (TransactionState.PROCEEDING.getValue() == this.getInternalState()) {
       if (statusCode / 100 == 1) {
         if (respondTo != null) {
           respondTo.processResponse(transactionResponse, encapsulatedChannel, sipDialog);
@@ -667,17 +667,17 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         disableRetransmissionTimer();
         disableTimeoutTimer();
         if (!isReliable()) {
-          this.setState(TransactionState._COMPLETED);
+          this.setState(TransactionState.COMPLETED.getValue());
           scheduleTimerK(timerK);
         } else {
-          this.setState(TransactionState._TERMINATED);
+          this.setState(TransactionState.TERMINATED.getValue());
         }
         if (respondTo != null) {
           respondTo.processResponse(transactionResponse, encapsulatedChannel, sipDialog);
         } else {
           this.semRelease();
         }
-        if (isReliable() && TransactionState._TERMINATED == getInternalState()) {
+        if (isReliable() && TransactionState.TERMINATED.getValue() == getInternalState()) {
           cleanUpOnTerminated();
         }
         cleanUpOnTimer();
@@ -796,7 +796,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
   {
     int statusCode = transactionResponse.getStatusCode();
 
-    if (TransactionState._TERMINATED == this.getInternalState()) {
+    if (TransactionState.TERMINATED.getValue() == this.getInternalState()) {
       boolean ackAlreadySent = false;
       // if (dialog != null && dialog.isAckSeen() && dialog.getLastAckSent() != null)
       if (dialog != null && dialog.isAckSent(transactionResponse.getCSeq().getSeqNumber())) {
@@ -867,7 +867,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         this.semRelease();
         return;
       }
-    } else if (TransactionState._CALLING == this.getInternalState()) {
+    } else if (TransactionState.CALLING.getValue() == this.getInternalState()) {
       if (statusCode / 100 == 2) {
 
         // JvB: do this ~before~ calling the application, to avoid
@@ -875,7 +875,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         // of the INVITE after app sends ACK
         disableRetransmissionTimer();
         disableTimeoutTimer();
-        this.setState(TransactionState._TERMINATED);
+        this.setState(TransactionState.TERMINATED.getValue());
 
         // 200 responses are always seen by TU.
         if (respondTo != null)
@@ -887,7 +887,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       } else if (statusCode / 100 == 1) {
         disableRetransmissionTimer();
         disableTimeoutTimer();
-        this.setState(TransactionState._PROCEEDING);
+        this.setState(TransactionState.PROCEEDING.getValue());
 
         if (respondTo != null)
           respondTo.processResponse(transactionResponse, encapsulatedChannel, dialog);
@@ -918,11 +918,11 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
 
         if (!isReliable()) {
-          this.setState(TransactionState._COMPLETED);
+          this.setState(TransactionState.COMPLETED.getValue());
           enableTimeoutTimer(timerD);
         } else {
           // Proceed immediately to the TERMINATED state.
-          this.setState(TransactionState._TERMINATED);
+          this.setState(TransactionState.TERMINATED.getValue());
         }
         if (respondTo != null) {
           respondTo.processResponse(transactionResponse, encapsulatedChannel, dialog);
@@ -931,7 +931,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
         cleanUpOnTimer();
       }
-    } else if (TransactionState._PROCEEDING == this.getInternalState()) {
+    } else if (TransactionState.PROCEEDING.getValue() == this.getInternalState()) {
       if (statusCode / 100 == 1) {
         if (respondTo != null) {
           respondTo.processResponse(transactionResponse, encapsulatedChannel, dialog);
@@ -939,7 +939,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
           this.semRelease();
         }
       } else if (statusCode / 100 == 2) {
-        this.setState(TransactionState._TERMINATED);
+        this.setState(TransactionState.TERMINATED.getValue());
         if (respondTo != null) {
           respondTo.processResponse(transactionResponse, encapsulatedChannel, dialog);
         } else {
@@ -959,10 +959,10 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
         // JvB: update state before passing to app
         if (!isReliable()) {
-          this.setState(TransactionState._COMPLETED);
+          this.setState(TransactionState.COMPLETED.getValue());
           this.enableTimeoutTimer(timerD);
         } else {
-          this.setState(TransactionState._TERMINATED);
+          this.setState(TransactionState.TERMINATED.getValue());
         }
         cleanUpOnTimer();
 
@@ -978,7 +978,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         // enableTimeoutTimer(TIMER_D);
         // }
       }
-    } else if (TransactionState._COMPLETED == this.getInternalState()) {
+    } else if (TransactionState.COMPLETED.getValue() == this.getInternalState()) {
       if (300 <= statusCode && statusCode <= 699) {
         // Send back an ACK request
         try {
@@ -1092,7 +1092,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       this.sendMessage(sipRequest);
 
     } catch (IOException ex) {
-      this.setState(TransactionState._TERMINATED);
+      this.setState(TransactionState.TERMINATED.getValue());
       if (this.expiresTimerTask != null) {
         sipStack.getTimer().cancel(this.expiresTimerTask);
       }
@@ -1119,8 +1119,8 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       // JvB: INVITE CTs only retransmit in CALLING, non-INVITE in both TRYING and
       // PROCEEDING
       // Bug-fix for non-INVITE transactions not retransmitted when 1xx response received
-      if ((inv && TransactionState._CALLING == s)
-          || (!inv && (TransactionState._TRYING == s || TransactionState._PROCEEDING == s)))
+      if ((inv && TransactionState.CALLING.getValue() == s)
+          || (!inv && (TransactionState.TRYING.getValue() == s || TransactionState.PROCEEDING.getValue() == s)))
       {
         // If the retransmission filter is disabled then
         // retransmission of the INVITE is the application
@@ -1147,7 +1147,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
             this.getSipProvider().handleEvent(txTimeout, this);
           }
           if (this.timeoutIfStillInCallingState
-              && this.getInternalState() == TransactionState._CALLING)
+              && this.getInternalState() == TransactionState.CALLING.getValue())
           {
             this.callingStateTimeoutCount--;
             if (callingStateTimeoutCount == 0) {
@@ -1178,9 +1178,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       logger.logDebug("fireTimeoutTimer " + this);
 
     SIPDialog dialog = (SIPDialog) this.getDialog();
-    if (TransactionState._CALLING == this.getInternalState()
-        || TransactionState._TRYING == this.getInternalState()
-        || TransactionState._PROCEEDING == this.getInternalState())
+    if (TransactionState.CALLING.getValue() == this.getInternalState()
+        || TransactionState.TRYING.getValue() == this.getInternalState()
+        || TransactionState.PROCEEDING.getValue() == this.getInternalState())
     {
       // Timeout occured. If this is asociated with a transaction
       // creation then kill the dialog.
@@ -1201,8 +1201,8 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
       }
     }
-    if (TransactionState._COMPLETED != this.getInternalState()
-        && TransactionState._TERMINATED != this.getInternalState())
+    if (TransactionState.COMPLETED.getValue() != this.getInternalState()
+        && TransactionState.TERMINATED.getValue() != this.getInternalState())
     {
       raiseErrorEvent(SIPTransactionErrorEvent.TIMEOUT_ERROR);
       // Got a timeout error on a cancel.
@@ -1210,7 +1210,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         SIPClientTransaction inviteTx = (SIPClientTransaction) this.getOriginalRequest()
                                                                    .getInviteTransaction();
         if (inviteTx != null
-            && ((inviteTx.getInternalState() == TransactionState._CALLING || inviteTx.getInternalState() == TransactionState._PROCEEDING))
+            && ((inviteTx.getInternalState() == TransactionState.CALLING.getValue() || inviteTx.getInternalState() == TransactionState.PROCEEDING.getValue()))
             && inviteTx.getDialog() != null)
         {
           /*
@@ -1218,13 +1218,13 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
            * using transaction.terminate() by itself (i.e. this is not the job of the
            * stack at this point but we do it to be nice.
            */
-          inviteTx.setState(TransactionState._TERMINATED);
+          inviteTx.setState(TransactionState.TERMINATED.getValue());
 
         }
       }
 
     } else {
-      this.setState(TransactionState._TERMINATED);
+      this.setState(TransactionState.TERMINATED.getValue());
     }
 
   }
@@ -1428,7 +1428,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
   public void setState(int newState) {
     // Set this timer for connection caching
     // of incoming connections.
-    if (newState == TransactionState._TERMINATED && this.isReliable()
+    if (newState == TransactionState.TERMINATED.getValue() && this.isReliable()
         && (!getSIPStack().cacheClientConnections))
     {
       // Set a time after which the connection
@@ -1436,8 +1436,8 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       this.collectionTime = TIMER_J;
 
     }
-    if (super.getInternalState() != TransactionState._COMPLETED
-        && (newState == TransactionState._COMPLETED || newState == TransactionState._TERMINATED))
+    if (super.getInternalState() != TransactionState.COMPLETED.getValue()
+        && (newState == TransactionState.COMPLETED.getValue() || newState == TransactionState.TERMINATED.getValue()))
     {
       sipStack.decrementActiveClientTransactionCount();
     }
@@ -1476,7 +1476,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
    */
   @Override
   public void terminate() {
-    this.setState(TransactionState._TERMINATED);
+    this.setState(TransactionState.TERMINATED.getValue());
     if (!transactionTimerStarted.get()) {
       // if no transaction timer was started just remove the tx without firing a transaction
       // terminated event
@@ -1645,7 +1645,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       // Test added to make sure the retrans flag is correct on forked responses
       // this will avoid setting the last response on the dialog and chnage its state
       // before it is passed to the dialogfilter layer where it is done as well
-      if (TransactionState._TERMINATED != getInternalState()) {
+      if (TransactionState.TERMINATED.getValue() != getInternalState()) {
         dialog.setLastResponse(this, sipResponse);
       }
     }
@@ -1972,6 +1972,11 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     	this.defaultDialog.setState(SIPDialog.TERMINATED_STATE);
     }
 
+    // If dialog is null state, no response is received and we should clean it up now, 
+    // it's hopeless to recover. Refers to this issue https://github.com/usnistgov/jsip/issues/8
+    if(this.defaultDialog != null && this.defaultDialog.getState() == DialogState.NULL_STATE) {
+        this.defaultDialog.setState(SIPDialog.TERMINATED_STATE);
+    }
   }
 
   /**

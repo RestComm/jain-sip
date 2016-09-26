@@ -1,8 +1,8 @@
 /**
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * Unpublished - rights reserved under the Copyright Laws of the United States.
- * Copyright © 2003 Sun Microsystems, Inc. All rights reserved.
- * Copyright © 2005 BEA Systems, Inc. All rights reserved.
+ * Copyright ï¿½ 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright ï¿½ 2005 BEA Systems, Inc. All rights reserved.
  *
  * Use is subject to license terms.
  *
@@ -214,286 +214,35 @@ import java.io.*;
  * @version 1.2
 
  */
-
-public final class TransactionState implements Serializable{
-
-
-
-    /**
-
-     * Constructor for the TransactionState
-
-     *
-
-     * @param transactionState  The integer value for the TransactionState
-
-     */
-
-    private TransactionState(int transactionState) {
-
-        m_transactionState = transactionState;
-
-        m_transStateArray[m_transactionState] = this;
-
-    }
-
-
-
-    /**
-
-     * This method returns the object value of the TransactionState
-
-     *
-
-     * @return  The TransactionState Object
-
-     * @param transactionState The integer value of the TransactionState
-
-     */
-
-    public static TransactionState getObject(int transactionState){
-
-        if (transactionState >= 0 && transactionState < m_size) {
-
-            return m_transStateArray[transactionState];
-
-        } else {
-
-            throw new IllegalArgumentException("Invalid transactionState value");
-
-        }
-
-    }
-
-
-
-    /**
-
-     * This method returns the integer value of the TransactionState
-
-     *
-
-     * @return The integer value of the TransactionState
-
-     */
-
-    public int getValue() {
-
-        return m_transactionState;
-
-    }
-
-
-
-    /**
-
-     * Returns the designated type as an alternative object to be used when
-
-     * writing an object to a stream.
-
-     *
-
-     * This method would be used when for example serializing TransactionState.EARLY
-
-     * and deserializing it afterwards results again in TransactionState.EARLY.
-
-     * If you do not implement readResolve(), you would not get
-
-     * TransactionState.EARLY but an instance with similar content.
-
-     *
-
-     * @return the TransactionState
-
-     * @exception ObjectStreamException
-
-     */
-
-    private Object readResolve() throws ObjectStreamException {
-
-        return m_transStateArray[m_transactionState];
-
-    }
-
-    
+public enum TransactionState{
+    NULL_STATE,
+    // This constant value indicates the internal value of the "Calling" 
+    CALLING,
+    // This constant value indicates the internal value of the "Trying" 
+    TRYING,
+    // This constant value indicates the internal value of the "Proceeding" 
+    PROCEEDING,
+    // This constant value indicates the internal value of the "Completed" 
+    COMPLETED,
+    // This constant value indicates the internal value of the "Confirmed" 
+    CONFIRMED,
+    // This constant value indicates the internal value of the "Terminated" 
+    TERMINATED;
     
     /**
-     * Compare this transaction state for equality with another.
-     * 
-     * @since 1.2
-     * @param obj the object to compare this with.
-     * @return <code>true</code> if <code>obj</code> is an instance of this class
-     * representing the same transaction state as this, <code>false</code> otherwise.
+     * This method return a integer value of this transaction state
+     * @return The integer value of the transaction state
      */
-    public boolean equals(Object obj) {
-        if (obj == this) return true;
-
-        return (obj instanceof TransactionState) && ((TransactionState)obj).m_transactionState == m_transactionState;
+    public int getValue(){
+        return this.ordinal() - 1;
     }
-
+    
     /**
-     * Get a hash code value for this transaction state.
-     * 
-     * @since 1.2
-     * @return a hash code value.
+     * This method return a DialogState value of this dialog state
+     * @return The DialogState value of the dialog state
      */
-    public int hashCode() {
-        return m_transactionState;
-    }    
-
-
-    /* 
-     * This method returns a string version of this class.
-     * 
-     * @return The string version of the TransactionState
-     */
-
-    public String toString() {
-
-        String text = "";
-
-        switch (m_transactionState) {
-
-            case _CALLING:
-
-                text = "Calling Transaction";
-
-                break;
-
-            case _TRYING:
-
-                text = "Trying Transaction";
-
-                break;                
-
-            case _PROCEEDING:
-
-                text = "Proceeding Transaction";
-
-                break;
-
-            case _COMPLETED:
-
-                text = "Completed Transaction";
-
-                break;                 
-
-            case _CONFIRMED:
-
-                text = "Confirmed Transaction";
-
-                break; 
-
-            case _TERMINATED:
-
-                text = "Terminated Transaction";
-
-                break;                
-
-            default:
-
-                text = "Error while printing Transaction State";
-
-                break;
-
-        }
-
-        return text;
-
+    public static TransactionState valueOf(int value){
+        int position = value + 1;
+        return TransactionState.values()[position];
     }
-
-    
-    // internal variables
-    private int m_transactionState;
-    private static int m_size = 6;
-    private static TransactionState[] m_transStateArray = new TransactionState[m_size];    
-
-    /**
-     * This constant value indicates the internal value of the "Calling" constant. 
-     * <br>This constant has an integer value of 0.
-     */    
-    public static final int _CALLING = 0;
-    /**
-     * This constant value indicates that the transaction state is "Calling".
-     */    
-    public final static TransactionState CALLING = new TransactionState(_CALLING);     
-
-    /**
-     * This constant value indicates the internal value of the "Trying" constant. 
-     * This constant has an integer value of 1.
-     */    
-    public static final int _TRYING = 1;
-    /**
-     * This constant value indicates that the transaction state is "Trying".
-     */   
-    public final static TransactionState TRYING = new TransactionState(_TRYING);   
-
-    /**
-     * This constant value indicates the internal value of the "Proceeding" 
-     * constant. 
-     * <br>This constant has an integer value of 2.
-     */    
-    public static final int _PROCEEDING = 2;
-    /**
-     * This constant value indicates that the transaction state is "Proceeding".
-     */        
-    public final static TransactionState PROCEEDING = new TransactionState(_PROCEEDING);    
-
-    /**
-     * This constant value indicates the internal value of the "Completed" 
-     * constant. 
-     * <br>This constant has an integer value of 3.
-     */    
-    public static final int _COMPLETED = 3;
-    /**
-     * This constant value indicates that the transaction state is "Completed".
-     */    
-    public final static TransactionState COMPLETED = new TransactionState(_COMPLETED);    
-
-    
-    /**
-     * This constant value indicates the internal value of the "Confirmed" 
-     * constant.
-     * <br>This constant has an integer value of 4.
-     */    
-    public static final int _CONFIRMED = 4;
-    /**
-     * This constant value indicates that the transaction state is "Confirmed".
-     */    
-    public final static TransactionState CONFIRMED = new TransactionState(_CONFIRMED);
-    
-    /**
-     * This constant value indicates the internal value of the "Terminated" 
-     * constant.
-     * <br>This constant has an integer value of 5.
-     */    
-    public static final int _TERMINATED = 5;
-    /**
-     * This constant value indicates that the transaction state is "Terminated".
-     */    
-    public final static TransactionState TERMINATED = new TransactionState(_TERMINATED);
-
-
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

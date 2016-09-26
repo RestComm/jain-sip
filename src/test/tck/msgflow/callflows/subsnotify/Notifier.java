@@ -194,7 +194,7 @@ public class Notifier implements SipListener {
                 this.dialog.terminateOnBye(false);
 
                 AbstractSubsnotifyTestCase.assertTrue("initial -- dialog assigned to the transaction not null " , dialog != null );
-                AbstractSubsnotifyTestCase.assertTrue("Dialog state should be null ", dialog.getState() == null);
+                AbstractSubsnotifyTestCase.assertTrue("Dialog state should be null ", dialog.getState() == DialogState.NULL_STATE);
 
             } else {
                 response = messageFactory.createResponse(200, request);

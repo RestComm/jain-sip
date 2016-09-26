@@ -81,11 +81,11 @@ public class DialogStateMachineTest extends MessageFlowHarness {
             //get the dialog
             Dialog dialog = tran.getDialog();
             //We should have a null state here
-            assertNull(
+            assertTrue(
                 "A dialog passed into the "
                     + dialog.getState()
                     + " state before receiving any response!",
-                dialog.getState());
+                dialog.getState() == DialogState.NULL_STATE);
 
             //We will now send RINGING response and see that the Dialog enters an early state
             //start listening for the response
@@ -260,11 +260,11 @@ public class DialogStateMachineTest extends MessageFlowHarness {
             Dialog dialog = tran.getDialog();
 
             // We should have a null state here
-            assertNull(
+            assertTrue(
                 "A dialog passed into the "
                     + dialog.getState()
                     + " state before sending any response!",
-                dialog.getState());
+                dialog.getState() == DialogState.NULL_STATE);
 
             //We will now send RINGING response and see that the Dialog enters an early state
             //start listening for the response

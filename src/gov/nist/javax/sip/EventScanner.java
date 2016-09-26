@@ -292,7 +292,7 @@ public class EventScanner implements Runnable {
                 // if the user configured to get notification on ACK
                 // termination
                 eventWrapper.transaction
-                        .setState(TransactionState._TERMINATED);
+                        .setState(TransactionState.TERMINATED.getValue());
             }
         }
     }
@@ -374,7 +374,7 @@ public class EventScanner implements Runnable {
             // that state may be released.
             SIPClientTransaction ct = (SIPClientTransaction) eventWrapper.transaction;
             if (ct != null
-                    && TransactionState._COMPLETED == ct.getInternalState()
+                    && TransactionState.COMPLETED.getValue() == ct.getInternalState()
 //                    && ct.getOriginalRequest() != null
                     && !ct.getMethod().equals(
                             Request.INVITE)) {
