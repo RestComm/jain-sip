@@ -266,8 +266,8 @@ public class NIOHandler {
                     }
                 }
         } catch (IOException ex) {
-            if (logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
-                    logger.logError(
+            if (logger.isLoggingEnabled(LogWriter.TRACE_INFO)) {
+                    logger.logInfo(
                                     "Problem OpeningConn: "
                                     + " inAddr "
                                     + receiverAddress.getHostAddress()
