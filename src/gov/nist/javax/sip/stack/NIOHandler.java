@@ -250,13 +250,15 @@ public class NIOHandler {
                                             //sipStack.getNetworkLayer().createSocket(
                                             //		receiverAddress, contactPort, senderAddress); TODO: sender address needed
                                     } catch (SocketException e) { // We must catch the socket timeout exceptions here, any SocketException not just ConnectException
-                                            logger.logError("Problem connecting " +
+                                    	if (logger.isLoggingEnabled(LogWriter.TRACE_INFO)) {
+                                            logger.logInfo("Problem connecting " +
                                                             receiverAddress + " " + contactPort + " " + senderAddress );
-                                            // new connection is bad.
-                                            // remove from our table the socket and its semaphore
-                                            removeSocket(key);
-                                            throw new SocketException(e.getClass() + " " + e.getMessage() + " " + e.getCause() + " Problem connecting " +
-                                                            receiverAddress + " " + contactPort + " " + senderAddress);
+                                    	}
+                                        // new connection is bad.
+                                        // remove from our table the socket and its semaphore
+                                        removeSocket(key);
+                                        throw new SocketException(e.getClass() + " " + e.getMessage() + " " + e.getCause() + " Problem connecting " +
+                                                receiverAddress + " " + contactPort + " " + senderAddress);
                                     }
                                     putSocket(key, clientSock);
                                     break;
