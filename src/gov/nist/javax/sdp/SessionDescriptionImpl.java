@@ -126,7 +126,9 @@ public class SessionDescriptionImpl implements SessionDescription {
         URIField otherUriField = (URIField) otherSessionDescription.getURI();
         if (otherUriField != null) {
             URIField newUF = new URIField();
-            newUF.setURI(otherUriField.toString());
+            //fixes https://github.com/RestComm/jain-sip/issues/112
+            //URL is final, we can reuse object in this case
+            newUF.set(otherUriField.get());
             this.setURI(newUF);
         }
 
