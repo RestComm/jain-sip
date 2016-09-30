@@ -338,7 +338,7 @@ final class SCTPMessageChannel extends MessageChannel
                 // Normal processing of message.
             } else {
                 if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                    logger.logDebug("null sipServerResponse!");
+                    logger.logDebug("null sipServerResponse as could not acquire semaphore or the valve dropped the message.");
                 }
             }
 

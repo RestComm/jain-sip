@@ -556,9 +556,8 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                         }
                     }
                 } else {
-                	logger
-                    	.logWarning(
-                            "Application is blocked -- could not acquire semaphore -- dropping response");
+                	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+                        this.logger.logDebug("null sipServerResponse as could not acquire semaphore or the valve dropped the message.");
                 }
             }
         } finally {

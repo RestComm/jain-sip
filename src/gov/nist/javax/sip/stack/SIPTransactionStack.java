@@ -1747,8 +1747,8 @@ public abstract class SIPTransactionStack implements
                 return null;
             }
         } else {
-            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-                this.logger.logDebug("Could not aquire semaphore !!");
+        	logger.logWarning(
+                "Application is blocked -- could not acquire semaphore -- dropping response");
         }
 
         if (acquired)
