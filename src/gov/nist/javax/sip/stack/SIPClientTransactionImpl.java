@@ -484,7 +484,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
             enableRetransmissionTimer();
           }
           if (isInviteTransaction()) {
-            enableTimeoutTimer(TIMER_B);
+            enableTimeoutTimer(getTimerB());
           } else {
             enableTimeoutTimer(TIMER_F);
           }

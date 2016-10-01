@@ -113,6 +113,8 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
 
     protected int timerD = 32000 / baseTimerInterval;
 
+    protected int timerB = 32000 / baseTimerInterval;
+
     // Proposed feature for next release.
     protected transient Object applicationData;
 
@@ -1573,6 +1575,14 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     }
 
     /**
+     * @see gov.nist.javax.sip.stack.SIPTransaction#getTimerB()
+     */
+    @Override
+    public int getTimerB() {
+        return timerB;
+    }
+
+    /**
      * @see gov.nist.javax.sip.stack.SIPTransaction#setTimerD(int)
      */
     @Override
@@ -1603,6 +1613,17 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         timerK = T4;
     }
     
+    /**
+     * @see gov.nist.javax.sip.stack.SIPTransaction#setTimerB(int)
+     */
+    @Override
+    public void setTimerB(int interval) {
+        if(interval <= 0) {
+            throw new IllegalArgumentException("Timer B value must be positive!");
+        }
+        timerB = interval / baseTimerInterval;
+    }
+
     /**
      * @see gov.nist.javax.sip.stack.SIPTransaction#getBaseTimerInterval()
      */
