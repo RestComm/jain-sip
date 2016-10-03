@@ -91,6 +91,8 @@ import javax.sip.address.Router;
 import javax.sip.header.HeaderFactory;
 import javax.sip.message.Request;
 
+import examples.nistgoodies.messagevalve.SipMessageValve;
+
 /**
  * Implementation of SipStack.
  * 
@@ -1510,22 +1512,25 @@ public class SipStackImpl extends SIPTransactionStack implements
 		
 		String valveClassName = configurationProperties.getProperty("gov.nist.javax.sip.SIP_MESSAGE_VALVE", null);
 		if(valveClassName != null && !valveClassName.equals("")) {
-			try {
-				super.sipMessageValve = (SIPMessageValve) Class.forName(valveClassName).newInstance();
-				final SipStack thisStack = this;
-
+			String[] valves = valveClassName.split(",");
+			for (String valve : valves) {
 				try {
-					Thread.sleep(100);
-					sipMessageValve.init(thisStack);
+					SIPMessageValve sipMessageValve = (SIPMessageValve) Class.forName(valve).newInstance();
+					final SipStack thisStack = this;
+
+					try {
+						Thread.sleep(100);
+						sipMessageValve.init(thisStack);
+					} catch (Exception e) {
+						logger
+						.logError("Error intializing SIPMessageValve", e);
+					}
+					this.sipMessageValves.add(sipMessageValve);
 				} catch (Exception e) {
 					logger
-					.logError("Error intializing SIPMessageValve", e);
+					.logError(
+							"Bad configuration value for gov.nist.javax.sip.SIP_MESSAGE_VALVE", e);			
 				}
-
-			} catch (Exception e) {
-				logger
-				.logError(
-						"Bad configuration value for gov.nist.javax.sip.SIP_MESSAGE_VALVE", e);			
 			}
 		}
 
@@ -1791,8 +1796,11 @@ public class SipStackImpl extends SIPTransactionStack implements
 			logger.logStackTrace();
 		}
 		this.stopStack();
-		if(super.sipMessageValve != null) 
-			super.sipMessageValve.destroy();
+		if(super.sipMessageValves.size() != 0) {
+			for (SIPMessageValve sipMessageValve : super.sipMessageValves) {
+				sipMessageValve.destroy();
+			}
+		}
 		if(super.sipEventInterceptor != null) 
 			super.sipEventInterceptor.destroy();
 		this.sipProviders = Collections.synchronizedList(new LinkedList<SipProviderImpl>());
