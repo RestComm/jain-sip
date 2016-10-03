@@ -104,6 +104,7 @@ import javax.sip.TransactionState;
 import javax.sip.address.Address;
 import javax.sip.address.Hop;
 import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.EventHeader;
@@ -209,8 +210,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
 
     private int dialogState;
 
-    protected transient SIPRequest lastAckSent;
-
+    private transient ACKWrapper lastAckSent;
+    
     // jeand : replaced the lastAckReceived message with only the data needed to
     // save on mem
     protected Long lastAckReceivedCSeqNumber;
@@ -1289,7 +1290,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
         // we clone the request that we store to make sure that if getNextHop modifies the request
         // we store it as it was passed to the method originally
-        this.setLastAckSent((SIPRequest)ackRequest.clone());
+        this.setLastAckSent(ackRequest);
         
         try {
             ackSendingStrategy.send(ackRequest);            
@@ -1633,12 +1634,59 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                             .getRemoteSeqNumber();
         }
     }
+    
+    
+    public CSeqHeader getLastAckSentCSeq() {
+        return this.lastAckSent.getCSeq();
+    }    
+    public String getLastAckSentFromTag() {
+        return this.lastAckSent.getFromTag();
+    }
+    public String getLastAckSentDialogId() {
+        return this.lastAckSent.getDialogId();
+    }
+    
+    final class ACKWrapper {
+        String msgBytes;
+        String fromTag;
+        String dialogId;
+        CSeqHeader cSeq;
+        ACKWrapper(SIPRequest req) {
+            req.setTransaction(null); // null out the associated Tx (release memory)
+            msgBytes = req.encode();
+            fromTag=req.getFromTag();
+            dialogId=req.getDialogId(false);
+            cSeq = req.getCSeq();
+        }
+
+        public String getFromTag() {
+            return fromTag;
+        }
+
+        public CSeqHeader getCSeq() {
+            return cSeq;
+        }
+        public String getDialogId() {
+                return dialogId;
+        }
+        public SIPRequest reparseRequest() {
+            try {
+                return (SIPRequest) sipStack.getMessageParserFactory().createMessageParser(sipStack).parseSIPMessage(msgBytes.getBytes("UTF-8"),true,false,null);
+            } catch (Exception ex) {
+        	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)){
+        		logger.logDebug("SIPDialog::resendAck:lastAck failed reparsing, hence not resending ACK");
+        	}
+                return null;
+            }
+        }
+    }    
 
     /**
-     * Get the last ACK for this transaction.
+     * 
+     * @return same as callling isAckSent(-1)
      */
-    public SIPRequest getLastAckSent() {
-        return this.lastAckSent;
+    public boolean isAckSent() {
+        return isAckSent(-1);
     }
 
     /**
@@ -1649,10 +1697,10 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         if (this.getLastTransaction() == null)
             return true;
         if (this.getLastTransaction() instanceof ClientTransaction) {
-            if (this.getLastAckSent() == null) {
+            if (lastAckSent == null) {
                 return false;
             } else {
-                return cseqNo <= ((SIPRequest) this.getLastAckSent()).getCSeq()
+                return cseqNo <= this.getLastAckSentCSeq()
                         .getSeqNumber();
             }
         } else {
@@ -2868,18 +2916,20 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     public void resendAck() throws SipException {
         // Check for null.
 
-        if (this.getLastAckSent() != null) {
-            if (getLastAckSent().getHeader(TimeStampHeader.NAME) != null
+        if (this.lastAckSent != null) {
+            
+            SIPRequest lastAckSentParsed = lastAckSent.reparseRequest();
+            if (lastAckSentParsed.getHeader(TimeStampHeader.NAME) != null
                     && sipStack.generateTimeStampHeader) {
                 TimeStamp ts = new TimeStamp();
                 try {
                     ts.setTimeStamp(System.currentTimeMillis());
-                    getLastAckSent().setHeader(ts);
+                    lastAckSentParsed.setHeader(ts);
                 } catch (InvalidArgumentException e) {
 
                 }
             }
-            this.sendAck(getLastAckSent(), false);
+            this.sendAck(lastAckSentParsed, false);
         } else {
         	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)){
         		logger.logDebug("SIPDialog::resendAck:lastAck sent is NULL hence not resending ACK");
@@ -4141,8 +4191,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
      *            the lastAckSent to set
      */
     private void setLastAckSent(SIPRequest lastAckSent) {
-        this.lastAckSent = lastAckSent;
-        this.lastAckSent.setTransaction(null); // null out the associated Tx (release memory)
+        this.lastAckSent = new ACKWrapper(lastAckSent);
     }
 
     /**

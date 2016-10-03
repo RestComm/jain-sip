@@ -1408,8 +1408,8 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                     return;
                 } else {
                     boolean ackAlreadySent = false;
-                    if (dialog.isAckSeen() && dialog.getLastAckSent() != null) {
-                        if (dialog.getLastAckSent().getCSeq().getSeqNumber() == response
+                    if (dialog.isAckSeen() && dialog.isAckSent()) {
+                        if (dialog.getLastAckSentCSeq().getSeqNumber() == response
                                 .getCSeq().getSeqNumber()) {
                             // the last ack sent corresponded to this 200
                             ackAlreadySent = true;
@@ -1701,12 +1701,11 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
                 } else {
                     boolean ackAlreadySent = false;
                     if (/* sipDialog.isAckSeen()
-                            && */ sipDialog.getLastAckSent() != null) {
-                        if (sipDialog.getLastAckSent().getCSeq().getSeqNumber() == sipResponse
+                            && */ sipDialog.isAckSent()) {
+                        if (sipDialog.getLastAckSentCSeq().getSeqNumber() == sipResponse
                                 .getCSeq().getSeqNumber()
                                 && sipResponse.getDialogId(false).equals(
-                                        sipDialog.getLastAckSent().getDialogId(
-                                                false))) {
+                                        sipDialog.getLastAckSentDialogId())) {
                             // the last ack sent corresponded to this 200
                             ackAlreadySent = true;
                         }

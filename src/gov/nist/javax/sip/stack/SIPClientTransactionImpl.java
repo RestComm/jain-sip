@@ -800,9 +800,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
       boolean ackAlreadySent = false;
       // if (dialog != null && dialog.isAckSeen() && dialog.getLastAckSent() != null)
       if (dialog != null && dialog.isAckSent(transactionResponse.getCSeq().getSeqNumber())) {
-        if (dialog.getLastAckSent().getCSeq().getSeqNumber() == transactionResponse.getCSeq()
+        if (dialog.getLastAckSentCSeq().getSeqNumber() == transactionResponse.getCSeq()
                                                                                    .getSeqNumber()
-            && transactionResponse.getFromTag().equals(dialog.getLastAckSent().getFromTag()))
+            && transactionResponse.getFromTag().equals(dialog.getLastAckSentFromTag()))
         {
           // the last ack sent corresponded to this response
           ackAlreadySent = true;
