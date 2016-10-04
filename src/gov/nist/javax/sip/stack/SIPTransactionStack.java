@@ -389,7 +389,7 @@ public abstract class SIPTransactionStack implements
 
     private ReleaseReferencesStrategy releaseReferencesStrategy = ReleaseReferencesStrategy.None;
 
-    public SIPMessageValve sipMessageValve;
+    public List<SIPMessageValve> sipMessageValves;
     
     public SIPEventInterceptor sipEventInterceptor;
 
@@ -544,6 +544,9 @@ public abstract class SIPTransactionStack implements
         // The default (identity) address lookup scheme
 
         this.addressResolver = new DefaultAddressResolver();
+        
+        // Init vavles list
+        this.sipMessageValves = new ArrayList<SIPMessageValve>();
 
         // Notify may or may not create a dialog. This is handled in
         // the code.
@@ -1510,22 +1513,24 @@ public abstract class SIPTransactionStack implements
 
         requestReceived.setMessageChannel(requestMessageChannel);
 
-        if(sipMessageValve != null) {
+        if(sipMessageValves.size() != 0) {
         	// https://java.net/jira/browse/JSIP-511
         	// catching all exceptions so it doesn't make JAIN SIP to fail
         	try {	
-        		if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-                    logger.logDebug(
-                            "Checking SIP message valve " + sipMessageValve + " for Request = " + requestReceived.getFirstLine());
-                }
-	            if(!sipMessageValve.processRequest(
-	                    requestReceived, requestMessageChannel)) {
-	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-	                    logger.logDebug(
-	                            "Request dropped by the SIP message valve. Request = " + requestReceived);
-	                }
-	                return null;
-	            }
+        		for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
+        			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                        logger.logDebug(
+                                "Checking SIP message valve " + sipMessageValve + " for Request = " + requestReceived.getFirstLine());
+                    }
+        			if(!sipMessageValve.processRequest(
+    	                    requestReceived, requestMessageChannel)) {
+    	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+    	                    logger.logDebug(
+    	                            "Request dropped by the SIP message valve. Request = " + requestReceived);
+    	                }
+    	                return null;
+    	            }
+        		}
         	} catch(Exception e) {
         		if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                     logger.logError(
@@ -1652,18 +1657,20 @@ public abstract class SIPTransactionStack implements
         // Transaction to handle this request
         SIPClientTransaction currentTransaction;
 
-        if(sipMessageValve != null) {
+        if(sipMessageValves.size() != 0) {
         	// https://java.net/jira/browse/JSIP-511
         	// catching all exceptions so it doesn't make JAIN SIP to fail
         	try {
-	            if(!sipMessageValve.processResponse(
-	                    responseReceived, responseMessageChannel)) {
-	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-	                    logger.logDebug(
-	                            "Response dropped by the SIP message valve. Response = " + responseReceived);
-	                }
-	                return null;
-	            }
+        		for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
+        			if(!sipMessageValve.processResponse(
+    	                    responseReceived, responseMessageChannel)) {
+    	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+    	                    logger.logDebug(
+    	                            "Response dropped by the SIP message valve. Response = " + responseReceived);
+    	                }
+    	                return null;
+    	            }
+        		}
         	} catch(Exception e) {
         		if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                     logger.logError(
