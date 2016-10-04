@@ -91,8 +91,6 @@ import javax.sip.address.Router;
 import javax.sip.header.HeaderFactory;
 import javax.sip.message.Request;
 
-import examples.nistgoodies.messagevalve.SipMessageValve;
-
 /**
  * Implementation of SipStack.
  * 
@@ -551,12 +549,13 @@ import examples.nistgoodies.messagevalve.SipMessageValve;
  * if the registered SipListener is of type SipListenerExt
  * </li>
  * 
- * <li><b>gov.nist.javax.sip.SIP_MESSAGE_VALVE= String</b> Default to null. The class name of your custom valve component.
- * An instance of this class will be created and the SIPMessageValve.processRequest/Response() methods will be called for every message
- * before any long-lived SIP Stack resources are allocated (no transactions, no dialogs). From within the processRequest callback
- * implementation you can drop messages, send a response statelessly or otherwise transform/pre-process the message before it reaches
- * the next steps of the pipeline. Similarly from processResponse() you can manipulate a response or drop it silently, but dropping
- * responses is not recommended, because the transaction already exists when the request for the response was sent.
+ * <li><b>gov.nist.javax.sip.SIP_MESSAGE_VALVE= String</b> Default to null. The class name collection of your custom valve components. The classes
+ * are separated by comma and the order will be honored later when invoking the callbacks. All instances of these classes will be created and
+ * the SIPMessageValve.processRequest/Response() methods will be called for every message before any long-lived SIP Stack resources are allocated
+ * (no transactions, no dialogs). From within the processRequest callback implementation you can drop messages, send a response statelessly or
+ * otherwise transform/pre-process the message before it reaches the next steps of the pipeline. Similarly from processResponse() you can manipulate
+ * a response or drop it silently, but dropping responses is not recommended, because the transaction already exists when the request for the response
+ * was sent.
  * </li>
  * 
  * <li><b>gov.nist.javax.sip.SIP_EVENT_INTERCEPTOR</b> Default to null. The class name of your custom interceptor object.
