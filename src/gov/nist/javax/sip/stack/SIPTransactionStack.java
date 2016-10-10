@@ -1123,7 +1123,7 @@ public abstract class SIPTransactionStack implements
                     }
                     //https://github.com/RestComm/jain-sip/issues/60
                     //Now check complementary conditions, to override selected ct, and break
-                   if (notifyMessage.getRequestURI().equals(ct.getOriginalRequest().getContactHeader().getAddress().getURI()) &&
+                   if ((ct.getOriginalRequest() != null && notifyMessage.getRequestURI().equals(ct.getOriginalRequest().getContactHeader().getAddress().getURI())) &&
                 		   (ct.getDefaultDialog() != null || ct.getDialog(dialogId) != null)){
                        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                            logger.logDebug("Tx compl conditions met." + ct);
