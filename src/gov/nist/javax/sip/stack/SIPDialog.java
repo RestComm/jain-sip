@@ -1637,13 +1637,13 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     
     
     public CSeqHeader getLastAckSentCSeq() {
-        return this.lastAckSent.getCSeq();
+        return lastAckSent != null ? lastAckSent.getCSeq() : null;
     }    
     public String getLastAckSentFromTag() {
-        return this.lastAckSent.getFromTag();
+        return lastAckSent != null ? lastAckSent.getFromTag() : null;
     }
     public String getLastAckSentDialogId() {
-        return this.lastAckSent.getDialogId();
+        return lastAckSent != null ? lastAckSent.getDialogId() : null;
     }
     
     final class ACKWrapper {
@@ -1681,6 +1681,10 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
     }    
 
+    public boolean isLastAckPresent(){
+    	return lastAckSent != null;
+    }
+    
     /**
      * 
      * @return same as callling isAckSent(-1)
