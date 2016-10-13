@@ -19,7 +19,7 @@ public class NioPipelineParserTest extends ScenarioHarness {
     private static AsserterListener listener;
     
     //TODO replace by AssertUntil
-    private static final int ASSERTION_WAIT = 100;
+    private static final int ASSERTION_WAIT = 200;
 
     public NioPipelineParserTest() {
         super("NioPipelineParserTest", true);

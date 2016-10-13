@@ -34,6 +34,7 @@ public class InviteTest extends TestCase {
 
     protected HashSet<Shootme> shootme = new HashSet<Shootme>();
 
+    private static final int TIMEOUT = 37000;
   
 
     private Proxy proxy;
@@ -91,7 +92,7 @@ public class InviteTest extends TestCase {
             
             this.shootist.sendInvite(forkCount);
             
-            Thread.sleep(35000);
+            Thread.sleep(TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
@@ -129,7 +130,7 @@ public class InviteTest extends TestCase {
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
-            Thread.sleep(35000);
+            Thread.sleep(TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
@@ -167,7 +168,7 @@ public class InviteTest extends TestCase {
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
-            Thread.sleep(35000);
+            Thread.sleep(TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
@@ -205,7 +206,7 @@ public class InviteTest extends TestCase {
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
-            Thread.sleep(35000);
+            Thread.sleep(TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
