@@ -390,7 +390,7 @@ public class UDPMessageChannel extends MessageChannel implements
             // myParser = null; // let go of the parser reference.
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 this.logger.logDebug(
-                        "Rejecting message !  " + new String(msgBytes), ex);
+                        "Rejecting message !  " + new String(msgBytes) + " " + ex.getMessage());
             }
 
             // JvB: send a 400 response for requests (except ACK)
@@ -676,7 +676,7 @@ public class UDPMessageChannel extends MessageChannel implements
             Class hdrClass, String header, String message)
             throws ParseException {
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-            logger.logDebug("Parsing Exception: " , ex);
+            logger.logDebug("Parsing Issue " + ex.getMessage());
         // Log the bad message for later reference.
         if ((hdrClass != null)
                 && (hdrClass.equals(From.class) || hdrClass.equals(To.class)

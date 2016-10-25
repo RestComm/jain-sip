@@ -2563,12 +2563,12 @@ public abstract class SIPTransactionStack implements
                     newChannel = nextProcessor
                             .createMessageChannel(targetHostPort);
                 } catch (UnknownHostException ex) {
-                    if (logger.isLoggingEnabled())
-                        logger.logException(ex);
+                    if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+                        logger.logDebug("host is not known " + targetHostPort + " " + ex.getMessage());
                     throw ex;
                 } catch (IOException e) {
-                    if (logger.isLoggingEnabled())
-                        logger.logException(e);
+                    if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+                    	logger.logDebug("host is reachable " + targetHostPort + " " + ex.getMessage());
                     // Ignore channel creation error -
                     // try next processor
                 }
