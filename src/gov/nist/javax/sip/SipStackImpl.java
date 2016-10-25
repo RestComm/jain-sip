@@ -74,6 +74,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -696,7 +697,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		super.setMessageFactory(msgFactory);
 		this.eventScanner = new EventScanner(this);
 		this.listeningPoints = new Hashtable<String, ListeningPointImpl>();
-		this.sipProviders = Collections.synchronizedList(new LinkedList<SipProviderImpl>());
+		this.sipProviders = new CopyOnWriteArrayList<SipProviderImpl>();
 		try {
 			Charset charset = Charset.forName("UTF-8");
 			if (charset == null) {
@@ -715,7 +716,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		super.reInit();
 		this.eventScanner = new EventScanner(this);
 		this.listeningPoints = new Hashtable<String, ListeningPointImpl>();
-		this.sipProviders = Collections.synchronizedList(new LinkedList<SipProviderImpl>());
+		this.sipProviders = new CopyOnWriteArrayList<SipProviderImpl>();
 		this.sipListener = null;
 		if(!getTimer().isStarted()) {			
 			String defaultTimerName = configurationProperties.getProperty("gov.nist.javax.sip.TIMER_CLASS_NAME",DefaultSipTimer.class.getName());
@@ -1802,7 +1803,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 		}
 		if(super.sipEventInterceptor != null) 
 			super.sipEventInterceptor.destroy();
-		this.sipProviders = Collections.synchronizedList(new LinkedList<SipProviderImpl>());
+		this.sipProviders = new CopyOnWriteArrayList<SipProviderImpl>();
 		this.listeningPoints = new Hashtable<String, ListeningPointImpl>();
 		/*
 		 * Check for presence of an event scanner ( may happen if stack is
