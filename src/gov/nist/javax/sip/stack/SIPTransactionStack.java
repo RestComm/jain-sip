@@ -2568,7 +2568,7 @@ public abstract class SIPTransactionStack implements
                     throw ex;
                 } catch (IOException e) {
                     if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-                    	logger.logDebug("host is reachable " + targetHostPort + " " + ex.getMessage());
+                    	logger.logDebug("host is reachable " + targetHostPort + " " + e.getMessage());
                     // Ignore channel creation error -
                     // try next processor
                 }
