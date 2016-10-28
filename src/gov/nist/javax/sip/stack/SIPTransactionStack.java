@@ -77,7 +77,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public abstract class SIPTransactionStack implements
         SIPTransactionEventListener, SIPDialogEventListener {
-	private static StackLogger logger = CommonLogger.getLogger(SIPTransactionStack.class);
+    private static StackLogger logger = CommonLogger.getLogger(SIPTransactionStack.class);
     /*
      * Number of milliseconds between timer ticks (500).
      */
@@ -113,6 +113,9 @@ public abstract class SIPTransactionStack implements
     // A set of methods that result in dialog creations.
     protected static final Set<String> dialogCreatingMethods = new HashSet<String>();
 
+    private transient Set<SIPDialogInjectionListener> dialogInjectionListeners = 
+            new HashSet<SIPDialogInjectionListener>();
+    
     // Global timer. Use this for all timer tasks.
 
     private SipTimer timer;
@@ -463,7 +466,7 @@ public abstract class SIPTransactionStack implements
             // Check if we still have a timer (it may be null after shutdown)
             if (getTimer() != null) {
                 // Register the timer task if we haven't done so
-            	// Contribution for https://github.com/Mobicents/jain-sip/issues/39
+                // Contribution for https://github.com/Mobicents/jain-sip/issues/39
                 if (threadHandle == null && getThreadAuditor() != null) {
                     // This happens only once since the thread handle is passed
                     // to the next scheduled ping timer
@@ -497,10 +500,10 @@ public abstract class SIPTransactionStack implements
 
         @Override
         public void runTask() {
-        	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-            	logger.logDebug(
+            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                logger.logDebug(
                         "Removing forked client transaction : forkId = " + forkId);
-        	}
+            }
             forkedClientTransactionTable.remove(forkId);
         }
 
@@ -974,28 +977,28 @@ public abstract class SIPTransactionStack implements
     }
 
     protected void removeMergeDialog(String mergeId) {
-		if(mergeId != null) {
-			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-				logger.logDebug("Tyring to remove Dialog from serverDialogMerge table with Merge Dialog Id " + mergeId);
-			}
-			SIPDialog sipDialog = serverDialogMergeTestTable.remove(mergeId);		
-			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG) && sipDialog != null) {
-				logger.logDebug("removed Dialog " + sipDialog + " from serverDialogMerge table with Merge Dialog Id " + mergeId);
-			}
-		}
-	}
-	
-	protected void putMergeDialog(SIPDialog sipDialog) {
-		if(sipDialog != null) {
-			String mergeId = sipDialog.getMergeId();
-			if(mergeId != null) {
-				serverDialogMergeTestTable.put(mergeId, sipDialog);
-				if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-					logger.logDebug("put Dialog " + sipDialog + " in serverDialogMerge table with Merge Dialog Id " + mergeId);
-				}
-			}
-		}
-	}
+        if(mergeId != null) {
+            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                logger.logDebug("Tyring to remove Dialog from serverDialogMerge table with Merge Dialog Id " + mergeId);
+            }
+            SIPDialog sipDialog = serverDialogMergeTestTable.remove(mergeId);        
+            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG) && sipDialog != null) {
+                logger.logDebug("removed Dialog " + sipDialog + " from serverDialogMerge table with Merge Dialog Id " + mergeId);
+            }
+        }
+    }
+    
+    protected void putMergeDialog(SIPDialog sipDialog) {
+        if(sipDialog != null) {
+            String mergeId = sipDialog.getMergeId();
+            if(mergeId != null) {
+                serverDialogMergeTestTable.put(mergeId, sipDialog);
+                if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                    logger.logDebug("put Dialog " + sipDialog + " in serverDialogMerge table with Merge Dialog Id " + mergeId);
+                }
+            }
+        }
+    }
     
     /**
      * Return the dialog for a given dialog ID. If compatibility is enabled then
@@ -1007,8 +1010,17 @@ public abstract class SIPTransactionStack implements
      */
 
     public SIPDialog getDialog(String dialogId) {
-
-        SIPDialog sipDialog = (SIPDialog) dialogTable.get(dialogId);
+        SIPDialog sipDialog = null;
+        if(dialogTable.contains(dialogId)) {
+            sipDialog = (SIPDialog) dialogTable.get(dialogId);
+        } else {
+            // Find external SIP Dialog
+            sipDialog = findSIPDialogFromInjectionListeners(dialogId);
+            // Store for next use
+            if(sipDialog != null) {
+                putDialog(sipDialog);
+            }
+        }
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug("getDialog(" + dialogId + ") : returning "
                     + sipDialog);
@@ -1017,6 +1029,20 @@ public abstract class SIPTransactionStack implements
 
     }
 
+    private SIPDialog findSIPDialogFromInjectionListeners(String dialogId) {
+        SIPDialog dialog = null;
+        synchronized (dialogInjectionListeners) {
+            for(SIPDialogInjectionListener listener : dialogInjectionListeners) {
+                SIPDialog tempDialog = listener.getExternalSIPDialog(dialogId);
+                if(tempDialog != null && tempDialog.getDialogId().equals(dialogId)) {
+                    dialog = tempDialog;
+                    // Take first valid Dialog and ignore following listener
+                    break;
+                }
+            }
+        }
+        return dialog;
+    }
     /**
      * Remove the dialog given its dialog id. This is used for dialog id
      * re-assignment only.
@@ -1029,6 +1055,26 @@ public abstract class SIPTransactionStack implements
             logger.logWarning("Silently removing dialog from table");
         }
         dialogTable.remove(dialogId);
+    }
+    
+    /**
+     * Adds a new dialog injection listener to this transaction.
+     * 
+     * @param newListener
+     *          Listener to add.
+     */
+    public void addDialogInjectionListener(SIPDialogInjectionListener newListener) {
+        dialogInjectionListeners.add(newListener);
+    }
+
+    /**
+     * Removed an dialog injection listener from this transaction.
+     * 
+     * @param oldListener
+     *          Listener to remove.
+     */
+    public void removeDialogInjectionListener(SIPDialogInjectionListener oldListener) {
+        dialogInjectionListeners.remove(oldListener);
     }
 
     /**
@@ -1103,7 +1149,7 @@ public abstract class SIPTransactionStack implements
                     logger.logDebug("eventHdr " + eventHdr);
                     logger.logDebug("ct.req.contact = " + ct.getOriginalRequestContact());
                     if (ct.getOriginalRequest() != null)
-                    	logger.logDebug("ct.req.reqURI = " + ct.getOriginalRequest().getRequestURI());
+                        logger.logDebug("ct.req.reqURI = " + ct.getOriginalRequest().getRequestURI());
                     logger.logDebug("msg.Contact= " + notifyMessage.getContactHeader());
                     logger.logDebug("msg.reqURI " + notifyMessage.getRequestURI());
                     
@@ -1119,12 +1165,12 @@ public abstract class SIPTransactionStack implements
                     }
                     if (retval == null) {
                         //take first matching tx, just in case
-                        retval = ct;                    	
+                        retval = ct;                        
                     }
                     //https://github.com/RestComm/jain-sip/issues/60
                     //Now check complementary conditions, to override selected ct, and break
                    if ((ct.getOriginalRequest() != null && notifyMessage.getRequestURI().equals(ct.getOriginalRequest().getContactHeader().getAddress().getURI())) &&
-                		   (ct.getDefaultDialog() != null || ct.getDialog(dialogId) != null)){
+                           (ct.getDefaultDialog() != null || ct.getDialog(dialogId) != null)){
                        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                            logger.logDebug("Tx compl conditions met." + ct);
                        }
@@ -1403,9 +1449,9 @@ public abstract class SIPTransactionStack implements
             if (mergedTransaction != null
                     && !mergedTransaction
                             .isMessagePartOfTransaction(sipRequest)) {
-            	if(logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
-            		logger.logDebug("Mathcing merged transaction for merge id " + mergeId + " with "+ mergedTransaction);
-            	}
+                if(logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
+                    logger.logDebug("Mathcing merged transaction for merge id " + mergeId + " with "+ mergedTransaction);
+                }
                 return true;
             }else {
                 /*
@@ -1416,9 +1462,9 @@ public abstract class SIPTransactionStack implements
                         .get(mergeId);
                 if (serverDialog != null && serverDialog.firstTransactionIsServerTransaction
                         && serverDialog.getState() == DialogState.CONFIRMED) {
-                	if(logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
-                		logger.logDebug("Mathcing merged dialog for merge id " + mergeId + " with "+ serverDialog);
-                	}
+                    if(logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
+                        logger.logDebug("Mathcing merged dialog for merge id " + mergeId + " with "+ serverDialog);
+                    }
                     return true;
                 }
             }
@@ -1514,32 +1560,32 @@ public abstract class SIPTransactionStack implements
         requestReceived.setMessageChannel(requestMessageChannel);
 
         if(sipMessageValves.size() != 0) {
-        	// https://java.net/jira/browse/JSIP-511
-        	// catching all exceptions so it doesn't make JAIN SIP to fail
-        	try {	
-        		for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
-        			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+            // https://java.net/jira/browse/JSIP-511
+            // catching all exceptions so it doesn't make JAIN SIP to fail
+            try {    
+                for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
+                    if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                         logger.logDebug(
                                 "Checking SIP message valve " + sipMessageValve + " for Request = " + requestReceived.getFirstLine());
                     }
-        			if(!sipMessageValve.processRequest(
-    	                    requestReceived, requestMessageChannel)) {
-    	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-    	                    logger.logDebug(
-    	                            "Request dropped by the SIP message valve. Request = " + requestReceived);
-    	                }
-    	                return null;
-    	            }
-        		}
-        	} catch(Exception e) {
-        		if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
+                    if(!sipMessageValve.processRequest(
+                            requestReceived, requestMessageChannel)) {
+                        if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                            logger.logDebug(
+                                    "Request dropped by the SIP message valve. Request = " + requestReceived);
+                        }
+                        return null;
+                    }
+                }
+            } catch(Exception e) {
+                if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                     logger.logError(
                             "An issue happening the valve on request " + 
-                            		requestReceived + 
-                            		" thus the message will not be processed further", e);
+                                    requestReceived + 
+                                    " thus the message will not be processed further", e);
                 }
-        		return null;
-        	}
+                return null;
+            }
         }
 
         // Transaction to handle this request
@@ -1658,28 +1704,28 @@ public abstract class SIPTransactionStack implements
         SIPClientTransaction currentTransaction;
 
         if(sipMessageValves.size() != 0) {
-        	// https://java.net/jira/browse/JSIP-511
-        	// catching all exceptions so it doesn't make JAIN SIP to fail
-        	try {
-        		for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
-        			if(!sipMessageValve.processResponse(
-    	                    responseReceived, responseMessageChannel)) {
-    	                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-    	                    logger.logDebug(
-    	                            "Response dropped by the SIP message valve. Response = " + responseReceived);
-    	                }
-    	                return null;
-    	            }
-        		}
-        	} catch(Exception e) {
-        		if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
+            // https://java.net/jira/browse/JSIP-511
+            // catching all exceptions so it doesn't make JAIN SIP to fail
+            try {
+                for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
+                    if(!sipMessageValve.processResponse(
+                            responseReceived, responseMessageChannel)) {
+                        if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                            logger.logDebug(
+                                    "Response dropped by the SIP message valve. Response = " + responseReceived);
+                        }
+                        return null;
+                    }
+                }
+            } catch(Exception e) {
+                if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                     logger.logError(
                             "An issue happening the valve on response " + 
-                            		responseReceived + 
-                            		" thus the message will not be processed further", e);
+                                    responseReceived + 
+                                    " thus the message will not be processed further", e);
                 }
-        		return null;
-        	}
+                return null;
+            }
         }
 
         String key = responseReceived.getTransactionId();
@@ -1754,7 +1800,7 @@ public abstract class SIPTransactionStack implements
                 return null;
             }
         } else {
-        	logger.logWarning(
+            logger.logWarning(
                 "Application is blocked -- could not acquire semaphore -- dropping response");
         }
 
@@ -1878,90 +1924,90 @@ public abstract class SIPTransactionStack implements
         }
         Object removed = null;
         try {
-        	if (sipTransaction instanceof SIPServerTransaction) {
-        		if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
-        			logger.logStackTrace();
-        		}
-        		String key = sipTransaction.getTransactionId();
-        		removed = serverTransactionTable.remove(key);
-        		String method = sipTransaction.getMethod();
-        		this
-        		.removePendingTransaction((SIPServerTransaction) sipTransaction);
-        		this
-        		.removeTransactionPendingAck((SIPServerTransaction) sipTransaction);
-        		if (method.equalsIgnoreCase(Request.INVITE)) {
-        			this
-        			.removeFromMergeTable((SIPServerTransaction) sipTransaction);
-        		}
-        		// Send a notification to the listener.
-        		SipProviderImpl sipProvider = (SipProviderImpl) sipTransaction
-        		.getSipProvider();
-        		if (removed != null
-        				&& sipTransaction.testAndSetTransactionTerminatedEvent()) {
-        			TransactionTerminatedEvent event = new TransactionTerminatedEvent(
-        					sipProvider, (ServerTransaction) sipTransaction);
+            if (sipTransaction instanceof SIPServerTransaction) {
+                if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG)) {
+                    logger.logStackTrace();
+                }
+                String key = sipTransaction.getTransactionId();
+                removed = serverTransactionTable.remove(key);
+                String method = sipTransaction.getMethod();
+                this
+                .removePendingTransaction((SIPServerTransaction) sipTransaction);
+                this
+                .removeTransactionPendingAck((SIPServerTransaction) sipTransaction);
+                if (method.equalsIgnoreCase(Request.INVITE)) {
+                    this
+                    .removeFromMergeTable((SIPServerTransaction) sipTransaction);
+                }
+                // Send a notification to the listener.
+                SipProviderImpl sipProvider = (SipProviderImpl) sipTransaction
+                .getSipProvider();
+                if (removed != null
+                        && sipTransaction.testAndSetTransactionTerminatedEvent()) {
+                    TransactionTerminatedEvent event = new TransactionTerminatedEvent(
+                            sipProvider, (ServerTransaction) sipTransaction);
 
-        			sipProvider.handleEvent(event, sipTransaction);
+                    sipProvider.handleEvent(event, sipTransaction);
 
-        		}
-        	} else {
+                }
+            } else {
 
-        		String key = sipTransaction.getTransactionId();
-        		removed = clientTransactionTable.remove(key);
+                String key = sipTransaction.getTransactionId();
+                removed = clientTransactionTable.remove(key);
 
-        		if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-        			logger.logDebug("REMOVED client tx " + removed + " KEY = "
-        					+ key);
+                if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                    logger.logDebug("REMOVED client tx " + removed + " KEY = "
+                            + key);
 
 
-        		}
-        		if ( removed != null ) {
-        			SIPClientTransaction clientTx = (SIPClientTransaction)removed;
-        			final String forkId = clientTx.getForkId();
-        			if (forkId != null && clientTx.isInviteTransaction()
-        					&& this.maxForkTime != 0) {
-        				if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-        	            	logger.logDebug(
-        	                        "Scheduling to remove forked client transaction : forkId = " + forkId + " in "  + this.maxForkTime + " seconds");
-        	        	}
-        				this.timer.schedule(new RemoveForkedTransactionTimerTask(
-        						forkId), this.maxForkTime * 1000);
-        				clientTx.stopExpiresTimer();
-        			}
-        		}
+                }
+                if ( removed != null ) {
+                    SIPClientTransaction clientTx = (SIPClientTransaction)removed;
+                    final String forkId = clientTx.getForkId();
+                    if (forkId != null && clientTx.isInviteTransaction()
+                            && this.maxForkTime != 0) {
+                        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                            logger.logDebug(
+                                    "Scheduling to remove forked client transaction : forkId = " + forkId + " in "  + this.maxForkTime + " seconds");
+                        }
+                        this.timer.schedule(new RemoveForkedTransactionTimerTask(
+                                forkId), this.maxForkTime * 1000);
+                        clientTx.stopExpiresTimer();
+                    }
+                }
 
-        		// Send a notification to the listener.
-        		if (removed != null
-        				&& sipTransaction.testAndSetTransactionTerminatedEvent()) {
-        			SipProviderImpl sipProvider = (SipProviderImpl) sipTransaction
-        			.getSipProvider();
-        			TransactionTerminatedEvent event = new TransactionTerminatedEvent(
-        					sipProvider, (ClientTransaction) sipTransaction);
+                // Send a notification to the listener.
+                if (removed != null
+                        && sipTransaction.testAndSetTransactionTerminatedEvent()) {
+                    SipProviderImpl sipProvider = (SipProviderImpl) sipTransaction
+                    .getSipProvider();
+                    TransactionTerminatedEvent event = new TransactionTerminatedEvent(
+                            sipProvider, (ClientTransaction) sipTransaction);
 
-        			sipProvider.handleEvent(event, sipTransaction);
-        		}
+                    sipProvider.handleEvent(event, sipTransaction);
+                }
 
-        	}
-        } finally {
-        	// http://java.net/jira/browse/JSIP-420
-        	if(removed != null) {
-            	((SIPTransaction)removed).cancelMaxTxLifeTimeTimer();
             }
-        	if ( logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-        		logger.logDebug(String.format("removeTransaction: Table size : " +
-        				" clientTransactionTable %d " +
-        				" serverTransactionTable %d " +
-        				" mergetTable %d " +
-        				" terminatedServerTransactionsPendingAck %d  " +
-        				" forkedClientTransactionTable %d " +
-        				" pendingTransactions %d " , 
-        				clientTransactionTable.size(),
-        				serverTransactionTable.size(),
-        				mergeTable.size(),
-        				terminatedServerTransactionsPendingAck.size(),
-        				forkedClientTransactionTable.size(),
-        				pendingTransactions.size()
-        		));
+        } finally {
+            // http://java.net/jira/browse/JSIP-420
+            if(removed != null) {
+                ((SIPTransaction)removed).cancelMaxTxLifeTimeTimer();
+            }
+            if ( logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+                logger.logDebug(String.format("removeTransaction: Table size : " +
+                        " clientTransactionTable %d " +
+                        " serverTransactionTable %d " +
+                        " mergetTable %d " +
+                        " terminatedServerTransactionsPendingAck %d  " +
+                        " forkedClientTransactionTable %d " +
+                        " pendingTransactions %d " , 
+                        clientTransactionTable.size(),
+                        serverTransactionTable.size(),
+                        mergeTable.size(),
+                        terminatedServerTransactionsPendingAck.size(),
+                        forkedClientTransactionTable.size(),
+                        pendingTransactions.size()
+                ));
         }
     }
 
@@ -2030,9 +2076,9 @@ public abstract class SIPTransactionStack implements
                     (SIPServerTransaction) sipTransaction);
 
         }
-    	// http://java.net/jira/browse/JSIP-420
+        // http://java.net/jira/browse/JSIP-420
         if(existingTx == null) {
-        	sipTransaction.scheduleMaxTxLifeTimeTimer();
+            sipTransaction.scheduleMaxTxLifeTimeTimer();
         }
 
     }
@@ -2077,9 +2123,9 @@ public abstract class SIPTransactionStack implements
                 logger.logDebug("removing server Tx : " + key);
             }
         }
-    	// http://java.net/jira/browse/JSIP-420
+        // http://java.net/jira/browse/JSIP-420
         if(removed != null) {
-        	((SIPTransaction)removed).cancelMaxTxLifeTimeTimer();
+            ((SIPTransaction)removed).cancelMaxTxLifeTimeTimer();
         }
     }
 
@@ -2146,7 +2192,7 @@ public abstract class SIPTransactionStack implements
         }
         
         if(selfRoutingThreadpoolExecutor != null && selfRoutingThreadpoolExecutor instanceof ExecutorService) {
-        	((ExecutorService)selfRoutingThreadpoolExecutor).shutdown();
+            ((ExecutorService)selfRoutingThreadpoolExecutor).shutdown();
         }
         selfRoutingThreadpoolExecutor = null;
 
@@ -2174,13 +2220,13 @@ public abstract class SIPTransactionStack implements
     }
     
     public void closeAllSockets() {
-    	this.ioHandler.closeAll();
-    	for(MessageProcessor p : messageProcessors) {
-    		if(p instanceof NioTcpMessageProcessor) {
-    			NioTcpMessageProcessor niop = (NioTcpMessageProcessor)p;
-    			niop.nioHandler.closeAll();
-    		}
-    	}
+        this.ioHandler.closeAll();
+        for(MessageProcessor p : messageProcessors) {
+            if(p instanceof NioTcpMessageProcessor) {
+                NioTcpMessageProcessor niop = (NioTcpMessageProcessor)p;
+                niop.nioHandler.closeAll();
+            }
+        }
     }
 
     /**
@@ -2568,7 +2614,7 @@ public abstract class SIPTransactionStack implements
                     throw ex;
                 } catch (IOException e) {
                     if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-                    	logger.logDebug("host is reachable " + targetHostPort + " " + e.getMessage());
+                        logger.logDebug("host is reachable " + targetHostPort + " " + e.getMessage());
                     // Ignore channel creation error -
                     // try next processor
                 }
@@ -3067,12 +3113,12 @@ public abstract class SIPTransactionStack implements
         String forkId = ((SIPRequest)clientTransaction.getRequest()).getForkId();
         clientTransaction.setForkId(forkId);
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-        	logger.logStackTrace();
+            logger.logStackTrace();
             logger.logDebug(
                     "Adding forked client transaction : " + clientTransaction + " branch=" + clientTransaction.getBranch() + 
                     " forkId = " + forkId + "  sipDialog = " + clientTransaction.getDefaultDialog() + 
                     " sipDialogId= " + clientTransaction.getDefaultDialog().getDialogId());
-    	}
+        }
 
         this.forkedClientTransactionTable.put(forkId, clientTransaction);
     }
@@ -3117,7 +3163,7 @@ public abstract class SIPTransactionStack implements
     }
 
     public void setPatchWebSocketHeaders(Boolean patchWebSocketHeaders) {
-    	this.patchWebSocketHeaders = patchWebSocketHeaders;
+        this.patchWebSocketHeaders = patchWebSocketHeaders;
     }
 
     public boolean isPatchWebSocketHeaders() {
@@ -3125,7 +3171,7 @@ public abstract class SIPTransactionStack implements
     }
 
     public void setPatchRport(Boolean patchRport) {
-    	this.patchRport = patchRport;
+        this.patchRport = patchRport;
     }
 
     public boolean isPatchRport() {
@@ -3215,20 +3261,20 @@ public abstract class SIPTransactionStack implements
      * @param aggressiveCleanup the aggressiveCleanup to set
      */
     public void setAggressiveCleanup(boolean aggressiveCleanup) {
-    	if(aggressiveCleanup)
-    		releaseReferencesStrategy = ReleaseReferencesStrategy.Normal;
-    	else
-    		releaseReferencesStrategy = ReleaseReferencesStrategy.None;
+        if(aggressiveCleanup)
+            releaseReferencesStrategy = ReleaseReferencesStrategy.Normal;
+        else
+            releaseReferencesStrategy = ReleaseReferencesStrategy.None;
     }
 
     /**
      * @return the aggressiveCleanup
      */
     public boolean isAggressiveCleanup() {
-    	if(releaseReferencesStrategy == releaseReferencesStrategy.None)
-    		return false;
-    	else
-    		return true;
+        if(releaseReferencesStrategy == releaseReferencesStrategy.None)
+            return false;
+        else
+            return true;
     }
 
 
@@ -3251,26 +3297,26 @@ public abstract class SIPTransactionStack implements
         return clientAuth;
     }
 
-	/**
-	 * @param threadPriority the threadPriority to set
-	 */
-	public void setThreadPriority(int threadPriority) {
-		if(threadPriority < Thread.MIN_PRIORITY)
-			throw new IllegalArgumentException("The Stack Thread Priority shouldn't be lower than Thread.MIN_PRIORITY");
-		if(threadPriority > Thread.MAX_PRIORITY)
-			throw new IllegalArgumentException("The Stack Thread Priority shouldn't be higher than Thread.MAX_PRIORITY");
-		if(logger.isLoggingEnabled(StackLogger.TRACE_INFO)) {
-			logger.logInfo("Setting Stack Thread priority to " + threadPriority);
-		}
-		this.threadPriority = threadPriority;
-	}
+    /**
+     * @param threadPriority the threadPriority to set
+     */
+    public void setThreadPriority(int threadPriority) {
+        if(threadPriority < Thread.MIN_PRIORITY)
+            throw new IllegalArgumentException("The Stack Thread Priority shouldn't be lower than Thread.MIN_PRIORITY");
+        if(threadPriority > Thread.MAX_PRIORITY)
+            throw new IllegalArgumentException("The Stack Thread Priority shouldn't be higher than Thread.MAX_PRIORITY");
+        if(logger.isLoggingEnabled(StackLogger.TRACE_INFO)) {
+            logger.logInfo("Setting Stack Thread priority to " + threadPriority);
+        }
+        this.threadPriority = threadPriority;
+    }
 
-	/**
-	 * @return the threadPriority
-	 */
-	public int getThreadPriority() {
-		return threadPriority;
-	}
+    /**
+     * @return the threadPriority
+     */
+    public int getThreadPriority() {
+        return threadPriority;
+    }
 
     public int getReliableConnectionKeepAliveTimeout() {
         return reliableConnectionKeepAliveTimeout;
@@ -3359,103 +3405,103 @@ public abstract class SIPTransactionStack implements
         return false;
     }
 
-	/**
-	 * @return the sslHandshakeTimeout
-	 */
-	public long getSslHandshakeTimeout() {
-		return sslHandshakeTimeout;
-	}
+    /**
+     * @return the sslHandshakeTimeout
+     */
+    public long getSslHandshakeTimeout() {
+        return sslHandshakeTimeout;
+    }
 
-	/**
-	 * @param sslHandshakeTimeout the sslHandshakeTimeout to set
-	 */
-	public void setSslHandshakeTimeout(long sslHandshakeTimeout) {
-		this.sslHandshakeTimeout = sslHandshakeTimeout;
-	}
+    /**
+     * @param sslHandshakeTimeout the sslHandshakeTimeout to set
+     */
+    public void setSslHandshakeTimeout(long sslHandshakeTimeout) {
+        this.sslHandshakeTimeout = sslHandshakeTimeout;
+    }
 
-	/**
-	 * @param earlyDialogTimeout the earlyDialogTimeout to set
-	 */
-	public void setEarlyDialogTimeout(int earlyDialogTimeout) {
-		this.earlyDialogTimeout = earlyDialogTimeout;
-	}
+    /**
+     * @param earlyDialogTimeout the earlyDialogTimeout to set
+     */
+    public void setEarlyDialogTimeout(int earlyDialogTimeout) {
+        this.earlyDialogTimeout = earlyDialogTimeout;
+    }
 
-	/**
-	 * @return the maxTxLifetimeInvite
-	 */
-	public int getMaxTxLifetimeInvite() {
-		return maxTxLifetimeInvite;
-	}
+    /**
+     * @return the maxTxLifetimeInvite
+     */
+    public int getMaxTxLifetimeInvite() {
+        return maxTxLifetimeInvite;
+    }
 
-	/**
-	 * @param maxTxLifetimeInvite the maxTxLifetimeInvite to set
-	 */
-	public void setMaxTxLifetimeInvite(int maxTxLifetimeInvite) {
-		this.maxTxLifetimeInvite = maxTxLifetimeInvite;
-	}
+    /**
+     * @param maxTxLifetimeInvite the maxTxLifetimeInvite to set
+     */
+    public void setMaxTxLifetimeInvite(int maxTxLifetimeInvite) {
+        this.maxTxLifetimeInvite = maxTxLifetimeInvite;
+    }
 
-	/**
-	 * @return the maxTxLifetimeNonInvite
-	 */
-	public int getMaxTxLifetimeNonInvite() {
-		return maxTxLifetimeNonInvite;
-	}
+    /**
+     * @return the maxTxLifetimeNonInvite
+     */
+    public int getMaxTxLifetimeNonInvite() {
+        return maxTxLifetimeNonInvite;
+    }
 
-	/**
-	 * @param maxTxLifetimeNonInvite the maxTxLifetimeNonInvite to set
-	 */
-	public void setMaxTxLifetimeNonInvite(int maxTxLifetimeNonInvite) {
-		this.maxTxLifetimeNonInvite = maxTxLifetimeNonInvite;
-	}
-	
-	public boolean isSslRenegotiationEnabled() {
-		return sslRenegotiationEnabled;
-	}
+    /**
+     * @param maxTxLifetimeNonInvite the maxTxLifetimeNonInvite to set
+     */
+    public void setMaxTxLifetimeNonInvite(int maxTxLifetimeNonInvite) {
+        this.maxTxLifetimeNonInvite = maxTxLifetimeNonInvite;
+    }
+    
+    public boolean isSslRenegotiationEnabled() {
+        return sslRenegotiationEnabled;
+    }
 
-	public void setSslRenegotiationEnabled(boolean sslRenegotiationEnabled) {
-		this.sslRenegotiationEnabled = sslRenegotiationEnabled;
-	}
+    public void setSslRenegotiationEnabled(boolean sslRenegotiationEnabled) {
+        this.sslRenegotiationEnabled = sslRenegotiationEnabled;
+    }
 
-	/**
-	 * @return the connectionLingerTimer
-	 */
-	public int getConnectionLingerTimer() {
-		return connectionLingerTimer;
-	}
+    /**
+     * @return the connectionLingerTimer
+     */
+    public int getConnectionLingerTimer() {
+        return connectionLingerTimer;
+    }
 
-	/**
-	 * @param connectionLingerTimer the connectionLingerTimer to set
-	 */
-	public void setConnectionLingerTimer(int connectionLingerTimer) {
-		SIPTransactionStack.connectionLingerTimer = connectionLingerTimer;
-	}
+    /**
+     * @param connectionLingerTimer the connectionLingerTimer to set
+     */
+    public void setConnectionLingerTimer(int connectionLingerTimer) {
+        SIPTransactionStack.connectionLingerTimer = connectionLingerTimer;
+    }
 
-	/**
-	 * @return the stackCongestionControlTimeout
-	 */
-	public int getStackCongestionControlTimeout() {
-		return stackCongestionControlTimeout;
-	}
+    /**
+     * @return the stackCongestionControlTimeout
+     */
+    public int getStackCongestionControlTimeout() {
+        return stackCongestionControlTimeout;
+    }
 
-	/**
-	 * @param stackCongestionControlTimeout the stackCongestionControlTimeout to set
-	 */
-	public void setStackCongestionControlTimeout(
-			int stackCongestionControlTimeout) {
-		this.stackCongestionControlTimeout = stackCongestionControlTimeout;
-	}
+    /**
+     * @param stackCongestionControlTimeout the stackCongestionControlTimeout to set
+     */
+    public void setStackCongestionControlTimeout(
+            int stackCongestionControlTimeout) {
+        this.stackCongestionControlTimeout = stackCongestionControlTimeout;
+    }
 
-	/**
-	 * @return the releaseReferencesStrategy
-	 */
-	public ReleaseReferencesStrategy getReleaseReferencesStrategy() {
-		return releaseReferencesStrategy;
-	}
+    /**
+     * @return the releaseReferencesStrategy
+     */
+    public ReleaseReferencesStrategy getReleaseReferencesStrategy() {
+        return releaseReferencesStrategy;
+    }
 
-	/**
-	 * @param releaseReferencesStrategy the releaseReferencesStrategy to set
-	 */
-	public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferencesStrategy) {
-		this.releaseReferencesStrategy = releaseReferencesStrategy;
-	}
+    /**
+     * @param releaseReferencesStrategy the releaseReferencesStrategy to set
+     */
+    public void setReleaseReferencesStrategy(ReleaseReferencesStrategy releaseReferencesStrategy) {
+        this.releaseReferencesStrategy = releaseReferencesStrategy;
+    }
 }
