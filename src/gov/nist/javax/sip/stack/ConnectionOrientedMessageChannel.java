@@ -622,7 +622,7 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                     try {
                         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
                             logger.logDebug(
-                                    "IOException closing sock " + ex);
+                                    "IO issue while closing socket " + ex.getMessage());
                         try {
                             if (sipStack.maxConnections != -1) {
                                 synchronized (messageProcessor) {
