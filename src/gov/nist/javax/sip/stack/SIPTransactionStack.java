@@ -113,9 +113,10 @@ public abstract class SIPTransactionStack implements
     // A set of methods that result in dialog creations.
     protected static final Set<String> dialogCreatingMethods = new HashSet<String>();
 
-    private transient Set<SIPDialogInjectionListener> dialogInjectionListeners = 
-            new HashSet<SIPDialogInjectionListener>();
     
+    
+    private transient CopyOnWriteArrayList<SIPDialogInjectionListener> dialogInjectionListeners = 
+            new CopyOnWriteArrayList<SIPDialogInjectionListener>();
     // Global timer. Use this for all timer tasks.
 
     private SipTimer timer;
@@ -1031,14 +1032,12 @@ public abstract class SIPTransactionStack implements
 
     private SIPDialog findSIPDialogFromInjectionListeners(String dialogId) {
         SIPDialog dialog = null;
-        synchronized (dialogInjectionListeners) {
-            for(SIPDialogInjectionListener listener : dialogInjectionListeners) {
-                SIPDialog tempDialog = listener.getExternalSIPDialog(dialogId);
-                if(tempDialog != null && tempDialog.getDialogId().equals(dialogId)) {
-                    dialog = tempDialog;
-                    // Take first valid Dialog and ignore following listener
-                    break;
-                }
+        for(SIPDialogInjectionListener listener : dialogInjectionListeners) {
+            SIPDialog tempDialog = listener.getExternalSIPDialog(dialogId);
+            if(tempDialog != null && tempDialog.getDialogId().equals(dialogId)) {
+                dialog = tempDialog;
+                // Take first valid Dialog and ignore following listener
+                break;
             }
         }
         return dialog;
