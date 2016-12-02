@@ -121,7 +121,7 @@ import org.apache.logging.log4j.core.Appender;
  * reporting non-obvious problems. You can also use the strings DEBUG or INFO
  * for level 32 and 16 respectively. If the value of this property is set to
  * LOG4J, then the effective log levels are determined from the log4j settings
- * file (e.g. log4j.properties). The LOG name for the stack is specified
+ * file (e.g. log4j2.properties). The LOG name for the stack is specified
  * using the gov.nist.javax.sip.LOG4J_LOGGER_NAME property. By default log4j
  * LOG name for the stack is the same as the stack name. For example, <code>
  * properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "LOG4J");

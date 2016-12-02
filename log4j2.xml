@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug" name="JAIN_SIP_LOG_CONFIG">
+    <Properties>
+        <Property name="filename">logs/debuglog.txt</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="A1">
+            <SimpleLayout/>
+        </Console>
+        <File name="A2" fileName="${filename}">
+            <SimpleLayout/>
+        </File>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="A1"/>
+        </Root>
+    </Loggers>
+</Configuration>
