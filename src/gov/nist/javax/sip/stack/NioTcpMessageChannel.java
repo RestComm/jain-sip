@@ -129,7 +129,8 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 
 			try {
 				if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-					logger.logDebug("IOException  closing sock " + ex + "myAddress:myport " + myAddress + ":" + myPort + ", remoteAddress:remotePort " + peerAddress + ":" + peerPort);
+					logger.logDebug("I/O Issue closing sock " + ex.getMessage() + "myAddress:myport " + myAddress + ":" + myPort + ", remoteAddress:remotePort " + peerAddress + ":" + peerPort);
+					logger.logStackTrace();
 				}
 				
 				close(true, false);
@@ -137,7 +138,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 				
 			} catch (Exception ex1) {
 				if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-					logger.logDebug("Exception closing the socket " + ex1);
+					logger.logDebug("Issue closing the socket " + ex1);
 			}
 		} 
 //		catch (Exception ex) {

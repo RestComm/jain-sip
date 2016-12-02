@@ -1,5 +1,13 @@
 package test.unit.gov.nist.javax.sip.multipartmime;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Iterator;
+
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.message.Request;
+
 import gov.nist.javax.sip.header.ContentType;
 import gov.nist.javax.sip.header.HeaderFactoryExt;
 import gov.nist.javax.sip.header.HeaderFactoryImpl;
@@ -64,6 +72,82 @@ public class MultipartMimeParserTest extends TestCase {
                                          + "Content-Type: application/x-nt-epid-frag-hex;version=ssLinux-6.00.18;base=x2611\r\n"
                                          + "Content-Disposition: signal;handling=optional\r\n\r\n" + "011201\r\n" + "00:1b:ba:fd:3d:0f\r\n"
                                          + "--unique-boundary-1\r\n";
+  
+  private static final String usnistgovissue16 = 
+			"--unique-boundary-1\n\r" +
+			"Content-Type: application/sdp\n\r" +
+			"\n\r" +
+			"v=0\n\r" +
+			"o=- 999999 999999 IN IP4 99.99.99.99\n\r" +
+			"s=-\n\r" +
+			"c=IN IP4 99.99.99.99\n\r" +
+			"t=0 0\n\r" +
+			"m=audio 99999 RTP/AVP 0 101\n\r" +
+			"a=rtpmap:0 PCMU/8000\n\r" +
+			"a=rtpmap:101 telephone-event/8000\n\r" +
+			"a=fmtp:101 0-15\n\r" +
+			"a=maxptime:20\n\r" +
+			"a=label:3199936\n\r" +
+			"a=inactive\n\r" +
+			"m=audio 0 RTP/AVP 0 101\n\r" +
+			"a=rtpmap:0 PCMU/8000\n\r" +
+			"a=rtpmap:101 telephone-event/8000\n\r" +
+			"a=fmtp:101 0-15\n\r" +
+			"a=maxptime:20\n\r" +
+			"a=inactive\n\r" +
+			"a=label:3199937\n\r" +
+			"\n\r" +
+			"--unique-boundary-1\n\r" +
+			"Content-Type: application/rs-metadata+xml\n\r" +
+			"Content-Disposition: recording-session\n\r" +
+			"\n\r" +
+			"<?xml version='1.0' encoding='UTF-8'?>\n" +
+			"<recording xmlns='urn:ietf:params:xml:ns:recording'>\n" +
+			"\t<datamode>complete</datamode>\n" +
+			"\t<session id=\"Rs1tZH5ISWxYdbRm/2R4fA==\">\n" +
+			"\t\t<associate-time>2016-10-12T12:07:18</associate-time>\n" +
+			"\t\t<extensiondata xmlns:apkt=\"http://acmepacket.com/siprec/extensiondata\">\n" +
+			"\t\t\t<apkt:ucid>00FA08XXXXXXXXXXXXXXXX;encoding=hex</apkt:ucid>\n" +
+			"\t\t\t<apkt:callerOrig>true</apkt:callerOrig>\n" +
+			"\t\t</extensiondata>\n" +
+			"\t</session>\n" +
+			"\t<participant id=\"nN+uOmP7TNBKfStkgTAKlw==\" session=\"Rs1tZH5ISWxYdbRm/2R4fA==\">\n" +
+			"\t\t<nameID aor=\"sip:9999999999@999.999.99.999\">\n" +
+			"\t\t\t<name>&quot;XXXXXXXXXXXXXXX&quot;</name>\n" +
+			"\t\t</nameID>\n" +
+			"\t\t<send>GjCvWYoEQh9zN9TsyCVl/w==</send>\n" +
+			"\t\t<associate-time>2016-10-12T12:07:18</associate-time>\n" +
+			"\t\t<extensiondata xmlns:apkt=\"http://acmepacket.com/siprec/extensiondata\">\n" +
+			"\t\t\t<apkt:callingParty>true</apkt:callingParty>\n" +
+			"\t\t\t<apkt:request-uri>sip:9999999999@99.99.999.999:5060</apkt:request-uri>\n" +
+			"\t\t\t<apkt:realm>outsideXO</apkt:realm>\n" +
+			"\t\t\t<apkt:header label=\"From\">\n" +
+			"\t\t\t\t<value>&quot;XXXXXXXXXXXXXXX&quot; &lt;sip:9999999999@999.999.99.999:5060;pstn-params=9999999999&gt;;tag=xxxxxxxxxx</value>\n" +
+			"\t\t\t</apkt:header>\n" +
+			"\t\t\t<apkt:header label=\"To\">\n" +
+			"\t\t\t\t<value>&lt;sip:9999999999@99.99.999.999:5060&gt;</value>\n" +
+			"\t\t\t</apkt:header>\n" +
+			"\t\t\t<apkt:header label=\"Call-ID\">\n" +
+			"\t\t\t\t<value>999999999999999999@999.999.99.999</value>\n" +
+			"\t\t\t</apkt:header>\n" +
+			"\t\t</extensiondata>\n" +
+			"\t</participant>\n" +
+			"\t<participant id=\"xvlmDeIwSGZLYOtKGCUQvA==\" session=\"Rs1tZH5ISWxYdbRm/2R4fA==\">\n" +
+			"\t\t<nameID aor=\"sip:9999999999@99.99.999.999\">\n" +
+			"\t\t\t<name>9999999999</name>\n" +
+			"\t\t</nameID>\n" +
+			"\t\t<associate-time>2016-10-12T12:07:18</associate-time>\n" +
+			"\t\t<extensiondata xmlns:apkt=\"http://acmepacket.com/siprec/extensiondata\">\n" +
+			"\t\t\t<apkt:callingParty>false</apkt:callingParty>\n" +
+			"\t\t</extensiondata>\n" +
+			"\t</participant>\n" +
+			"\t<stream id=\"GjCvWYoEQh9zN9TsyCVl/w==\" session=\"Rs1tZH5ISWxYdbRm/2R4fA==\">\n" +
+			"\t\t<label>3199936</label>\n" +
+			"\t\t<mode>separate</mode>\n" +
+			"\t\t<associate-time>2016-10-12T12:07:18</associate-time>\n" +
+			"\t</stream>\n" +
+			"</recording>\r\n" +
+			"--unique-boundary-1--\r\n";
 
   private static String contentString2 = 
 		  "--boundary1\n"
@@ -93,6 +177,7 @@ public class MultipartMimeParserTest extends TestCase {
 										  + "<timestamp>2007-07-09T14:00:00Z</timestamp>\n"
 		   + "<status>\n"
 		    + "<gp:geopriv>\n"
+		    + "\r\n"
 		  	+ "<gp:location-info>\n"
 		  	  + "<gml:location>\n"
 		  		+ "<gml:Point srsName=\"urn:ogc:def:crs:EPSG::4326\">\n"
@@ -112,6 +197,56 @@ public class MultipartMimeParserTest extends TestCase {
 		  + "</tuple>\n"
 		  + "</presence>\n"
 		  + "--boundary1--\n";
+
+  
+  private static String simpleContentWithEmptyLine = "\n"
+    + "v=0\n"
+    + "o=IWSPM 2266426 2266426 IN IP4 10.92.9.164\n"
+    + "s=-\n"
+    + "c=IN IP4 10.92.9.164\n"
+    + "\n"
+    + "t=0 0\n"
+    + "m=audio 31956 RTP/AVP 0 8 18 101\n"
+    + "a=ptime:20\n"
+    + "a=rtpmap:101 telephone-event/8000\n"
+    + "a=fmtp:101 0-15\n"
+    + "\n";
+  
+  private static String multipartContentWithEmptyLine = "\n"
+    + "--boundary1\n"
+    + "Content-Type: message/sip\n"
+    + "\n"
+    + "INVITE sip:bob@biloxi.com SIP/2.0\n"
+    + "Via: SIP/2.0/UDP pc33.atlanta.com;branch=z9hG4bKnashds8\n"
+    + "To: Bob <bob@biloxi.com>\n"
+    + "From: Alice <alice@atlanta.com>;tag=1928301774\n"
+    + "Call-ID: a84b4c76e66710\n"
+    + "CSeq: 314159 INVITE\n"
+    + "Max-Forwards: 70\n"
+    + "Date: Thu, 21 Feb 2002 13:02:03 GMT\n"
+    + "Contact: <sip:alice@pc33.atlanta.com>\n"
+    + "Content-Type: application/sdp\n"
+    + "Content-Length: 147\n"
+    + "\n"
+    + "v=0\n"
+    + "o=UserA 2890844526 2890844526 IN IP4 here.com\n"
+    + "s=Session SDP\n"
+    + "c=IN IP4 pc33.atlanta.com\n"
+    + "t=0 0\n"
+    + "m=audio 49172 RTP/AVP 0\n"
+    + "a=rtpmap:0 PCMU/8000\n"
+    + "\n"
+    + "--boundary1\n"
+    + "Content-Type: application/pkcs7-signature; name=smime.p7s\n"
+    + "Content-Transfer-Encoding: base64\n"
+    + "Content-Disposition: attachment; filename=smime.p7s; handling=required\n"
+    + "\n"
+    + "ghyHhHUujhJhjH77n8HHGTrfvbnj756tbB9HG4VQpfyF467GhIGfHfYT6\n"
+    + "4VQpfyF467GhIGfHfYT6jH77n8HHGghyHhHUujhJh756tbB9HGTrfvbnj\n"
+    + "n8HHGTrfvhJhjH776tbB9HG4VQbnj7567GhIGfHfYT6ghyHhHUujpfyF4\n"
+    + "7GhIGfHfYT64VQbnj756\n"
+    + "\n"
+    + "--boundary1--\n";
 
   
   private static String messageString = "INVITE sip:user2@server2.com SIP/2.0\r\n"
@@ -213,6 +348,7 @@ public class MultipartMimeParserTest extends TestCase {
     byte[] content = contentString2.getBytes("UTF-8");
     ContentType contentType = new ContentType("multipart", "mixed");
     contentType.setParameter("boundary", "boundary1");
+    
     request.setContent(content, contentType);
     MultipartMimeContent multipartMimeContent = request.getMultipartMimeContent();
     checkMultiPart(multipartMimeContent);
@@ -222,6 +358,53 @@ public class MultipartMimeParserTest extends TestCase {
     request.setContent(bodyContent, contentType);
     MultipartMimeContent multipartMimeContent2 = request.getMultipartMimeContent();
     checkMultiPart(multipartMimeContent2);
+  }
+  
+  public void testMultiPartMimeMarshallingAndUnMarshallingWithExtraHeadersAndSpaces() throws Exception {
+    SIPRequest request = new SIPRequest();
+    byte[] content = multipartContentWithEmptyLine.getBytes("UTF-8");
+    ContentType contentType = new ContentType("multipart", "mixed");
+    contentType.setParameter("boundary", "boundary1");
+    
+    request.setContent(content, contentType);
+    MultipartMimeContent multipartMimeContent = request.getMultipartMimeContent();
+    checkMultiPartWithSpaces(multipartMimeContent);
+    
+    // let's now marshall back the body and reparse it to check consistency
+    String bodyContent = multipartMimeContent.toString();
+    request.setContent(bodyContent, contentType);
+    MultipartMimeContent multipartMimeContent2 = request.getMultipartMimeContent();
+    checkMultiPartWithSpaces(multipartMimeContent2);
+  }
+  
+  public void testMultiParUsnistgovtIssue16() throws Exception {
+	    SIPRequest request = new SIPRequest();
+	    byte[] content = usnistgovissue16.getBytes("UTF-8");
+	    ContentType contentType = new ContentType("multipart", "mixed");
+	    contentType.setParameter("boundary", "unique-boundary-1");
+	    
+	    request.setContent(content, contentType);
+	    MultipartMimeContent multipartMimeContent = request.getMultipartMimeContent();
+	    Iterator<Content> partContentIterator = multipartMimeContent.getContents();
+	    Content part1 = partContentIterator.next();
+	    Content part2 = partContentIterator.next();
+	    assertEquals("application/rs-metadata+xml", ((ContentType) part2.getContentTypeHeader()).getValue());
+	  }
+  
+  public void testMultiPartMimeMarshallingAndUnMarshallingWithANonMultiPartBodyWithAnEmptyLine() throws Exception {
+    SIPRequest request = new SIPRequest();
+    byte[] content = simpleContentWithEmptyLine.getBytes("UTF-8");
+    ContentType contentType = new ContentType("application", "sdp");
+    request.setContent(content, contentType);
+    MultipartMimeContent multipartMimeContent = request.getMultipartMimeContent();
+    checkSimpleBody(multipartMimeContent);
+    
+    // let's now marshall back the body and reparse it to check consistency
+    // we just want the content, not the boundaries (which are null)
+    String bodyContent = multipartMimeContent.getContents().next().getContent().toString();
+    request.setContent(bodyContent, contentType);
+    MultipartMimeContent multipartMimeContent2 = request.getMultipartMimeContent();
+    checkSimpleBody(multipartMimeContent2);
   }
 
   private void checkMultiPart(MultipartMimeContent multipartMimeContent) {
@@ -241,6 +424,37 @@ public class MultipartMimeParserTest extends TestCase {
     assertNotNull(sdpPart.getContent());
   }
 
+  
+  private void checkMultiPartWithSpaces(MultipartMimeContent multipartMimeContent) {
+    Iterator<Content> partContentIterator = multipartMimeContent.getContents();
+    Content part1 = partContentIterator.next();
+    Content part2 = partContentIterator.next();
+
+    assertEquals("message/sip", ((ContentType) part1.getContentTypeHeader()).getValue());
+    assertFalse(part1.getExtensionHeaders().hasNext());
+    assertNotNull(part1.getContent());
+
+    assertEquals("application/pkcs7-signature;name=smime.p7s", ((ContentType) part2.getContentTypeHeader()).getValue());
+    assertTrue(part2.getExtensionHeaders().hasNext());
+    assertEquals("ghyHhHUujhJhjH77n8HHGTrfvbnj756tbB9HG4VQpfyF467GhIGfHfYT6\n"
+                 + "4VQpfyF467GhIGfHfYT6jH77n8HHGghyHhHUujhJh756tbB9HGTrfvbnj\n"
+                 + "n8HHGTrfvhJhjH776tbB9HG4VQbnj7567GhIGfHfYT6ghyHhHUujpfyF4\n"
+                 + "7GhIGfHfYT64VQbnj756\n", part2.getContent());
+    
+  }
+  
+
+  private void checkSimpleBody(MultipartMimeContent multipartMimeContent) {
+    Iterator<Content> partContentIterator = multipartMimeContent.getContents();
+    Content sdpPart = partContentIterator.next();
+    
+    assertEquals("application/sdp", ((ContentType) sdpPart.getContentTypeHeader()).getValue());
+    assertFalse(sdpPart.getExtensionHeaders().hasNext());
+    
+    assertNotNull(sdpPart.getContent());
+    assertFalse(partContentIterator.hasNext());
+  }
+  
   private byte[] toByteArray(InputStream input) throws IOException {
     ByteArrayOutputStream output = new ByteArrayOutputStream();
     byte[] buffer = new byte[1024];

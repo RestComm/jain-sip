@@ -135,7 +135,7 @@ public class NioPipelineParser {
             	// https://java.net/jira/browse/JSIP-499 move the ParseException here so the finally block 
             	// is called, the semaphore released and map cleaned up if need be
             	if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-            		logger.logDebug("Problem parsing message " + unparsedMessage, e);
+            		logger.logDebug("Problem parsing message " + unparsedMessage + " " + e.getMessage());
             	}
     		}catch (Exception e) {
             	logger.logError("Error occured processing message " + message, e);
@@ -286,9 +286,8 @@ public class NioPipelineParser {
                         sipMessage = smp.parseSIPMessage(msgBytes, false, false, null);
 						sipMessage.setMessageContent(msgBodyBytes);
 					} catch (ParseException e) {
-						if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-		            		logger.logDebug("Parsing problem", e);
-		            	}
+						this.logger.logDebug(
+		                        "Parsing issue !  " + new String(msgLines.getBytes("UTF-8")) + " " + e.getMessage());
 					}
 				
 				this.contentLength = 0;

@@ -753,10 +753,15 @@ public class SipProviderImpl implements javax.sip.SipProvider, gov.nist.javax.si
                                 + hop.toString());
             }
         } catch (IOException ex) {
-            if (logger.isLoggingEnabled()) {
-                logger.logException(ex);
-            }
+        	// not needed as we throw the exception below and it pollutes the logs
+//            if (logger.isLoggingEnabled()) {
+//                logger.logException(ex);
+//            }
 
+        	if (logger.isLoggingEnabled(LogLevels.TRACE_DEBUG) ) {
+        		logger.logDebug("Could not create a message channel for " + hop.toString() + " listeningPoints = " + this.listeningPoints + " because of an IO issue " + ex.getMessage());
+            }
+        	
             throw new SipException(
                     "IO Exception occured while Sending Request", ex);
 
