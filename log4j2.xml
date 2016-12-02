@@ -5,17 +5,20 @@
     </Properties>
 
     <Appenders>
-        <Console name="A1">
-            <SimpleLayout/>
+        <Console name="Console">
+            <PatternLayout pattern="%d [%-6p] %c - %m%n"/>
         </Console>
-        <File name="A2" fileName="${filename}">
-            <SimpleLayout/>
+        <File name="File" fileName="${filename}">
+            <PatternLayout pattern="%d [%-6p] %c - %m%n"/>
         </File>
+        <Async name="Async">
+            <AppenderRef ref="File"/>
+        </Async>
     </Appenders>
 
     <Loggers>
         <Root level="info">
-            <AppenderRef ref="A1"/>
+            <AppenderRef ref="Console"/>
         </Root>
     </Loggers>
 </Configuration>
