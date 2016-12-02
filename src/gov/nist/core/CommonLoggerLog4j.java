@@ -38,7 +38,7 @@ import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configuration;
 
 /**
- * A wrapper around log4j that is used for logging debug and errors. You can
+ * A wrapper around log4j2 that is used for logging debug and errors. You can
  * replace this file if you want to change the way in which messages are logged.
  *
  * @version 1.0
@@ -103,7 +103,7 @@ public class CommonLoggerLog4j implements StackLogger {
      * This is useful for the case when you want to log to
      * a different log stream than a file.
      *
-     * @param appender the log4j appender to add
+     * @param appender the log4j2 appender to add
      */
     public void addAppender(Appender appender) {
         final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);

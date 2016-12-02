@@ -110,8 +110,8 @@ import org.apache.logging.log4j.core.Appender;
  * <b> Use of this property is still supported but deprecated. Please use
  * gov.nist.javax.sip.STACK_LOGGER and gov.nist.javax.sip.SERVER_LOGGER for
  * integration with logging frameworks and for custom formatting of log records.
- * </b> This property is used by the built in log4j based LOG. You can use
- * the standard log4j level names here (i.e. ERROR, INFO, WARNING, OFF, DEBUG,
+ * </b> This property is used by the built in log4j2 based LOG. You can use
+ * the standard log4j2 level names here (i.e. ERROR, INFO, WARNING, OFF, DEBUG,
  * TRACE) If this is set to INFO or above, then incoming valid messages are
  * logged in SERVER_LOG. If you set this to 32 and specify a DEBUG_LOG then vast
  * amounts of trace information will be dumped in to the specified DEBUG_LOG.
@@ -120,7 +120,7 @@ import org.apache.logging.log4j.core.Appender;
  * viewer tool .</a> Please send us both the server log and debug log when
  * reporting non-obvious problems. You can also use the strings DEBUG or INFO
  * for level 32 and 16 respectively. If the value of this property is set to
- * LOG4J, then the effective log levels are determined from the log4j settings
+ * LOG4J, then the effective log levels are determined from the log4j2 settings
  * file (e.g. log4j2.properties). The LOG name for the stack is specified
  * using the gov.nist.javax.sip.LOG4J_LOGGER_NAME property. By default log4j
  * LOG name for the stack is the same as the stack name. For example, <code>
@@ -1864,7 +1864,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 	 * log format or log to something other than a file for example). This method
 	 * is will be removed May 11, 2010 or shortly there after.
 	 * 
-	 * @param appender the log4j appender to add.
+	 * @param appender the log4j2 appender to add.
 	 * @deprecated TODO: remove this method May 11, 2010.
 	 */
 	@Deprecated
@@ -1875,10 +1875,10 @@ public class SipStackImpl extends SIPTransactionStack implements
 	}
 
 	/**
-	 * Get the log4j LOG ( for log stream integration ).
+	 * Get the log4j2 LOG ( for log stream integration ).
 	 * This method will be removed May 11, 2010 or shortly there after.
 	 * 
-	 * @return  the log4j LOG.
+	 * @return  the log4j2 LOG.
 	 * @deprecated TODO: This method will be removed May 11, 2010.
 	 */
 	@Deprecated

@@ -44,7 +44,7 @@ import org.apache.logging.log4j.core.config.LoggerConfig;
 import org.apache.logging.log4j.core.layout.PatternLayout;
 
 /**
- * A wrapper around log4j that is used for logging debug and errors. You can
+ * A wrapper around log4j2 that is used for logging debug and errors. You can
  * replace this file if you want to change the way in which messages are logged.
  *
  * @author M. Ranganathan <br/>
@@ -291,7 +291,7 @@ public class LogWriter implements StackLogger {
         String stackName = configurationProperties
                 .getProperty("javax.sip.STACK_NAME");
 
-        //check whether a Log4j LOG name has been
+        //check whether a Log4j2 LOG name has been
         //specified. if not, use the stack name as the default
         //LOG name.
         String category = configurationProperties
