@@ -1,11 +1,9 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Properties;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -38,17 +36,12 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DeliverNotifyBefore202Test extends TestCase {
-    private static Logger logger = Logger.getLogger(DeliverNotifyBefore202Test.class);
+    private static final Logger LOG = LogManager.getLogger(DeliverNotifyBefore202Test.class);
     private static AddressFactory addressFactory;
 
     private static MessageFactory messageFactory;
@@ -63,12 +56,6 @@ public class DeliverNotifyBefore202Test extends TestCase {
     static {
         try {
             sipFactory = SipFactory.getInstance();
-            sipFactory.setPathName("gov.nist");
-            logger.setLevel(Level.DEBUG);
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-            logger.addAppender(new FileAppender(new SimpleLayout(), "subscriberoutputlog.txt"));
-
-          
             sipFactory.setPathName("gov.nist");
             headerFactory = sipFactory.createHeaderFactory();
             addressFactory = sipFactory.createAddressFactory();
@@ -114,7 +101,7 @@ public class DeliverNotifyBefore202Test extends TestCase {
             String viaBranch = ((ViaHeader) (request.getHeaders(ViaHeader.NAME).next()))
                     .getParameter("branch");
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId + " branch ID = " + viaBranch);
 
@@ -128,16 +115,16 @@ public class DeliverNotifyBefore202Test extends TestCase {
             SipProvider provider = (SipProvider) requestEvent.getSource();
             Request notify = requestEvent.getRequest();
             try {
-                logger.info("subscriber:  got a notify count  " + this.count++);
+                LOG.info("subscriber:  got a notify count  " + this.count++);
                 if (serverTransactionId == null) {
-                    logger.info("subscriber:  null TID.");
+                    LOG.info("subscriber:  null TID.");
                     serverTransactionId = provider.getNewServerTransaction(notify);
                 }
                 Dialog dialog = serverTransactionId.getDialog();
-                logger.info("Dialog = " + dialog);
+                LOG.info("Dialog = " + dialog);
 
                 if (dialog != null) {
-                    logger.info("Dialog State = " + dialog.getState());
+                    LOG.info("Dialog State = " + dialog.getState());
                 }
 
                 Response response = messageFactory.createResponse(200, notify);
@@ -145,10 +132,10 @@ public class DeliverNotifyBefore202Test extends TestCase {
                 ContactHeader contact = (ContactHeader) contactHeader.clone();
                 ((SipURI) contact.getAddress().getURI()).setParameter("id", "sub");
                 response.addHeader(contact);
-                logger.info("Transaction State = " + serverTransactionId.getState());
+                LOG.info("Transaction State = " + serverTransactionId.getState());
                 serverTransactionId.sendResponse(response);
                 if (dialog != null) {
-                    logger.info("Dialog State = " + dialog.getState());
+                    LOG.info("Dialog State = " + dialog.getState());
                 }
                 SubscriptionStateHeader subscriptionState = (SubscriptionStateHeader) notify
                         .getHeader(SubscriptionStateHeader.NAME);
@@ -158,33 +145,33 @@ public class DeliverNotifyBefore202Test extends TestCase {
                 if (state.equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
                     dialog.delete();
                 } else {
-                    logger.info("Subscriber: state now " + state);
+                    LOG.info("Subscriber: state now " + state);
                 }
                 this.notifySeen = true;
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("Unexpected exception");
 
             }
         }
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response");
+            LOG.info("Got a response");
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id " + tid + ":\n"
+            LOG.info("Response received with client transaction id " + tid + ":\n"
                     + response.getStatusCode());
             if (tid == null) {
-                logger.info("Stray response -- dropping ");
+                LOG.info("Stray response -- dropping ");
                 return;
             }
-            logger.info("transaction state is " + tid.getState());
-            logger.info("Dialog = " + tid.getDialog());
+            LOG.info("transaction state is " + tid.getState());
+            LOG.info("Dialog = " + tid.getDialog());
             if (tid.getDialog() != null)
-                logger.info("Dialog State is " + tid.getDialog().getState());
+                LOG.info("Dialog State is " + tid.getDialog().getState());
 
         }
 
@@ -282,21 +269,21 @@ public class DeliverNotifyBefore202Test extends TestCase {
                 eventHeader.setEventId("foo");
                 request.addHeader(eventHeader);
 
-                logger.info("Subscribe Dialog = " + subscribeTid.getDialog());
+                LOG.info("Subscribe Dialog = " + subscribeTid.getDialog());
 
                 
                 // send the request out.
                 subscribeTid.sendRequest();
 
             } catch (Throwable ex) {
-                logger.info(ex.getMessage());
+                LOG.info(ex.getMessage());
                 ex.printStackTrace();
                 fail("Unexpected exception");
             }
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("io exception event recieved");
+            LOG.info("io exception event recieved");
             fail ("unexpected event -- IOException");
         }
 
@@ -305,20 +292,17 @@ public class DeliverNotifyBefore202Test extends TestCase {
         }
 
         public void processDialogTerminated(DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("dialog terminated event    recieved");
+            LOG.info("dialog terminated event    recieved");
         }
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
-            logger.info("Transaction Time out");
+            LOG.info("Transaction Time out");
             fail ("Unexpected event -- timeout");
         }
         
         public Subscriber(int notifierPort, int port) throws Exception {
             this.notifierPort = notifierPort;
             this.port = port;
-            logger.addAppender(new FileAppender(new SimpleLayout(), "subscriberoutputlog_" + port
-                    + ".txt"));
-            
             Properties properties = new Properties();
 
             properties.setProperty("javax.sip.STACK_NAME", "subscriber" + port);
@@ -330,12 +314,12 @@ public class DeliverNotifyBefore202Test extends TestCase {
             properties.setProperty("gov.nist.javax.sip.SERVER_LOG", "subscriberlog_" + port
                     + ".txt");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            logger.info("sipStack = " + sipStack);
+            LOG.info("sipStack = " + sipStack);
             this.createProvider( );
             this.udpProvider.addSipListener(this);
             
@@ -371,7 +355,7 @@ public class DeliverNotifyBefore202Test extends TestCase {
             Request request = requestEvent.getRequest();
             ServerTransaction serverTransactionId = requestEvent.getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId + " and dialog id " + requestEvent.getDialog());
 
@@ -389,12 +373,12 @@ public class DeliverNotifyBefore202Test extends TestCase {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("notifier: got an Subscribe sending OK");
-                logger.info("notifier:  " + request);
-                logger.info("notifier : dialog = " + requestEvent.getDialog());
+                LOG.info("notifier: got an Subscribe sending OK");
+                LOG.info("notifier:  " + request);
+                LOG.info("notifier : dialog = " + requestEvent.getDialog());
                 EventHeader eventHeader = (EventHeader) request.getHeader(EventHeader.NAME);
                 if (eventHeader == null) {
-                    logger.info("Cannot find event header.... dropping request.");
+                    LOG.info("Cannot find event header.... dropping request.");
                     return;
                 }
 
@@ -426,8 +410,8 @@ public class DeliverNotifyBefore202Test extends TestCase {
                     // subscribe dialogs do not terminate on bye.
                     this.dialog.terminateOnBye(false);
                     if (dialog != null) {
-                        logger.info("Dialog " + dialog);
-                        logger.info("Dialog state " + dialog.getState());
+                        LOG.info("Dialog " + dialog);
+                        LOG.info("Dialog state " + dialog.getState());
                     }
                 } else {
                     response = messageFactory.createResponse(200, request);
@@ -507,10 +491,10 @@ public class DeliverNotifyBefore202Test extends TestCase {
                  * We deliberately send the NOTIFY first before the 202 is sent.
                  */
                 ct.sendRequest();
-                logger.info("NOTIFY Branch ID "
+                LOG.info("NOTIFY Branch ID "
                         + ((ViaHeader) request.getHeader(ViaHeader.NAME)).getParameter("branch"));
-                logger.info("Dialog " + dialog);
-                logger.info("Dialog state after pending NOTIFY: " + dialog.getState());
+                LOG.info("Dialog " + dialog);
+                LOG.info("Dialog state after pending NOTIFY: " + dialog.getState());
 
                 /*
                  * Now send the NOTIFY.
@@ -542,10 +526,10 @@ public class DeliverNotifyBefore202Test extends TestCase {
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("state = " + transaction.getState());
-            logger.info("dialog = " + transaction.getDialog());
-            logger.info("dialogState = " + transaction.getDialog().getState());
-            logger.info("Transaction Time out");
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = " + transaction.getDialog().getState());
+            LOG.info("Transaction Time out");
         }
 
         public void createProvider() {
@@ -555,10 +539,10 @@ public class DeliverNotifyBefore202Test extends TestCase {
                 ListeningPoint lp = sipStack.createListeningPoint("127.0.0.1", this.port, "udp");
 
                 this.udpProvider = sipStack.createSipProvider(lp);
-                logger.info("udp provider " + udpProvider);
+                LOG.info("udp provider " + udpProvider);
 
             } catch (Exception ex) {
-                logger.info(ex.getMessage());
+                LOG.info(ex.getMessage());
                 ex.printStackTrace();
 
             }
@@ -568,9 +552,6 @@ public class DeliverNotifyBefore202Test extends TestCase {
         public Notifier(int port) throws Exception {
             this.port = port;
             Properties properties = new Properties();
-            logger.addAppender(new FileAppender(new SimpleLayout(), "notifieroutputlog_" + port
-                    + ".txt"));
-
             properties.setProperty("javax.sip.STACK_NAME", "notifier" + port);
             // You need 16 for logging traces. 32 for debug + traces.
             // Your code will limp at 32 but it is best for debugging.
@@ -580,12 +561,12 @@ public class DeliverNotifyBefore202Test extends TestCase {
             properties.setProperty("gov.nist.javax.sip.SERVER_LOG", "notifierlog_" + port
                     + ".txt");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            logger.info("sipStack = " + sipStack);
+            LOG.info("sipStack = " + sipStack);
             this.createProvider( );
             this.udpProvider.addSipListener(this);
         }

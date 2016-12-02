@@ -17,13 +17,9 @@
 *
 *
 */
-/**
- *
- */
 package test.tck.msgflow.callflows.tls;
 
 import java.util.EventObject;
-
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.RequestEvent;
@@ -32,28 +28,16 @@ import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
-
-import org.apache.log4j.Logger;
-
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
  * @author M. Ranganathan
- *
  */
 public class TlsTest extends ScenarioHarness implements SipListener {
-
 
     protected Shootist shootist;
 
     private Shootme shootme;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
 
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();
@@ -70,15 +54,15 @@ public class TlsTest extends ScenarioHarness implements SipListener {
 
         try {
             // setup TLS properties
-            System.setProperty( "javax.net.ssl.keyStore",  TlsTest.class.getResource("testkeys").getPath() );
-            System.setProperty( "javax.net.ssl.trustStore", TlsTest.class.getResource("testkeys").getPath() );
-            System.setProperty( "javax.net.ssl.keyStorePassword", "passphrase" );
-            System.setProperty( "javax.net.ssl.keyStoreType", "jks" );
+            System.setProperty("javax.net.ssl.keyStore", TlsTest.class.getResource("testkeys").getPath());
+            System.setProperty("javax.net.ssl.trustStore", TlsTest.class.getResource("testkeys").getPath());
+            System.setProperty("javax.net.ssl.keyStorePassword", "passphrase");
+            System.setProperty("javax.net.ssl.keyStoreType", "jks");
 
             this.transport = "tls";
 
             super.setUp();
-        
+
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
@@ -87,10 +71,11 @@ public class TlsTest extends ScenarioHarness implements SipListener {
             providerTable.put(shootistProvider, shootist);
             shootmeProvider.addSipListener(this);
             shootistProvider.addSipListener(this);
-             
+
             getRiProtocolObjects().start();
-            if (getTiProtocolObjects() != getRiProtocolObjects())
+            if (getTiProtocolObjects() != getRiProtocolObjects()) {
                 getTiProtocolObjects().start();
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("unexpected exception ");
@@ -107,31 +92,29 @@ public class TlsTest extends ScenarioHarness implements SipListener {
             this.shootist.checkState();
             this.shootme.checkState();
             getTiProtocolObjects().destroy();
-            if (getTiProtocolObjects() != getRiProtocolObjects())
+            if (getTiProtocolObjects() != getRiProtocolObjects()) {
                 getRiProtocolObjects().destroy();
+            }
             Thread.sleep(1000);
             this.providerTable.clear();
 
-            System.clearProperty( "javax.net.ssl.keyStore" );
-            System.clearProperty( "javax.net.ssl.trustStore" );
-            System.clearProperty( "javax.net.ssl.keyStorePassword" );
-            System.clearProperty( "javax.net.ssl.keyStoreType" );
+            System.clearProperty("javax.net.ssl.keyStore");
+            System.clearProperty("javax.net.ssl.trustStore");
+            System.clearProperty("javax.net.ssl.keyStorePassword");
+            System.clearProperty("javax.net.ssl.keyStoreType");
 
             logTestCompleted();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
     public void processRequest(RequestEvent requestEvent) {
         getSipListener(requestEvent).processRequest(requestEvent);
-
     }
 
     public void processResponse(ResponseEvent responseEvent) {
         getSipListener(responseEvent).processResponse(responseEvent);
-
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
@@ -140,21 +123,17 @@ public class TlsTest extends ScenarioHarness implements SipListener {
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
         fail("unexpected exception");
-
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
         getSipListener(transactionTerminatedEvent)
                 .processTransactionTerminated(transactionTerminatedEvent);
-
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
         getSipListener(dialogTerminatedEvent).processDialogTerminated(
                 dialogTerminatedEvent);
-
     }
-
 }

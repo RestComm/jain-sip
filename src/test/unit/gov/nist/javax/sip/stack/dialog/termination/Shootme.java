@@ -1,19 +1,28 @@
 package test.unit.gov.nist.javax.sip.stack.dialog.termination;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.ToHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 import test.tck.msgflow.callflows.ProtocolObjects;
-
-import java.text.ParseException;
-import java.util.*;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -84,16 +93,6 @@ public class Shootme implements SipListener {
     public static final String myAddress = "127.0.0.1";
 
     public static final int myPort = 5070;
-
-    private static Logger logger = Logger.getLogger(Shootme.class);
-
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
 
     public Shootme(ProtocolObjects protocolObjects) {
         this.protocolObjects = protocolObjects;

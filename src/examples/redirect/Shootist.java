@@ -1,17 +1,36 @@
 package examples.redirect;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
-import java.util.*;
-
+import java.util.ArrayList;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogState;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.TransactionState;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.Header;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.RouteHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -21,6 +40,8 @@ import junit.framework.TestCase;
  */
 
 public class Shootist extends TestCase implements SipListener {
+
+    private static final Logger LOG = LogManager.getLogger(Shootist.class);
 
     private SipProvider sipProvider;
 
@@ -54,16 +75,12 @@ public class Shootist extends TestCase implements SipListener {
 
     private SipURI requestURI;
 
-    private static Logger logger = Logger.getLogger(Shootist.class);
-
-
-
     public void processRequest(RequestEvent requestReceivedEvent) {
         Request request = requestReceivedEvent.getRequest();
         ServerTransaction serverTransactionId = requestReceivedEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + protocolObjects.sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -76,22 +93,22 @@ public class Shootist extends TestCase implements SipListener {
     public void processBye(Request request,
             ServerTransaction serverTransactionId) {
         try {
-            logger.info("shootist:  got a bye . ServerTxId = " + serverTransactionId);
+            LOG.info("shootist:  got a bye . ServerTxId = " + serverTransactionId);
             this.byeReceived  = true;
             if (serverTransactionId == null) {
-                logger.info("shootist:  null TID.");
+                LOG.info("shootist:  null TID.");
                 return;
             }
 
             Dialog dialog = serverTransactionId.getDialog();
             assertTrue(dialog == this.dialog);
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("Dialog State = " + dialog.getState());
             Response response = protocolObjects.messageFactory.createResponse(
                     200, request);
             serverTransactionId.sendResponse(response);
             this.transactionCount++;
-            logger.info("shootist:  Sending OK.");
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("shootist:  Sending OK.");
+            LOG.info("Dialog State = " + dialog.getState());
             assertTrue(serverTransactionId.getState() == TransactionState.COMPLETED);
             assertTrue(dialog.getState() == DialogState.TERMINATED);
 
@@ -103,27 +120,27 @@ public class Shootist extends TestCase implements SipListener {
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         ClientTransaction tid = responseReceivedEvent.getClientTransaction();
         CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-        logger.info("Response received : Status Code = "
+        LOG.info("Response received : Status Code = "
                 + response.getStatusCode() + " " + cseq);
         if (tid == null) {
-            logger.info("Stray response -- dropping ");
+            LOG.info("Stray response -- dropping ");
             return;
         }
-        logger.info("transaction state is " + tid.getState());
-        logger.info("Dialog = " + tid.getDialog());
-        logger.info("Dialog State is " + tid.getDialog().getState());
+        LOG.info("transaction state is " + tid.getState());
+        LOG.info("Dialog = " + tid.getDialog());
+        LOG.info("Dialog State is " + tid.getDialog().getState());
 
         try {
             if (response.getStatusCode() == Response.OK) {
-                logger.info("response = " + response);
+                LOG.info("response = " + response);
                 if (cseq.getMethod().equals(Request.INVITE)) {
                     Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                    logger.info("Sending ACK");
+                    LOG.info("Sending ACK");
                     dialog.sendAck(ackRequest);
                 }
             } else if  (response.getStatusCode() == Response.MOVED_TEMPORARILY) {
@@ -147,7 +164,7 @@ public class Shootist extends TestCase implements SipListener {
                     // we take the next cseq
                     long seqNo = (((CSeqHeader) response
                             .getHeader(CSeqHeader.NAME)).getSeqNumber());
-                    logger.info("seqNo = " + seqNo);
+                    LOG.info("seqNo = " + seqNo);
                     CSeqHeader cseqNew = protocolObjects.headerFactory
                             .createCSeqHeader(++seqNo, "INVITE");
                     // Create ViaHeaders (either use tcp or udp)
@@ -192,15 +209,15 @@ public class Shootist extends TestCase implements SipListener {
                         protocolObjects.headerFactory.createRouteHeader(chdr.getAddress());
                     invRequest.addHeader(routeHeader);
 
-                    logger.info("Sending INVITE to "
+                    LOG.info("Sending INVITE to "
                             + contHdr.getAddress().getURI().toString());
                     inviteTid = sipProvider.getNewClientTransaction(invRequest);
                     this.transactionCount++;
 
-                    logger.info("New TID = " + inviteTid);
+                    LOG.info("New TID = " + inviteTid);
                     inviteTid.sendRequest();
                     assertTrue(inviteTid.getState() == TransactionState.CALLING);
-                    logger.info("sendReqeust succeeded " + inviteTid);
+                    LOG.info("sendReqeust succeeded " + inviteTid);
                     Dialog dialog = inviteTid.getDialog();
                     assertTrue("Stack must allocate a new dialog", dialog != this.dialog);
                     this.dialogCount ++;
@@ -221,14 +238,14 @@ public class Shootist extends TestCase implements SipListener {
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
         fail("Unexpected event");
     }
 
 
 
     public SipProvider createProvider() throws Exception {
-        logger.info("Shootist: createProvider()");
+        LOG.info("Shootist: createProvider()");
         listeningPoint = protocolObjects.sipStack.createListeningPoint(
                 "127.0.0.1", myPort, protocolObjects.transport);
         this.sipProvider = protocolObjects.sipStack
@@ -375,14 +392,14 @@ public class Shootist extends TestCase implements SipListener {
 
             assertTrue(inviteTid.getState() == TransactionState.CALLING);
 
-            logger.info("client tx = " + inviteTid);
+            LOG.info("client tx = " + inviteTid);
             dialog = inviteTid.getDialog();
             this.dialogCount++;
             assertTrue(dialog != null);
             assertTrue(dialog.getState() == null);
 
         } catch (Exception ex) {
-            logger.error(ex.getMessage(),ex);
+            LOG.error(ex.getMessage(), ex);
             fail("unexpected exception");
         }
     }
@@ -395,16 +412,14 @@ public class Shootist extends TestCase implements SipListener {
 
     public static void main(String args[]) throws Exception {
         ProtocolObjects  protocolObjects = new ProtocolObjects ("shootist",true,"udp","");
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         Shootist shootist = new Shootist(protocolObjects);
         shootist.createProvider();
         shootist.sipProvider.addSipListener(shootist);
         shootist.sendInvite();
-
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("IOException happened for "
+        LOG.info("IOException happened for "
                 + exceptionEvent.getHost() + " port = "
                 + exceptionEvent.getPort());
 
@@ -412,7 +427,7 @@ public class Shootist extends TestCase implements SipListener {
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Transaction terminated event recieved for " +
+        LOG.info("Transaction terminated event recieved for " +
                 transactionTerminatedEvent.getClientTransaction());
         this.transctionTerminatedCount++;
     }

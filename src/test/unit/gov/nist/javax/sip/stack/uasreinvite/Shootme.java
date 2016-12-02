@@ -19,18 +19,30 @@
 */
 package test.unit.gov.nist.javax.sip.stack.uasreinvite;
 
-import gov.nist.javax.sip.DialogExt;
-
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
 /**
@@ -42,8 +54,9 @@ import test.tck.msgflow.callflows.ProtocolObjects;
 public class Shootme  implements SipListener {
 
 
-    private ProtocolObjects  protocolObjects;
+    private static final Logger LOG = LogManager.getLogger(Shootme.class);
 
+    private ProtocolObjects  protocolObjects;
 
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
@@ -52,22 +65,9 @@ public class Shootme  implements SipListener {
 
     private ServerTransaction inviteTid;
 
-
-    private static Logger logger = Logger.getLogger(Shootme.class);
-
-    static{
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-
-        }
-    }
-
     private Dialog dialog;
 
     private boolean okRecieved;
-
 
     private boolean ackReceived;
 
@@ -85,7 +85,7 @@ public class Shootme  implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + protocolObjects.sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -106,7 +106,7 @@ public class Shootme  implements SipListener {
             ServerTransaction serverTransaction) {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         try {
-            logger.info("shootme: got an ACK "
+            LOG.info("shootme: got an ACK "
                     + requestEvent.getRequest());
              dialog = inviteTid.getDialog();
              this.ackReceived = true;
@@ -114,7 +114,7 @@ public class Shootme  implements SipListener {
              this.sendReInvite(sipProvider);
         } catch (Exception ex) {
             String s = "Unexpected error";
-            logger.error(s,ex);
+            LOG.error(s, ex);
             ReInviteAllowInterleavingTest.fail(s);
         }
     }
@@ -126,10 +126,10 @@ public class Shootme  implements SipListener {
             ServerTransaction serverTransaction) {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
-        logger.info("Got an INVITE  " + request);
+        LOG.info("Got an INVITE  " + request);
         try {
-            logger.info("shootme: got an Invite sending OK");
-            // logger.info("shootme: " + request);
+            LOG.info("shootme: got an Invite sending OK");
+            // LOG.info("shootme: " + request);
             Response response = protocolObjects.messageFactory.createResponse(180, request);
             ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
             toHeader.setTag("4321");
@@ -142,34 +142,34 @@ public class Shootme  implements SipListener {
 
             if (st == null) {
                 st = sipProvider.getNewServerTransaction(request);
-                logger.info("Server transaction created!" + request);
+                LOG.info("Server transaction created!" + request);
 
-                logger.info("Dialog = " + st.getDialog());
+                LOG.info("Dialog = " + st.getDialog());
                 if (st.getDialog().getApplicationData() == null) {
                     st.getDialog().setApplicationData(new ApplicationData());
                 }
             } else {
                 // If Server transaction is not null, then
                 // this is a re-invite.
-                logger.info("This is a RE INVITE ");
+                LOG.info("This is a RE INVITE ");
                 ReInviteAllowInterleavingTest.assertSame("Dialog mismatch ", st.getDialog(),this.dialog);
             }
 
             // Thread.sleep(5000);
-            logger.info("got a server tranasaction " + st);
+            LOG.info("got a server tranasaction " + st);
             byte[] content = request.getRawContent();
             if (content != null) {
-                logger.info(" content = " + new String(content));
+                LOG.info(" content = " + new String(content));
                 ContentTypeHeader contentTypeHeader = protocolObjects.headerFactory
                         .createContentTypeHeader("application", "sdp");
-                logger.info("response = " + response);
+                LOG.info("response = " + response);
                 response.setContent(content, contentTypeHeader);
             }
             dialog = st.getDialog();
             
             if (dialog != null) {
-                logger.info("Dialog " + dialog);
-                logger.info("Dialog state " + dialog.getState());
+                LOG.info("Dialog " + dialog);
+                LOG.info("Dialog state " + dialog.getState());
             }
             st.sendResponse(response);
             response = protocolObjects.messageFactory.createResponse(200, request);
@@ -178,12 +178,12 @@ public class Shootme  implements SipListener {
             // Application is supposed to set.
             response.addHeader(contactHeader);
             st.sendResponse(response);
-            logger.info("TxState after sendResponse = " + st.getState());
+            LOG.info("TxState after sendResponse = " + st.getState());
             this.inviteTid = st;
         } catch (Exception ex) {
             String s = "unexpected exception";
 
-            logger.error(s,ex);
+            LOG.error(s, ex);
             ReInviteAllowInterleavingTest.fail(s);
         }
     }
@@ -214,31 +214,31 @@ public class Shootme  implements SipListener {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme:  got a bye sending OK.");
+            LOG.info("shootme:  got a bye sending OK.");
             Response response = protocolObjects.messageFactory.createResponse(200, request);
             if (serverTransactionId != null) {
                 serverTransactionId.sendResponse(response);
-                logger.info("Dialog State is "
+                LOG.info("Dialog State is "
                         + serverTransactionId.getDialog().getState());
             } else {
-                logger.info("null server tx.");
+                LOG.info("null server tx.");
                 // sipProvider.sendResponse(response);
             }
 
         } catch (Exception ex) {
             String s = "Unexpected exception";
-            logger.error(s,ex);
+            LOG.error(s, ex);
             ReInviteAllowInterleavingTest.fail(s);
 
         }
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         Transaction tid = responseReceivedEvent.getClientTransaction();
 
-        logger.info("Response received with client transaction id "
+        LOG.info("Response received with client transaction id "
                 + tid + ":\n" + response);
         try {
             if (response.getStatusCode() == Response.OK
@@ -253,13 +253,13 @@ public class Shootme  implements SipListener {
             }
             if ( tid != null ) {
                 Dialog dialog = tid.getDialog();
-                logger.info("Dalog State = " + dialog.getState());          
+                LOG.info("Dalog State = " + dialog.getState());
             }
         } catch (Exception ex) {
 
             String s = "Unexpected exception";
 
-            logger.error(s,ex);
+            LOG.error(s, ex);
             ReInviteAllowInterleavingTest.fail(s);
         }
 
@@ -272,11 +272,11 @@ public class Shootme  implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("dialog = " + transaction.getDialog());
-        logger.info("dialogState = "
+        LOG.info("state = " + transaction.getState());
+        LOG.info("dialog = " + transaction.getDialog());
+        LOG.info("dialogState = "
                 + transaction.getDialog().getState());
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
 
@@ -293,7 +293,6 @@ public class Shootme  implements SipListener {
 
 
     public static void main(String args[]) throws Exception {
-        logger.addAppender( new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects protocolObjects = new ProtocolObjects("shootme", "gov.nist","udp",true,false, false);
 
         Shootme shootme = new Shootme(protocolObjects);
@@ -312,7 +311,7 @@ public class Shootme  implements SipListener {
      * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
      */
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.error("An IO Exception was detected : "
+        LOG.error("An IO Exception was detected : "
                 + exceptionEvent.getHost());
 
     }
@@ -324,7 +323,7 @@ public class Shootme  implements SipListener {
      */
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Tx terminated event ");
+        LOG.info("Tx terminated event ");
 
     }
 
@@ -335,7 +334,7 @@ public class Shootme  implements SipListener {
      */
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("Dialog terminated event detected ");
+        LOG.info("Dialog terminated event detected ");
 
     }
 

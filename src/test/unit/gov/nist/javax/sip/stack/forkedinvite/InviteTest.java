@@ -4,16 +4,10 @@
 package test.unit.gov.nist.javax.sip.stack.forkedinvite;
 
 import java.util.HashSet;
-
 import javax.sip.SipProvider;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author M. Ranganathan
@@ -21,11 +15,9 @@ import org.apache.log4j.SimpleLayout;
  */
 public class InviteTest extends TestCase {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    protected static final Appender console = new ConsoleAppender(new SimpleLayout());
 
     private static int forkCount = 2;
     
@@ -38,8 +30,6 @@ public class InviteTest extends TestCase {
   
 
     private Proxy proxy;
-
-    // private Appender appender;
 
     public InviteTest() {
 
@@ -63,7 +53,7 @@ public class InviteTest extends TestCase {
             
         } catch (Exception ex) {
             ex.printStackTrace();
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
     }
@@ -88,7 +78,7 @@ public class InviteTest extends TestCase {
             this.proxy = new Proxy(5070,forkCount);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
-            logger.debug("setup completed");
+            LOG.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
             
@@ -127,7 +117,7 @@ public class InviteTest extends TestCase {
             this.proxy = new Proxy(5070,forkCount);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
-            logger.debug("setup completed");
+            LOG.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
             Thread.sleep(TIMEOUT);
@@ -165,7 +155,7 @@ public class InviteTest extends TestCase {
             this.proxy = new Proxy(5070,forkCount);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
-            logger.debug("setup completed");
+            LOG.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
             Thread.sleep(TIMEOUT);
@@ -203,7 +193,7 @@ public class InviteTest extends TestCase {
             this.proxy = new Proxy(5070,forkCount);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
-            logger.debug("setup completed");
+            LOG.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
             Thread.sleep(TIMEOUT);
@@ -247,7 +237,7 @@ public class InviteTest extends TestCase {
             this.proxy = new Proxy(5070,forkCount);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
-            logger.debug("setup completed");
+            LOG.debug("setup completed");
             
             this.shootist.sendInvite(0);
             Thread.sleep(35000);

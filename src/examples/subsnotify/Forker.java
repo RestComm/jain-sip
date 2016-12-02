@@ -1,20 +1,43 @@
 package examples.subsnotify;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
 import java.text.ParseException;
-
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Properties;
+import javax.sip.ClientTransaction;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.InvalidArgumentException;
+import javax.sip.ListeningPoint;
+import javax.sip.PeerUnavailableException;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipException;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionState;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.RecordRouteHeader;
+import javax.sip.header.RouteHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Message;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.appender.FileAppender;
 
 /**
  * This implements a simple forking proxy to test proper handling of multiple
@@ -30,6 +53,8 @@ import java.util.*;
  */
 
 public class Forker implements SipListener {
+
+    private static final Logger LOG = LogManager.getLogger(Forker.class);
 
     private static AddressFactory addressFactory;
 
@@ -48,24 +73,12 @@ public class Forker implements SipListener {
      */
     private static boolean nonRFC3261Proxy;
 
-    private static Logger logger = Logger.getLogger(Forker.class);
-    static {
-        try {
-            logger.setLevel(Level.INFO);
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "forkeroutputlog.txt"));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     private static final String usageString = "java "
             + "examples.subsnotify.Forker \n"
             + ">>>> is your class path set to the root?";
 
     private static void usage() {
-        logger.info(usageString);
+        LOG.info(usageString);
         System.exit(0);
 
     }
@@ -89,7 +102,7 @@ public class Forker implements SipListener {
         Request request = re.getRequest();
         ServerTransaction st = re.getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + sipStack.getStackName()
                 + " with server transaction id " + st);
 
@@ -100,7 +113,7 @@ public class Forker implements SipListener {
                                                                         // of
                                                                         // Record-Routing
 
-                logger.info( "Got NOTIFY, forwarding statelessly...");
+                LOG.info("Got NOTIFY, forwarding statelessly...");
 
                 // Forward it without creating a transaction
 
@@ -127,12 +140,12 @@ public class Forker implements SipListener {
     public void processSubscribe( RequestEvent re, ServerTransaction st) {
         Request request = re.getRequest();
         try {
-            logger.info("forker: got an Subscribe -> forking or forwarding");
+            LOG.info("forker: got an Subscribe -> forking or forwarding");
 
             // Check if it is in-dialog or not
             ToHeader to = (ToHeader) request.getHeader(ToHeader.NAME);
             if (to.getTag()==null) {
-                logger.info("forker: got a dialog-creating Subscribe forking twice");
+                LOG.info("forker: got a dialog-creating Subscribe forking twice");
 
                 if (st==null) {
                     st = ((SipProvider)re.getSource()).getNewServerTransaction(request);
@@ -221,25 +234,25 @@ public class Forker implements SipListener {
         // Internally a dialog is created for the SUBSCRIBE, unless dialog support
         // is switched off (see initialization)
         if (st!=null) {
-            logger.info( "Would like to forward statelessly, but ST!=null! Problem...");
-            logger.info("st == " + st);
+            LOG.info("Would like to forward statelessly, but ST!=null! Problem...");
+            LOG.info("st == " + st);
 
         }
         udpProvider.sendRequest( orig );
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         ClientTransaction ct = responseReceivedEvent.getClientTransaction();
 
-        logger.info("Dialog = " + responseReceivedEvent.getDialog());
+        LOG.info("Dialog = " + responseReceivedEvent.getDialog());
 
-        logger.info("Response received with client transaction id "
+        LOG.info("Response received with client transaction id "
                 + ct + ": " + response.getStatusCode() );
 
         if (ct==null) {
-            logger.info( "Assuming NOTIFY response, forwarding...");
+            LOG.info("Assuming NOTIFY response, forwarding...");
             // NOTIFYs are forwarded without transaction, do the same for their
             // responses
             response.removeFirst( ViaHeader.NAME );
@@ -263,12 +276,12 @@ public class Forker implements SipListener {
                             e.printStackTrace();
                         }
                     } else {
-                        logger.info( "Discarding second response" );
+                        LOG.info("Discarding second response" );
                     }
                     CTtoST.remove( ct );
                 }
             } else {
-                logger.info( "No ST found");
+                LOG.info("No ST found");
             }
         }
     }
@@ -280,8 +293,8 @@ public class Forker implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("Transaction Time out");
+        LOG.info("state = " + transaction.getState());
+        LOG.info("Transaction Time out");
     }
 
     private static void initFactories () {
@@ -308,7 +321,7 @@ public class Forker implements SipListener {
         try {
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            logger.info("sipStack = " + sipStack);
+            LOG.info("sipStack = " + sipStack);
         } catch (PeerUnavailableException e) {
             // could not find
             // gov.nist.jain.protocol.ip.sip.SipStackImpl
@@ -336,10 +349,10 @@ public class Forker implements SipListener {
             ListeningPoint lp = sipStack.createListeningPoint("127.0.0.1", 5065, "udp");
 
             this.udpProvider = sipStack.createSipProvider(lp);
-            logger.info("udp provider " + udpProvider);
+            LOG.info("udp provider " + udpProvider);
 
         } catch (Exception ex) {
-            logger.error(ex.getMessage());
+            LOG.error(ex.getMessage());
             ex.printStackTrace();
             usage();
         }

@@ -455,7 +455,7 @@ public abstract class SIPTransactionStack implements
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return null;
         }         
 
@@ -491,7 +491,7 @@ public abstract class SIPTransactionStack implements
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return null;
         }         
 
@@ -2234,10 +2234,10 @@ public abstract class SIPTransactionStack implements
     }
 
     /**
-     * Get the logger. This method should be deprected.
-     * Use static logger = CommonLogger.getLogger() instead
+     * Get the LOG. This method should be deprected.
+     * Use static LOG = CommonLogger.getLogger() instead
      *
-     * @return --the logger for the sip stack. Each stack has its own logger
+     * @return --the LOG for the sip stack. Each stack has its own LOG
      *         instance.
      */
     @Deprecated
@@ -2632,7 +2632,7 @@ public abstract class SIPTransactionStack implements
     }
 
     /**
-     * Set the logger factory.
+     * Set the LOG factory.
      *
      * @param logRecordFactory
      *            -- the log record factory to set.

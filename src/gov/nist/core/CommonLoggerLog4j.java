@@ -30,10 +30,12 @@ package gov.nist.core;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Properties;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.config.Configuration;
 
 /**
  * A wrapper around log4j that is used for logging debug and errors. You can
@@ -48,7 +50,7 @@ import org.apache.log4j.Logger;
 public class CommonLoggerLog4j implements StackLogger {
 
     /**
-     * The logger to which we will write our logging output.
+     * The LOG to which we will write our logging output.
      */
     private Logger logger;
 
@@ -87,7 +89,7 @@ public class CommonLoggerLog4j implements StackLogger {
     }
 
     /**
-     * Get the logger.
+     * Get the LOG.
      *
      * @return
      */
@@ -101,21 +103,21 @@ public class CommonLoggerLog4j implements StackLogger {
      * This is useful for the case when you want to log to
      * a different log stream than a file.
      *
-     * @param appender
+     * @param appender the log4j appender to add
      */
     public void addAppender(Appender appender) {
-
-        this.logger.addAppender(appender);
-
+        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        final Configuration config = ctx.getConfiguration();
+        appender.start();
+        config.addAppender(appender);
     }
 
     /**
      * Log an exception.
      *
-     * @param ex
+     * @param ex the throwable to log
      */
     public void logException(Throwable ex) {
-
         logger.error("Error", ex);
     }
 
@@ -209,7 +211,7 @@ public class CommonLoggerLog4j implements StackLogger {
      * @param logLevel
      */
     public boolean isLoggingEnabled(int logLevel) {
-        return logger.isEnabledFor(intToLevel(logLevel));
+        return logger.isEnabled(intToLevel(logLevel));
     }
 
 

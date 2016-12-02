@@ -19,29 +19,42 @@
 */
 package test.unit.gov.nist.javax.sip.stack.reinvitechallenge;
 
-import gov.nist.javax.sip.DialogExt;
 import gov.nist.javax.sip.SipStackExt;
-import gov.nist.javax.sip.address.SipUri;
 import gov.nist.javax.sip.clientauthutils.AuthenticationHelper;
 import gov.nist.javax.sip.clientauthutils.DigestServerAuthenticationHelper;
-
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
-import test.tck.TestHarness;
-import test.tck.msgflow.callflows.ProtocolObjects;
-
-import java.util.*;
-
+import java.util.ArrayList;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogState;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.Header;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ProxyAuthorizationHeader;
+import javax.sip.header.RouteHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import test.tck.msgflow.callflows.ProtocolObjects;
 
 /**
  * This class is a UAC template.
@@ -49,7 +62,9 @@ import junit.framework.TestCase;
  * @author M. Ranganathan
  */
 
-public class Shootist  implements SipListener {
+public class Shootist implements SipListener {
+
+    private static final Logger LOG = LogManager.getLogger(Shootist.class);
 
     private SipProvider provider;
 
@@ -82,120 +97,100 @@ public class Shootist  implements SipListener {
 
     int reInviteReceivedCount;
 
-
-    private static Logger logger = Logger.getLogger(Shootist.class);
-
-    static{
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-
-        }
-    }
-
     private ProtocolObjects protocolObjects;
 
     private Dialog dialog;
 
-
-
-
-
     public Shootist(ProtocolObjects protocolObjects) {
         super();
         this.protocolObjects = protocolObjects;
-
     }
-
-
 
     public void processRequest(RequestEvent requestReceivedEvent) {
         Request request = requestReceivedEvent.getRequest();
         ServerTransaction serverTransactionId = requestReceivedEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod() + " received at "
-                + protocolObjects.sipStack.getStackName()
-                + " with server transaction id " + serverTransactionId);
+        LOG.info("\n\nRequest " + request.getMethod() + " received at "
+                         + protocolObjects.sipStack.getStackName()
+                         + " with server transaction id " + serverTransactionId);
 
-        if (request.getMethod().equals(Request.BYE))
+        if (request.getMethod().equals(Request.BYE)) {
             processBye(request, serverTransactionId);
-        else if (request.getMethod().equals(Request.INVITE))
+        } else if (request.getMethod().equals(Request.INVITE)) {
             processInvite(request, serverTransactionId);
-        else if (request.getMethod().equals(Request.ACK))
+        } else if (request.getMethod().equals(Request.ACK)) {
             processAck(request, serverTransactionId);
-
+        }
     }
 
     public void processInvite(Request request, ServerTransaction st) {
         try {
-          if (this.reInviteCount == 0 ) {
-            Dialog dialog = st.getDialog();
-            Response response = protocolObjects.messageFactory.createResponse(
-                    Response.OK, request);
-            ((ToHeader) response.getHeader(ToHeader.NAME))
-                    .setTag(((ToHeader) request.getHeader(ToHeader.NAME))
-                            .getTag());
+            if (this.reInviteCount == 0) {
+                Dialog dialog = st.getDialog();
+                Response response = protocolObjects.messageFactory.createResponse(
+                        Response.OK, request);
+                ((ToHeader) response.getHeader(ToHeader.NAME))
+                        .setTag(((ToHeader) request.getHeader(ToHeader.NAME))
+                                        .getTag());
 
-            Address address = protocolObjects.addressFactory
-                    .createAddress("Shootme <sip:" + myAddress + ":" + myPort
-                            + ">");
-            ContactHeader contactHeader = protocolObjects.headerFactory
-                    .createContactHeader(address);
-            response.addHeader(contactHeader);
-            st.sendResponse(response);
-            ReInviteTest.assertEquals("Dialog for reinvite must match original dialog", dialog, this.dialog);
-            this.reInviteReceivedCount++;
-          } else  if ( request.getHeader(ProxyAuthorizationHeader.NAME) == null ) {
-        	  Dialog dialog = st.getDialog();
-        	       
-        	  Response response = protocolObjects.messageFactory.createResponse(
-                      Response.PROXY_AUTHENTICATION_REQUIRED, request);
-        	  ((ToHeader) response.getHeader(ToHeader.NAME))
-              .setTag(((ToHeader) request.getHeader(ToHeader.NAME))
-                      .getTag());
-        	  Address address = protocolObjects.addressFactory
-              		.createAddress("Shootme <sip:" + myAddress + ":" + myPort
-                      + ">");
-        	  ContactHeader contactHeader = protocolObjects.headerFactory
-        	  						.createContactHeader(address);
-        	  response.addHeader(contactHeader);
-        	  new DigestServerAuthenticationHelper().generateChallenge(protocolObjects.headerFactory,response,"127.0.0.1");
-        	  st.sendResponse(response);
-          } else {
-        	  if ( ! new DigestServerAuthenticationHelper().doAuthenticatePlainTextPassword(request, "password")) {
-        		  TestCase.fail("Authentication failed");
-        	  }
-        	  Response response = protocolObjects.messageFactory.createResponse(
-                      Response.OK, request);
-              ((ToHeader) response.getHeader(ToHeader.NAME))
-                      .setTag(((ToHeader) request.getHeader(ToHeader.NAME))
-                              .getTag());
+                Address address = protocolObjects.addressFactory
+                        .createAddress("Shootme <sip:" + myAddress + ":" + myPort
+                                               + ">");
+                ContactHeader contactHeader = protocolObjects.headerFactory
+                        .createContactHeader(address);
+                response.addHeader(contactHeader);
+                st.sendResponse(response);
+                ReInviteTest.assertEquals("Dialog for reinvite must match original dialog", dialog, this.dialog);
+                this.reInviteReceivedCount++;
+            } else if (request.getHeader(ProxyAuthorizationHeader.NAME) == null) {
+                Dialog dialog = st.getDialog();
 
-              Address address = protocolObjects.addressFactory
-                      .createAddress("Shootme <sip:" + myAddress + ":" + myPort
-                              + ">");
-              ContactHeader contactHeader = protocolObjects.headerFactory
-                      .createContactHeader(address);
-              response.addHeader(contactHeader);
-              st.sendResponse(response);
-              ReInviteTest.assertEquals("Dialog for reinvite must match original dialog", dialog, this.dialog);
-              this.reInviteReceivedCount++;
-          }
-            
+                Response response = protocolObjects.messageFactory.createResponse(
+                        Response.PROXY_AUTHENTICATION_REQUIRED, request);
+                ((ToHeader) response.getHeader(ToHeader.NAME))
+                        .setTag(((ToHeader) request.getHeader(ToHeader.NAME))
+                                        .getTag());
+                Address address = protocolObjects.addressFactory
+                        .createAddress("Shootme <sip:" + myAddress + ":" + myPort
+                                               + ">");
+                ContactHeader contactHeader = protocolObjects.headerFactory
+                        .createContactHeader(address);
+                response.addHeader(contactHeader);
+                new DigestServerAuthenticationHelper().generateChallenge(protocolObjects.headerFactory, response, "127.0.0.1");
+                st.sendResponse(response);
+            } else {
+                if (!new DigestServerAuthenticationHelper().doAuthenticatePlainTextPassword(request, "password")) {
+                    TestCase.fail("Authentication failed");
+                }
+                Response response = protocolObjects.messageFactory.createResponse(
+                        Response.OK, request);
+                ((ToHeader) response.getHeader(ToHeader.NAME))
+                        .setTag(((ToHeader) request.getHeader(ToHeader.NAME))
+                                        .getTag());
+
+                Address address = protocolObjects.addressFactory
+                        .createAddress("Shootme <sip:" + myAddress + ":" + myPort
+                                               + ">");
+                ContactHeader contactHeader = protocolObjects.headerFactory
+                        .createContactHeader(address);
+                response.addHeader(contactHeader);
+                st.sendResponse(response);
+                ReInviteTest.assertEquals("Dialog for reinvite must match original dialog", dialog, this.dialog);
+                this.reInviteReceivedCount++;
+            }
         } catch (Exception ex) {
-            logger.error("unexpected exception",ex);
+            LOG.error("unexpected exception", ex);
             ReInviteTest.fail("unexpected exception");
         }
     }
 
     public void processAck(Request request, ServerTransaction tid) {
         try {
-            logger.info("Got an ACK! sending bye : " + tid);
+            LOG.info("Got an ACK! sending bye : " + tid);
             if (tid != null) {
                 Dialog dialog = tid.getDialog();
-                ReInviteTest.assertSame("dialog id mismatch", dialog,this.dialog);
+                ReInviteTest.assertSame("dialog id mismatch", dialog, this.dialog);
                 Request bye = dialog.createRequest(Request.BYE);
                 MaxForwardsHeader mf = protocolObjects.headerFactory
                         .createMaxForwardsHeader(10);
@@ -205,67 +200,65 @@ public class Shootist  implements SipListener {
                 this.byeSent = true;
             }
         } catch (Exception ex) {
-            logger.error("unexpected exception",ex);
+            LOG.error("unexpected exception", ex);
             ReInviteTest.fail("unexpected exception");
-
         }
     }
 
-    public void processBye(Request request,
+    public void processBye(
+            Request request,
             ServerTransaction serverTransactionId) {
         try {
-            logger.info("shootist:  got a bye .");
+            LOG.info("shootist:  got a bye .");
             if (serverTransactionId == null) {
-                logger.info("shootist:  null TID.");
+                LOG.info("shootist:  null TID.");
                 return;
             }
             Dialog dialog = serverTransactionId.getDialog();
-            ReInviteTest.assertSame("dialog mismatch", dialog,this.dialog);
-            logger.info("Dialog State = " + dialog.getState());
+            ReInviteTest.assertSame("dialog mismatch", dialog, this.dialog);
+            LOG.info("Dialog State = " + dialog.getState());
             Response response = protocolObjects.messageFactory.createResponse(
                     200, request);
             serverTransactionId.sendResponse(response);
-            logger.info("shootist:  Sending OK.");
-            logger.info("Dialog State = " + dialog.getState());
-            ReInviteTest.assertEquals("Should be terminated", dialog.getState() , DialogState.TERMINATED);
-
+            LOG.info("shootist:  Sending OK.");
+            LOG.info("Dialog State = " + dialog.getState());
+            ReInviteTest.assertEquals("Should be terminated", dialog.getState(), DialogState.TERMINATED);
         } catch (Exception ex) {
-            logger.error("unexpected exception",ex);
+            LOG.error("unexpected exception", ex);
             ReInviteTest.fail("unexpected exception");
-
         }
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
 
         Response response = (Response) responseReceivedEvent.getResponse();
         Transaction tid = responseReceivedEvent.getClientTransaction();
 
-        logger.info("Response received with client transaction id " + tid
-                + ":\n" + response.getStatusCode());
+        LOG.info("Response received with client transaction id " + tid
+                         + ":\n" + response.getStatusCode());
         if (tid == null) {
-            logger.info("Stray response -- dropping ");
+            LOG.info("Stray response -- dropping ");
             return;
         }
-        logger.info("transaction state is " + tid.getState());
-        logger.info("Dialog = " + tid.getDialog());
-        logger.info("Dialog State is " + tid.getDialog().getState());
+        LOG.info("transaction state is " + tid.getState());
+        LOG.info("Dialog = " + tid.getDialog());
+        LOG.info("Dialog State is " + tid.getDialog().getState());
         SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
 
         try {
             if (response.getStatusCode() == Response.OK
                     && ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
-                            .getMethod().equals(Request.INVITE)) {
+                    .getMethod().equals(Request.INVITE)) {
 
                 // Request cancel = inviteTid.createCancel();
                 // ClientTransaction ct =
                 // sipProvider.getNewClientTransaction(cancel);
                 Dialog dialog = tid.getDialog();
                 CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
-                Request ackRequest = dialog.createAck( cseq.getSeqNumber() );
-                logger.info("Ack request to send = " + ackRequest);
-                logger.info("Sending ACK");
+                Request ackRequest = dialog.createAck(cseq.getSeqNumber());
+                LOG.info("Ack request to send = " + ackRequest);
+                LOG.info("Sending ACK");
                 dialog.sendAck(ackRequest);
 
                 // Send a Re INVITE but this time force it
@@ -273,60 +266,57 @@ public class Shootist  implements SipListener {
                 // Use whatever transport was used to create
                 // the dialog.
                 if (reInviteCount == 0) {
-                    for ( int i = 0 ; i <  2 ; i ++ ) {
-                        reInviteCount ++;
+                    for (int i = 0; i < 2; i++) {
+                        reInviteCount++;
                         Request inviteRequest = dialog
-                        .createRequest(Request.INVITE);
+                                .createRequest(Request.INVITE);
                         ((SipURI) inviteRequest.getRequestURI())
-                        .removeParameter("transport");
+                                .removeParameter("transport");
                         ((ViaHeader) inviteRequest.getHeader(ViaHeader.NAME))
-                        .setTransport("udp");
+                                .setTransport("udp");
                         inviteRequest.addHeader(contactHeader);
                         MaxForwardsHeader mf = protocolObjects.headerFactory
-                        .createMaxForwardsHeader(10);
+                                .createMaxForwardsHeader(10);
                         inviteRequest.addHeader(mf);
-                       
+
                         ClientTransaction ct = provider
-                        .getNewClientTransaction(inviteRequest);
+                                .getNewClientTransaction(inviteRequest);
                         dialog.sendRequest(ct);
-                        
                     }
                 } else {
                     this.okReceived = true;
                 }
-
             } else if (response.getStatusCode() == Response.OK
                     && ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
-                            .getMethod().equals(Request.BYE)) {
+                    .getMethod().equals(Request.BYE)) {
                 this.byeOkRecieved = true;
-            } else if (response.getStatusCode() == Response.PROXY_AUTHENTICATION_REQUIRED ) {
-            	
-            	 AuthenticationHelper authenticationHelper =
-                     ((SipStackExt) protocolObjects.sipStack).getAuthenticationHelper(new AccountManagerImpl(),
-                    		 protocolObjects.headerFactory);
+            } else if (response.getStatusCode() == Response.PROXY_AUTHENTICATION_REQUIRED) {
 
-                 tid = authenticationHelper.handleChallenge(response, (ClientTransaction) tid, provider, 5);
+                AuthenticationHelper authenticationHelper =
+                        ((SipStackExt) protocolObjects.sipStack).getAuthenticationHelper(
+                                new AccountManagerImpl(),
+                                protocolObjects.headerFactory);
 
-                 if ( dialog.getState() == DialogState.CONFIRMED) {
-                	 dialog.sendRequest((ClientTransaction) tid);
-                 } else {
-                	 ((ClientTransaction)tid).sendRequest();
-                 }
+                tid = authenticationHelper.handleChallenge(response, (ClientTransaction) tid, provider, 5);
 
+                if (dialog.getState() == DialogState.CONFIRMED) {
+                    dialog.sendRequest((ClientTransaction) tid);
+                } else {
+                    ((ClientTransaction) tid).sendRequest();
+                }
             }
         } catch (Exception ex) {
             ex.printStackTrace();
 
-            logger.error(ex);
+            LOG.error(ex);
             ReInviteTest.fail("unexpceted exception");
         }
-
     }
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        logger.info("Transaction Time out");
-        logger.info("TimeoutEvent " + timeoutEvent.getTimeout());
+        LOG.info("Transaction Time out");
+        LOG.info("TimeoutEvent " + timeoutEvent.getTimeout());
     }
 
     public SipProvider createSipProvider() {
@@ -338,7 +328,7 @@ public class Shootist  implements SipListener {
                     .createSipProvider(listeningPoint);
             return provider;
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             ReInviteTest.fail("unable to create provider");
             return null;
         }
@@ -388,11 +378,11 @@ public class Shootist  implements SipListener {
 
             ArrayList viaHeaders = new ArrayList();
             int port = provider.getListeningPoint(protocolObjects.transport)
-                    .getPort();
+                               .getPort();
 
             ViaHeader viaHeader = protocolObjects.headerFactory
                     .createViaHeader(myAddress, port,
-                            protocolObjects.transport, null);
+                                     protocolObjects.transport, null);
 
             // add via headers
             viaHeaders.add(viaHeader);
@@ -404,8 +394,7 @@ public class Shootist  implements SipListener {
             // Create a new CallId header
             CallIdHeader callIdHeader = provider.getNewCallId();
             // JvB: Make sure that the implementation matches the messagefactory
-            callIdHeader = protocolObjects.headerFactory.createCallIdHeader( callIdHeader.getCallId() );
-
+            callIdHeader = protocolObjects.headerFactory.createCallIdHeader(callIdHeader.getCallId());
 
             // Create a new Cseq header
             CSeqHeader cSeqHeader = protocolObjects.headerFactory
@@ -458,13 +447,13 @@ public class Shootist  implements SipListener {
 
             Address address = protocolObjects.addressFactory
                     .createAddress("<sip:" + PEER_ADDRESS + ":" + PEER_PORT
-                            + ">");
+                                           + ">");
             // SipUri sipUri = (SipUri) address.getURI();
             // sipUri.setPort(PEER_PORT);
 
             RouteHeader routeHeader = protocolObjects.headerFactory
                     .createRouteHeader(address);
-            ((SipURI)address.getURI()).setLrParam();
+            ((SipURI) address.getURI()).setLrParam();
             request.addHeader(routeHeader);
             extensionHeader = protocolObjects.headerFactory.createHeader(
                     "My-Other-Header", "my new header value ");
@@ -483,21 +472,17 @@ public class Shootist  implements SipListener {
 
             // send the request out.
             this.inviteTid.sendRequest();
-
-
         } catch (Exception ex) {
-            logger.error("Unexpected exception", ex);
+            LOG.error("Unexpected exception", ex);
             ReInviteTest.fail("unexpected exception");
         }
     }
 
 
-
     public void checkState() {
-        ReInviteTest.assertTrue("Expect to send a re-invite" , reInviteCount == 2 && this.okReceived);
+        ReInviteTest.assertTrue("Expect to send a re-invite", reInviteCount == 2 && this.okReceived);
         ReInviteTest.assertTrue("Expect to send a bye and get OK for the bye", this.byeSent && this.byeOkRecieved);
-        ReInviteTest.assertTrue("Expecting a re-invite",this.reInviteReceivedCount == 1);
-
+        ReInviteTest.assertTrue("Expecting a re-invite", this.reInviteReceivedCount == 1);
     }
 
     /*
@@ -506,9 +491,8 @@ public class Shootist  implements SipListener {
      * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
      */
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.error("IO Exception!");
+        LOG.error("IO Exception!");
         ReInviteTest.fail("Unexpected exception");
-
     }
 
     /*
@@ -519,7 +503,7 @@ public class Shootist  implements SipListener {
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
 
-        logger.info("Transaction Terminated Event!");
+        LOG.info("Transaction Terminated Event!");
     }
 
     /*
@@ -529,7 +513,6 @@ public class Shootist  implements SipListener {
      */
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("Dialog Terminated Event!");
-
+        LOG.info("Dialog Terminated Event!");
     }
 }

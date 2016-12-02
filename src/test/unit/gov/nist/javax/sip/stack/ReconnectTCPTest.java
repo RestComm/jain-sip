@@ -24,14 +24,12 @@ package test.unit.gov.nist.javax.sip.stack;
 
 import gov.nist.javax.sip.stack.IOHandler;
 import gov.nist.javax.sip.stack.SIPTransactionStack;
-
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.EventObject;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -59,9 +57,8 @@ import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -75,20 +72,13 @@ import test.tck.msgflow.callflows.ScenarioHarness;
 public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
 
     private Shootme shootme;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
      class Shootme  implements SipListener {
-
-
             ProtocolObjects  protocolObjects;
 
             Timer timer = new Timer();
@@ -116,7 +106,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                 ServerTransaction serverTransactionId = requestEvent
                         .getServerTransaction();
 
-                logger.info("\n\nRequest " + request.getMethod()
+                LOG.info("\n\nRequest " + request.getMethod()
                         + " received at " + protocolObjects.sipStack.getStackName()
                         + " with server transaction id " + serverTransactionId);
 
@@ -133,7 +123,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
              */
             public void processAck(RequestEvent requestEvent,
                     ServerTransaction serverTransaction) {
-                logger.info("shootme: got an ACK " + requestEvent.getRequest());   
+                LOG.info("shootme: got an ACK " + requestEvent.getRequest());
                 ackReceived = true;
             }
 
@@ -144,7 +134,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                     ServerTransaction serverTransaction) {
                 SipProvider sipProvider = (SipProvider) requestEvent.getSource();
                 Request request = requestEvent.getRequest();
-                logger.info("Got an INVITE  " + request);
+                LOG.info("Got an INVITE  " + request);
                 timer.schedule(new DelayedInviteResponsesTask(requestEvent, sipProvider), 100);
             }
 
@@ -186,23 +176,23 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
 	                    if (st == null) {
 	                        st = sipProvider.getNewServerTransaction(request);
-	                        logger.info("Server transaction created!" + request);
+	                        LOG.info("Server transaction created!" + request);
 
-	                        logger.info("Dialog = " + st.getDialog());
+	                        LOG.info("Dialog = " + st.getDialog());
 	                    }
 
 	                    byte[] content = request.getRawContent();
 	                    if (content != null) {
-	                        logger.info(" content = " + new String(content));
+	                        LOG.info(" content = " + new String(content));
 	                        ContentTypeHeader contentTypeHeader = protocolObjects.headerFactory
 	                                .createContentTypeHeader("application", "sdp");
-	                        logger.info("response = " + response);
+	                        LOG.info("response = " + response);
 	                        response.setContent(content, contentTypeHeader);
 	                    }
 	                    dialog = st.getDialog();
 	                    if (dialog != null) {
-	                        logger.info("Dialog " + dialog);
-	                        logger.info("Dialog state " + dialog.getState());
+	                        LOG.info("Dialog " + dialog);
+	                        LOG.info("Dialog state " + dialog.getState());
 	                    }
 	                    st.sendResponse(response);
 	                    response = protocolObjects.messageFactory.createResponse(200, request);
@@ -213,12 +203,12 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 	                    st.sendResponse(response);
 	                    reSendSt = st;
 	                    reSendResponse = response;
-	                    logger.info("TxState after sendResponse = " + st.getState());
+	                    LOG.info("TxState after sendResponse = " + st.getState());
 	                    Shootme.this.inviteTid = st;
 	                } catch (Exception ex) {
 	                    String s = "unexpected exception";
 
-	                    logger.error(s,ex);
+	                    LOG.error(s, ex);
 	                    ReconnectTCPTest.fail(s);
 	                }
 				}
@@ -233,7 +223,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                 System.out.println("Got a response " + response);
                 Transaction tid = responseReceivedEvent.getClientTransaction();
 
-                logger.info("Response received with client transaction id "
+                LOG.info("Response received with client transaction id "
                         + tid + ":\n" + response);
                 try {
                     if (response.getStatusCode() == Response.OK
@@ -246,11 +236,11 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                     }
                     if ( tid != null ) {
                         Dialog dialog = tid.getDialog();
-                        logger.info("Dialog State = " + dialog.getState());
+                        LOG.info("Dialog State = " + dialog.getState());
                     }
                 } catch (Exception ex) {
                     String s = "Unexpected exception";
-                    logger.error(s,ex);
+                    LOG.error(s, ex);
                     ReconnectTCPTest.fail(s);
                 }
 
@@ -263,11 +253,11 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                 } else {
                     transaction = timeoutEvent.getClientTransaction();
                 }
-                logger.info("state = " + transaction.getState());
-                logger.info("dialog = " + transaction.getDialog());
-                logger.info("dialogState = "
+                LOG.info("state = " + transaction.getState());
+                LOG.info("dialog = " + transaction.getDialog());
+                LOG.info("dialogState = "
                         + transaction.getDialog().getState());
-                logger.info("Transaction Time out");
+                LOG.info("Transaction Time out");
             }
 
 
@@ -294,7 +284,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
              * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
              */
             public void processIOException(IOExceptionEvent exceptionEvent) {
-                logger.error("An IO Exception was detected : "
+                LOG.error("An IO Exception was detected : "
                         + exceptionEvent.getHost());
 
             }
@@ -306,7 +296,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
              */
             public void processTransactionTerminated(
                     TransactionTerminatedEvent transactionTerminatedEvent) {
-                logger.info("Tx terminated event ");
+                LOG.info("Tx terminated event ");
 
             }
 
@@ -317,7 +307,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
              */
             public void processDialogTerminated(
                     DialogTerminatedEvent dialogTerminatedEvent) {
-                logger.info("Dialog terminated event detected ");
+                LOG.info("Dialog terminated event detected ");
 
             }
 
@@ -372,7 +362,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
             ServerTransaction serverTransactionId = requestReceivedEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + protocolObjects.sipStack.getStackName()
                     + " with server transaction id " + serverTransactionId);
 
@@ -383,16 +373,16 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
         public void processBye(Request request,
                 ServerTransaction serverTransactionId) {
             try {
-                logger.info("shootist:  got a bye .");
+                LOG.info("shootist:  got a bye .");
                 if (serverTransactionId == null) {
-                    logger.info("shootist:  null TID.");
+                    LOG.info("shootist:  null TID.");
                     return;
                 }
                 Response response = protocolObjects.messageFactory.createResponse(
                         200, request);
                 serverTransactionId.sendResponse(response);
             } catch (Exception ex) {
-                logger.error("unexpected exception",ex);
+                LOG.error("unexpected exception", ex);
                 ReconnectTCPTest.fail("unexpected exception");
 
             }
@@ -404,12 +394,12 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Got a response " + response);
-            logger.info("Response received with client transaction id " + tid
+            LOG.info("Got a response " + response);
+            LOG.info("Response received with client transaction id " + tid
                     + ":\n" + response.getStatusCode());
             if (tid != null) {
-				logger.info("Dialog = " + responseReceivedEvent.getDialog());
-				logger.info("Dialog State is "
+				LOG.info("Dialog = " + responseReceivedEvent.getDialog());
+				LOG.info("Dialog State is "
 						+ responseReceivedEvent.getDialog().getState());
 			}
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
@@ -422,12 +412,12 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                     Dialog dialog = responseReceivedEvent.getDialog();
                     CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
                     Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                    logger.info("Ack request to send = " + ackRequest);
-                    logger.info("Sending ACK");
+                    LOG.info("Ack request to send = " + ackRequest);
+                    LOG.info("Sending ACK");
                     dialog.sendAck(ackRequest);
                 }
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 ex.printStackTrace();
                 ReconnectTCPTest.fail("unexpected exception");
             }
@@ -436,8 +426,8 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-            logger.info("Transaction Time out");
-            logger.info("TimeoutEvent " + timeoutEvent.getTimeout());
+            LOG.info("Transaction Time out");
+            LOG.info("TimeoutEvent " + timeoutEvent.getTimeout());
         }
 
         public SipProvider createSipProvider() {
@@ -449,7 +439,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                         .createSipProvider(listeningPoint);
                 return provider;
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 ReconnectTCPTest.fail("unable to create provider");
                 return null;
             }
@@ -597,7 +587,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 ReconnectTCPTest.fail("unexpected exception");
             }
         }
@@ -610,7 +600,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("IO Exception!");
+            LOG.error("IO Exception!");
             ReconnectTCPTest.fail("Unexpected exception");
 
         }
@@ -623,7 +613,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
 
-            logger.info("Transaction Terminated Event!");
+            LOG.info("Transaction Terminated Event!");
         }
 
         /*
@@ -633,7 +623,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
          */
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog Terminated Event!");
+            LOG.info("Dialog Terminated Event!");
 
         }
     }

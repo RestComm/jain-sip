@@ -16,15 +16,13 @@
 package test.unit.gov.nist.javax.sip.stack.tx.timeout;
 
 import gov.nist.javax.sip.DialogTimeoutEvent;
+import gov.nist.javax.sip.DialogTimeoutEvent.Reason;
 import gov.nist.javax.sip.SipListenerExt;
 import gov.nist.javax.sip.SipStackImpl;
-import gov.nist.javax.sip.DialogTimeoutEvent.Reason;
-
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -52,12 +50,8 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
 /**
@@ -69,8 +63,10 @@ import test.tck.msgflow.callflows.ProtocolObjects;
 
 public class Shootist implements SipListenerExt {
 
+    private static Logger LOG = LogManager.getLogger(Shootist.class);
     private ListeningPoint listeningPoint;
     private ProtocolObjects protocolObjects;
+
     /* move variables as class variables from init() */
     private SipURI requestURI;
 
@@ -87,8 +83,8 @@ public class Shootist implements SipListenerExt {
     private Address fromNameAddress;
 
     private ContentTypeHeader contentTypeHeader;
-
     private ContactHeader contactHeader;
+
     // If you want to try TCP transport change the following to
     // String transport = "tcp";
     String transport = "udp";
@@ -111,21 +107,11 @@ public class Shootist implements SipListenerExt {
     private static final int myPort = 5060;
 
     private boolean stateIsOk = false;
-    
+
     private boolean sendByeOnDialogTimeout = false;
-    
     private Dialog dialog = null;
+
 	private int statusCode = -1;
-
-    private static Logger logger = Logger.getLogger(Shootist.class);
-
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
 
     class ByeTask  extends TimerTask {
         Dialog dialog;
@@ -165,7 +151,7 @@ public class Shootist implements SipListenerExt {
                     .createSipProvider(listeningPoint);
             return sipProvider;
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             TxTimeoutTest
                     .fail("Shootist: unable to create provider");
             return null;

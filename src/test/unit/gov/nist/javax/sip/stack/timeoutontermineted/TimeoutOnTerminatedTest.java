@@ -4,13 +4,9 @@
 package test.unit.gov.nist.javax.sip.stack.timeoutontermineted;
 
 import javax.sip.SipProvider;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
@@ -18,15 +14,11 @@ import org.apache.log4j.SimpleLayout;
  */
 public class TimeoutOnTerminatedTest extends TestCase {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
 
     protected Shootme shootme;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    protected static final Appender console = new ConsoleAppender(new SimpleLayout());
-
-    // private Appender appender;
 
     public TimeoutOnTerminatedTest() {
 
@@ -48,7 +40,7 @@ public class TimeoutOnTerminatedTest extends TestCase {
             SipProvider shootmeProvider = shootme.createProvider();
             shootmeProvider.addSipListener(shootme);
 
-            logger.debug("setup completed");
+            LOG.debug("setup completed");
 
         } catch (Exception ex) {
             fail("unexpected exception ");
@@ -70,7 +62,7 @@ public class TimeoutOnTerminatedTest extends TestCase {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
     }

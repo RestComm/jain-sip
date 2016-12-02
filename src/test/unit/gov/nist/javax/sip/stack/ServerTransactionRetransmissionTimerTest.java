@@ -4,12 +4,10 @@ import gov.nist.javax.sip.ResponseEventExt;
 import gov.nist.javax.sip.SipStackImpl;
 import gov.nist.javax.sip.message.SIPResponse;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogState;
@@ -45,21 +43,15 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class ServerTransactionRetransmissionTimerTest extends TestCase {
     public static final boolean callerSendsBye = true;
 
-    private static Logger logger = Logger.getLogger( ServerTransactionRetransmissionTimerTest.class);
-    static {
-        if ( ! logger.getAllAppenders().hasMoreElements())
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-    }
+    private static final Logger LOG = LogManager.getLogger(ServerTransactionRetransmissionTimerTest.class);
+
     class Shootist implements SipListener {
 
         private SipProvider sipProvider;
@@ -98,7 +90,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                     Request byeRequest = this.dialog.createRequest(Request.BYE);
                     ClientTransaction ct = sipProvider
                             .getNewClientTransaction(byeRequest);
-                    logger.info("15s are over: sending BYE now");
+                    LOG.info("15s are over: sending BYE now");
                     dialog.sendRequest(ct);
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -118,7 +110,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             ServerTransaction serverTransactionId = requestReceivedEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod()
+            LOG.info("\n\nRequest " + request.getMethod()
                     + " received at " + sipStack.getStackName()
                     + " with server transaction id " + serverTransactionId);
 
@@ -131,7 +123,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                             .createResponse(202, request));
                 } catch (Exception e) {
                     fail("Unexpected exception");
-                    logger.error("Unexpected exception", e);
+                    LOG.error("Unexpected exception", e);
                 }
             }
 
@@ -140,17 +132,17 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
         public void processBye(Request request,
                 ServerTransaction serverTransactionId) {
             try {
-                logger.info("shootist:  got a bye .");
+                LOG.info("shootist:  got a bye .");
                 if (serverTransactionId == null) {
-                    logger.info("shootist:  null TID.");
+                    LOG.info("shootist:  null TID.");
                     return;
                 }
                 Dialog dialog = serverTransactionId.getDialog();
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("Dialog State = " + dialog.getState());
                 Response response = messageFactory.createResponse(200, request);
                 serverTransactionId.sendResponse(response);
-                logger.info("shootist:  Sending OK.");
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("shootist:  Sending OK.");
+                LOG.info("Dialog State = " + dialog.getState());
 
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -163,21 +155,21 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
         private Request ackRequest;
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info(System.currentTimeMillis() - startTime
+            LOG.info(System.currentTimeMillis() - startTime
                     + "ms: Got a response");
             Response response = (Response) responseReceivedEvent.getResponse();
             ClientTransaction tid = responseReceivedEvent
                     .getClientTransaction();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-            logger.info("Response received : Status Code = "
+            LOG.info("Response received : Status Code = "
                     + response.getStatusCode() + " " + cseq);
 
             if (tid == null) {
                 TestCase.assertTrue("retrans flag should be true", ((ResponseEventExt)responseReceivedEvent).isRetransmission());
                 // RFC3261: MUST respond to every 2xx
                 if (ackRequest != null && dialog != null) {
-                    logger.info("re-sending ACK");
+                    LOG.info("re-sending ACK");
                     try {
                         dialog.sendAck(ackRequest);
                     } catch (SipException se) {
@@ -199,9 +191,9 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                                                                     // delayed-ack
                                                                     // demo
             }
-            logger.info("transaction state is " + tid.getState());
-            logger.info("Dialog = " + tid.getDialog());
-            logger.info("Dialog State is " + tid.getDialog().getState());
+            LOG.info("transaction state is " + tid.getState());
+            LOG.info("Dialog = " + tid.getDialog());
+            LOG.info("Dialog State is " + tid.getDialog().getState());
 
             try {
                 if (response.getStatusCode() == Response.OK) {
@@ -212,7 +204,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                             // *****************************************************************
                             // BEGIN
                             // Frank Reif: delayed-ack after 6s
-                            logger.info("Sending ACK after 15s ...");
+                            LOG.info("Sending ACK after 15s ...");
                             new Timer().schedule(new AckTimerTask(dialog,cseq.getSeqNumber()), 15000);
     
                             // JvB: test REFER, reported bug in tag handling
@@ -241,7 +233,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                     }
                 }
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("Unexpected exception");
 
             }
@@ -261,12 +253,12 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             }
 
             public void run() {
-                logger.info("15s are over: now sending ACK");
+                LOG.info("15s are over: now sending ACK");
                 try {
                     Request ackRequest = dialog.createAck(cseq);
                     dialog.sendAck(ackRequest);
                 } catch (Exception e) {
-                    logger.error("Unexpected exception", e);
+                    LOG.error("Unexpected exception", e);
                     fail ("Unexpected exception");
                 }
             }
@@ -276,7 +268,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-            logger.info("Transaction Time out");
+            LOG.info("Transaction Time out");
             fail("Unexpected exception -- ");
         }
 
@@ -314,13 +306,13 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             // Your code will limp at 32 but it is best for debugging.
             properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             try {
                 // Create SipStack object
                 sipStack = sipFactory.createSipStack(properties);
-                logger.info("createSipStack " + sipStack);
+                LOG.info("createSipStack " + sipStack);
             } catch (PeerUnavailableException e) {
                 // could not find
                 // gov.nist.jain.protocol.ip.sip.SipStackImpl
@@ -461,13 +453,13 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                 dialog = inviteTid.getDialog();
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("Unexpected exception ");
             }
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("IOException happened for "
+            LOG.error("IOException happened for "
                     + exceptionEvent.getHost() + " port = "
                     + exceptionEvent.getPort());
 
@@ -476,16 +468,16 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
             if ( transactionTerminatedEvent.getServerTransaction() != null)
-                logger.info("Shootist: Transaction terminated event recieved on transaction : " +
+                LOG.info("Shootist: Transaction terminated event recieved on transaction : " +
                     transactionTerminatedEvent.getServerTransaction());
             else
-                logger.info("Shootist : Transaction terminated event recieved on transaction : " +
+                LOG.info("Shootist : Transaction terminated event recieved on transaction : " +
                     transactionTerminatedEvent.getClientTransaction());
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("dialogTerminatedEvent");
+            LOG.info("dialogTerminatedEvent");
 
         }
 
@@ -545,7 +537,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             ServerTransaction serverTransactionId = requestEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod()
+            LOG.info("\n\nRequest " + request.getMethod()
                     + " received at " + sipStack.getStackName()
                     + " with server transaction id " + serverTransactionId);
 
@@ -586,9 +578,9 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
         public void processAck(RequestEvent requestEvent,
                 ServerTransaction serverTransaction) {
             try {
-                logger.info("shootme: got an ACK! ");
+                LOG.info("shootme: got an ACK! ");
                 if(!enableRetransmitAlerts) {
-                	logger.info("Dialog State = " + dialog.getState());
+                	LOG.info("Dialog State = " + dialog.getState());
                 }
                 SipProvider provider = (SipProvider) requestEvent.getSource();
                 if (!callerSendsBye) {
@@ -598,7 +590,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                     dialog.sendRequest(ct);
                 }
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("unexpected exception");
             }
 
@@ -612,8 +604,8 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme: got an Invite sending Trying");
-                // logger.info("shootme: " + request);
+                LOG.info("shootme: got an Invite sending Trying");
+                // LOG.info("shootme: " + request);
                 Response response = messageFactory.createResponse(
                         Response.TRYING, request);
                 ServerTransaction st = requestEvent.getServerTransaction();
@@ -649,7 +641,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
 
                 new Timer().schedule(new MyTimerTask(this), 1000);
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("Unexpected exception");
             }
         }
@@ -658,17 +650,17 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             try {
                 if (inviteTid.getState() != TransactionState.COMPLETED) {
                 	if(!enableRetransmitAlerts) {
-                		logger.info("shootme: Dialog state before 200: "
+                		LOG.info("shootme: Dialog state before 200: "
                             + inviteTid.getDialog().getState());
                 	}
                     inviteTid.sendResponse(okResponse);
                     if(!enableRetransmitAlerts) {
-                    	logger.info("shootme: Dialog state after 200: "
+                    	LOG.info("shootme: Dialog state after 200: "
                             + inviteTid.getDialog().getState());
                     }
                 }
             } catch (Exception ex) {
-                logger.error("Unexpected exception",ex);
+                LOG.error("Unexpected exception", ex);
                 fail("Unexpected exception");
             }
         }
@@ -681,16 +673,16 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             Dialog dialog = requestEvent.getDialog();
-            logger.info("shootme: local party = " + dialog.getLocalParty());
+            LOG.info("shootme: local party = " + dialog.getLocalParty());
             try {
-                logger.info("shootme:  got a bye sending OK.");
+                LOG.info("shootme:  got a bye sending OK.");
                 Response response = messageFactory.createResponse(200, request);
                 serverTransactionId.sendResponse(response);
-                logger.info("shootme: Dialog State is "
+                LOG.info("shootme: Dialog State is "
                         + serverTransactionId.getDialog().getState());
 
             } catch (Exception ex) {
-                logger.error("UNexpected exception",ex);
+                LOG.error("UNexpected exception", ex);
                 fail("UNexpected exception");
 
             }
@@ -701,9 +693,9 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme:  got a cancel.");
+                LOG.info("shootme:  got a cancel.");
                 if (serverTransactionId == null) {
-                    logger.info("shootme:  null tid.");
+                    LOG.info("shootme:  null tid.");
                     return;
                 }
                 Response response = messageFactory.createResponse(200, request);
@@ -728,7 +720,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("Shootme: Transaction Time out : " + transaction);
+            LOG.info("Shootme: Transaction Time out : " + transaction);
         }
 
         public void init(String name) {
@@ -746,7 +738,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             properties.setProperty("gov.nist.javax.sip.SERVER_LOG",
                     "logs/stxretransmission_shootmelog.txt");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             if(enableRetransmitAlerts) {
@@ -755,7 +747,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             try {
                 // Create SipStack object
                 sipStack = sipFactory.createSipStack(properties);
-                logger.info("sipStack = " + sipStack);
+                LOG.info("sipStack = " + sipStack);
             } catch (PeerUnavailableException e) {
                 // could not find
                 // gov.nist.jain.protocol.ip.sip.SipStackImpl
@@ -764,7 +756,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                logger.error("Unexpected error creating stack", e);
+                LOG.error("Unexpected error creating stack", e);
                 fail ("Unexpected error");
             }
 
@@ -778,7 +770,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                 Shootme listener = this;
 
                 sipProvider = sipStack.createSipProvider(lp);
-                logger.info("udp provider " + sipProvider);
+                LOG.info("udp provider " + sipProvider);
                 sipProvider.addSipListener(listener);
 
             } catch (Exception ex) {
@@ -807,26 +799,26 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("IOException");
+            LOG.info("IOException");
 
         }
 
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
             if (transactionTerminatedEvent.isServerTransaction())
-                logger.info("Transaction terminated event recieved"
+                LOG.info("Transaction terminated event recieved"
                         + transactionTerminatedEvent.getServerTransaction());
             else
-                logger.info("Transaction terminated "
+                LOG.info("Transaction terminated "
                         + transactionTerminatedEvent.getClientTransaction());
 
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Shootme: Dialog terminated event recieved");
+            LOG.info("Shootme: Dialog terminated event recieved");
             Dialog d = dialogTerminatedEvent.getDialog();
-            logger.info("Local Party = " + d.getLocalParty());
+            LOG.info("Local Party = " + d.getLocalParty());
 
         }
 

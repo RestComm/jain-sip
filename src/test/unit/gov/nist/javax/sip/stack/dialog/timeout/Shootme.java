@@ -16,13 +16,10 @@
 package test.unit.gov.nist.javax.sip.stack.dialog.timeout;
 
 import gov.nist.javax.sip.DialogTimeoutEvent;
-import gov.nist.javax.sip.SipListenerExt;
 import gov.nist.javax.sip.DialogTimeoutEvent.Reason;
-import gov.nist.javax.sip.stack.SIPDialog;
-
+import gov.nist.javax.sip.SipListenerExt;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
@@ -42,12 +39,6 @@ import javax.sip.header.ToHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
 import test.tck.msgflow.callflows.ProtocolObjects;
 
 /**
@@ -124,16 +115,6 @@ public class Shootme implements SipListenerExt {
     public static final String myAddress = "127.0.0.1";
 
     public static final int myPort = 5070;
-
-    private static Logger logger = Logger.getLogger(Shootme.class);
-
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
 
     public Shootme(ProtocolObjects protocolObjects) {
         this.protocolObjects = protocolObjects;

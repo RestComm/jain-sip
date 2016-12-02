@@ -16,11 +16,7 @@
  package test.unit.gov.nist.javax.sip.stack.dialog.timeout;
 
 import gov.nist.javax.sip.SipStackImpl;
-
 import javax.sip.SipProvider;
-
-import org.apache.log4j.Logger;
-
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -46,13 +42,7 @@ public class DialogTimeoutTest extends ScenarioHarness {
     
     private ShootmeNotImplementingListener shootmeNotImplementingListener;
 
-    private static final Logger logger = Logger.getLogger("test.tck");
     private static final int TIMEOUT = 60000;
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
 
     public DialogTimeoutTest() {
         super("DialogTerminationOn500Test", true);

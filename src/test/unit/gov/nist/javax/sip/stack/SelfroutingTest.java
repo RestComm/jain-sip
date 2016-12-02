@@ -1,10 +1,7 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 import gov.nist.javax.sip.SipStackImpl;
-
 import java.util.ArrayList;
-import java.util.EventObject;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -15,7 +12,6 @@ import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
-import javax.sip.TimeoutEvent;
 import javax.sip.Transaction;
 import javax.sip.TransactionTerminatedEvent;
 import javax.sip.address.Address;
@@ -32,22 +28,16 @@ import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 public class SelfroutingTest extends ScenarioHarness {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
 
     class Shootist  implements SipListener {
 
@@ -89,7 +79,7 @@ public class SelfroutingTest extends ScenarioHarness {
             ServerTransaction serverTransactionId = requestReceivedEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + protocolObjects.sipStack.getStackName()
                     + " with server transaction id " + serverTransactionId);
 
@@ -104,16 +94,16 @@ public class SelfroutingTest extends ScenarioHarness {
         public void processBye(Request request,
                 ServerTransaction serverTransactionId) {
             try {
-                logger.info("shootist:  got a bye .");
+                LOG.info("shootist:  got a bye .");
                 if (serverTransactionId == null) {
-                    logger.info("shootist:  null TID.");
+                    LOG.info("shootist:  null TID.");
                     return;
                 }
                 Response response = protocolObjects.messageFactory.createResponse(
                         200, request);
                 serverTransactionId.sendResponse(response);
             } catch (Exception ex) {
-                logger.error("unexpected exception",ex);
+                LOG.error("unexpected exception", ex);
                 fail("unexpected exception");
 
             }
@@ -126,7 +116,7 @@ public class SelfroutingTest extends ScenarioHarness {
                         200, request);
                 provider.sendResponse(response);
             } catch (Exception ex) {
-                logger.error("unexpected exception",ex);
+                LOG.error("unexpected exception", ex);
                 fail("unexpected exception");
 
             }
@@ -135,16 +125,16 @@ public class SelfroutingTest extends ScenarioHarness {
         public void processAck(Request request,
                 ServerTransaction serverTransactionId) {
             try {
-                logger.info("shootist:  got ACK .");
+                LOG.info("shootist:  got ACK .");
                 if (serverTransactionId == null) {
-                    logger.info("shootist:  null TID.");
+                    LOG.info("shootist:  null TID.");
                     return;
                 }
                 Request bye = dialog.createRequest(Request.BYE);
                 ClientTransaction ctx = provider.getNewClientTransaction(bye);
                 ctx.sendRequest();
             } catch (Exception ex) {
-                logger.error("unexpected exception",ex);
+                LOG.error("unexpected exception", ex);
                 fail("unexpected exception");
 
             }
@@ -153,16 +143,16 @@ public class SelfroutingTest extends ScenarioHarness {
         public boolean okToInviteReceived;
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response");
+            LOG.info("Got a response");
 
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id " + tid
+            LOG.info("Response received with client transaction id " + tid
                     + ":\n" + response.getStatusCode());
             if (tid != null) {
-				logger.info("Dialog = " + responseReceivedEvent.getDialog());
-				logger.info("Dialog State is "
+				LOG.info("Dialog = " + responseReceivedEvent.getDialog());
+				LOG.info("Dialog State is "
 						+ responseReceivedEvent.getDialog().getState());
 			}
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
@@ -175,7 +165,7 @@ public class SelfroutingTest extends ScenarioHarness {
             		}
             	}
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 ex.printStackTrace();
                 fail("unexpected exception");
             }
@@ -184,8 +174,8 @@ public class SelfroutingTest extends ScenarioHarness {
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-            logger.info("Transaction Time out");
-            logger.info("TimeoutEvent " + timeoutEvent.getTimeout());
+            LOG.info("Transaction Time out");
+            LOG.info("TimeoutEvent " + timeoutEvent.getTimeout());
         }
 
         public SipProvider createSipProvider() {
@@ -197,7 +187,7 @@ public class SelfroutingTest extends ScenarioHarness {
                         .createSipProvider(listeningPoint);
                 return provider;
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 fail("unable to create provider");
                 return null;
             }
@@ -345,7 +335,7 @@ public class SelfroutingTest extends ScenarioHarness {
 
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("unexpected exception");
             }
         }
@@ -358,7 +348,7 @@ public class SelfroutingTest extends ScenarioHarness {
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("IO Exception!");
+            LOG.error("IO Exception!");
             fail("Unexpected exception");
 
         }
@@ -371,7 +361,7 @@ public class SelfroutingTest extends ScenarioHarness {
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
 
-            logger.info("Transaction Terminated Event!");
+            LOG.info("Transaction Terminated Event!");
         }
 
         /*
@@ -381,7 +371,7 @@ public class SelfroutingTest extends ScenarioHarness {
          */
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog Terminated Event!");
+            LOG.info("Dialog Terminated Event!");
 
         }
     }

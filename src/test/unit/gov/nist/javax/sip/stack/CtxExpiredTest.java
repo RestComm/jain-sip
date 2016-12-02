@@ -1,15 +1,13 @@
 package test.unit.gov.nist.javax.sip.stack;
 
-import java.util.ArrayList;
-import java.util.Properties;
-
 import gov.nist.javax.sip.ServerTransactionExt;
 import gov.nist.javax.sip.SipProviderExt;
 import gov.nist.javax.sip.SipStackExt;
 import gov.nist.javax.sip.header.HeaderFactoryExt;
 import gov.nist.javax.sip.message.MessageFactoryExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
+import java.util.ArrayList;
+import java.util.Properties;
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -33,20 +31,19 @@ import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
 import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
-import javax.sip.header.Header;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.RouteHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class CtxExpiredTest extends TestCase {
+
+    private static final Logger LOG = LogManager.getLogger(CtxExpiredTest.class);
 
     AddressFactory addressFactory;
 
@@ -67,11 +64,6 @@ public class CtxExpiredTest extends TestCase {
     private static int PEER_PORT = Shootme.myPort;
 
     private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
-
-    private static Logger logger = Logger.getLogger(CtxExpiredTest.class);
-    static {
-        logger.addAppender(new ConsoleAppender());
-    }
 
     class Shootist implements SipListener {
 
@@ -234,7 +226,7 @@ public class CtxExpiredTest extends TestCase {
                 this.inviteTid.sendRequest();
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 TestCase.fail("unexpected exception");
             }
         }
@@ -279,7 +271,7 @@ public class CtxExpiredTest extends TestCase {
                         .getNewClientTransaction(cancelRequest);
                 cancelTx.sendRequest();
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 TestCase.fail("Unexpected exception");
             }
 
@@ -288,7 +280,7 @@ public class CtxExpiredTest extends TestCase {
         
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.debug("Transaction Terminated Event seen");
+            LOG.debug("Transaction Terminated Event seen");
 
         }
 
@@ -344,7 +336,7 @@ public class CtxExpiredTest extends TestCase {
 
                 }
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 TestCase.fail("Unexpected exception");
             }
         }
@@ -398,7 +390,7 @@ public class CtxExpiredTest extends TestCase {
             properties.setProperty("gov.nist.javax.sip.DEBUG_LOG",
                     "shootistdebug.txt");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
           
@@ -415,7 +407,7 @@ public class CtxExpiredTest extends TestCase {
             properties.setProperty("gov.nist.javax.sip.DEBUG_LOG",
                     "shootmedebug.txt");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             this.shootmeStack = (SipStackExt) sipFactory

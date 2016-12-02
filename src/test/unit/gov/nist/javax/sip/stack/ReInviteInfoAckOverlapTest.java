@@ -23,15 +23,12 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 
-
 import gov.nist.javax.sip.message.ResponseExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogState;
@@ -66,14 +63,9 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.NonSipUriRouter;
 
 /**
@@ -81,6 +73,8 @@ import test.tck.msgflow.callflows.NonSipUriRouter;
  * 
  */
 public class ReInviteInfoAckOverlapTest extends TestCase {
+
+    private static final Logger LOG = LogManager.getLogger(ReInviteInfoAckOverlapTest.class);
 
     protected Shootist shootist;
 
@@ -90,26 +84,12 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
     private ProtocolObjects shootmeProtocolObjs;
 
-    protected static final Appender console = new ConsoleAppender(new SimpleLayout());
-
-    protected static Logger logger = Logger.getLogger(ReInviteInfoAckOverlapTest.class);
-    
-    
-
-    static {
-
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
     private static String PEER_ADDRESS = Shootme.myAddress;
 
     private static int PEER_PORT = Shootme.myPort;
 
     private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
-    
-    
-   
+
     /**
      * @author M. Ranganathan
      *
@@ -179,7 +159,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", new Integer(
                     logLevel).toString());
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             try {
@@ -282,7 +262,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             Request request = requestEvent.getRequest();
             ServerTransaction serverTransactionId = requestEvent.getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + protocolObjects.sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId);
 
@@ -301,7 +281,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
         public void processAck(RequestEvent requestEvent, ServerTransaction serverTransaction) {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             try {
-                logger.info("shootme: got an ACK " + requestEvent.getRequest());
+                LOG.info("shootme: got an ACK " + requestEvent.getRequest());
 
                 CSeqHeader cseq = (CSeqHeader) requestEvent.getRequest().getHeader(CSeqHeader.NAME);
                 if(cseq.getSeqNumber() == 2) this.ack2Received = true;
@@ -309,14 +289,14 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
                 dialog = inviteTid.getDialog();
                 Thread.sleep(1000);
-                logger.info("shootme is sending RE INVITE now");
+                LOG.info("shootme is sending RE INVITE now");
                 System.out.println("Got an ACK " );
                 this.reInviteCount++;
                 this.sendReInvite(sipProvider);
 
             } catch (Exception ex) {
                 String s = "Unexpected error";
-                logger.error(s, ex);
+                LOG.error(s, ex);
                 ReInviteInfoAckOverlapTest.fail(s);
             }
         }
@@ -330,12 +310,12 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
              try {
                 ServerTransaction st = requestEvent.getServerTransaction();
                 int finalResponse;
-                logger.info("Got an INVITE  " + request + " serverTx = " + st);
+                LOG.info("Got an INVITE  " + request + " serverTx = " + st);
                 Thread.sleep(300);
                 
                 if (st == null) {
                     st = sipProvider.getNewServerTransaction(request);
-                    logger.info("Server transaction created!" + request);
+                    LOG.info("Server transaction created!" + request);
 
                     System.out.println("Dialog = " + st.getDialog());
                     if (st.getDialog().getApplicationData() == null) {
@@ -348,12 +328,12 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                     // this is a re-invite.
                 	System.out.println("Dialog = " + st.getDialog());
                        
-                    logger.info("This is a RE INVITE ");
+                    LOG.info("This is a RE INVITE ");
                     this.reInviteCount++;
                     ReInviteInfoAckOverlapTest.assertSame("Dialog mismatch ", st.getDialog(), this.dialog);
                     finalResponse = Response.OK;
                 }
-                logger.info("shootme: got an Invite sending " + finalResponse);
+                LOG.info("shootme: got an Invite sending " + finalResponse);
 
                 Response response = protocolObjects.messageFactory.createResponse(finalResponse,
                         request);
@@ -366,7 +346,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 response.addHeader(contactHeader);
 
                 // Thread.sleep(5000);
-                logger.info("got a server tranasaction " + st);
+                LOG.info("got a server tranasaction " + st);
                 byte[] content = request.getRawContent();
                 if (content != null) {
                     ContentTypeHeader contentTypeHeader = protocolObjects.headerFactory
@@ -375,8 +355,8 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 }
                 dialog = st.getDialog();
                 if (dialog != null) {
-                    logger.info("Dialog " + dialog);
-                    logger.info("Dialog state " + dialog.getState());
+                    LOG.info("Dialog " + dialog);
+                    LOG.info("Dialog state " + dialog.getState());
                 }
                 st.sendResponse(response);
                 response = protocolObjects.messageFactory.createResponse(finalResponse, request);
@@ -385,12 +365,12 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 // Application is supposed to set.
                 response.addHeader(contactHeader);
                 st.sendResponse(response);
-                logger.info("TxState after sendResponse = " + st.getState());
+                LOG.info("TxState after sendResponse = " + st.getState());
                 this.inviteTid = st;
             } catch (Exception ex) {
                 String s = "unexpected exception";
 
-                logger.error(s, ex);
+                LOG.error(s, ex);
                 ReInviteInfoAckOverlapTest.fail(s);
             }
         }
@@ -419,19 +399,19 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme:  got a bye sending OK.");
+                LOG.info("shootme:  got a bye sending OK.");
                 Response response = protocolObjects.messageFactory.createResponse(200, request);
                 if (serverTransactionId != null) {
                     serverTransactionId.sendResponse(response);
-                    logger.info("Dialog State is " + serverTransactionId.getDialog().getState());
+                    LOG.info("Dialog State is " + serverTransactionId.getDialog().getState());
                 } else {
-                    logger.info("null server tx.");
+                    LOG.info("null server tx.");
                     // sipProvider.sendResponse(response);
                 }
 
             } catch (Exception ex) {
                 String s = "Unexpected exception";
-                logger.error(s, ex);
+                LOG.error(s, ex);
                 ReInviteInfoAckOverlapTest.fail(s);
 
             }
@@ -442,30 +422,30 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme:  got a INFO sending OK.");
+                LOG.info("shootme:  got a INFO sending OK.");
                 Response response = protocolObjects.messageFactory.createResponse(200, request);
                 if (serverTransactionId != null) {
                     serverTransactionId.sendResponse(response);
-                    logger.info("Dialog State is " + serverTransactionId.getDialog().getState());
+                    LOG.info("Dialog State is " + serverTransactionId.getDialog().getState());
                 } else {
-                    logger.info("null server tx.");
+                    LOG.info("null server tx.");
                     // sipProvider.sendResponse(response);
                 }
 
             } catch (Exception ex) {
                 String s = "Unexpected exception";
-                logger.error(s, ex);
+                LOG.error(s, ex);
                 ReInviteInfoAckOverlapTest.fail(s);
 
             }
         }
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response");
+            LOG.info("Got a response");
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id " + tid + ":\n" + response);
+            LOG.info("Response received with client transaction id " + tid + ":\n" + response);
             try {
                 if (response.getStatusCode() == Response.OK
                         && ((CSeqHeader) response.getHeader(CSeqHeader.NAME)).getMethod().equals(
@@ -480,19 +460,19 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 }
                 if (tid != null) {
                     Dialog dialog = tid.getDialog();
-                    logger.info("Dalog State = " + dialog.getState());
+                    LOG.info("Dalog State = " + dialog.getState());
                     String toTag = ((ResponseExt)response).getToHeader().getTag(); 
                     // Note that TRYING is an optional response.
                     if(DialogState.CONFIRMED.equals(dialog.getState()) && toTag == null && response.getStatusCode() == Response.TRYING) {
                         this.isToTagInTryingReInvitePresent  = false;
-                        logger.info("to tag for trying in re INVITE is present " + toTag);
+                        LOG.info("to tag for trying in re INVITE is present " + toTag);
                     }
                 }
             } catch (Exception ex) {
 
                 String s = "Unexpected exception";
 
-                logger.error(s, ex);
+                LOG.error(s, ex);
                 ReInviteInfoAckOverlapTest.fail(s);
             }
 
@@ -505,10 +485,10 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("state = " + transaction.getState());
-            logger.info("dialog = " + transaction.getDialog());
-            logger.info("dialogState = " + transaction.getDialog().getState());
-            logger.info("Transaction Time out");
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = " + transaction.getDialog().getState());
+            LOG.info("Transaction Time out");
         }
 
         public SipProvider createSipProvider() throws Exception {
@@ -531,7 +511,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("An IO Exception was detected : " + exceptionEvent.getHost());
+            LOG.error("An IO Exception was detected : " + exceptionEvent.getHost());
 
         }
 
@@ -542,7 +522,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
          */
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.info("Tx terminated event ");
+            LOG.info("Tx terminated event ");
 
         }
 
@@ -552,7 +532,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
          * @see javax.sip.SipListener#processDialogTerminated(javax.sip.DialogTerminatedEvent)
          */
         public void processDialogTerminated(DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog terminated event detected ");
+            LOG.info("Dialog terminated event detected ");
             fail("shootme: Dialog TERMINATED event unexpected");
 
         }
@@ -597,7 +577,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             Request request = requestReceivedEvent.getRequest();
             ServerTransaction serverTransactionId = requestReceivedEvent.getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + protocolObjects.sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId);
 
@@ -612,7 +592,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             try {
                 this.reInviteReceivedCount++;
                 Dialog dialog = st.getDialog();
-                logger.info("shootist received RE INVITE. Sending BUSY_HERE");
+                LOG.info("shootist received RE INVITE. Sending BUSY_HERE");
                 assertEquals("Dialog state must in confirmed state ",DialogState.CONFIRMED,dialog.getState());
                 
                 Thread.sleep(300);
@@ -633,36 +613,36 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                         dialog, this.dialog);
 
             } catch (Exception ex) {
-                logger.error("unexpected exception", ex);
+                LOG.error("unexpected exception", ex);
                 ReInviteInfoAckOverlapTest.fail("unexpected exception");
             }
         }
 
         public void processAck(Request request, ServerTransaction tid) {
             try {
-                logger.info("Got an ACK! ");
+                LOG.info("Got an ACK! ");
             } catch (Exception ex) {
-                logger.error("unexpected exception", ex);
+                LOG.error("unexpected exception", ex);
                 ReInviteInfoAckOverlapTest.fail("unexpected exception");
 
             }
         }
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response " + responseReceivedEvent.getResponse());
+            LOG.info("Got a response " + responseReceivedEvent.getResponse());
 
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id " + tid + ":\n"
+            LOG.info("Response received with client transaction id " + tid + ":\n"
                     + response.getStatusCode());
             if (tid == null) {
-                logger.info("Stray response -- dropping ");
+                LOG.info("Stray response -- dropping ");
                 return;
             }
-            logger.info("transaction state is " + tid.getState());
-            logger.info("Dialog = " + tid.getDialog());
-            logger.info("Dialog State is " + tid.getDialog().getState());
+            LOG.info("transaction state is " + tid.getState());
+            LOG.info("Dialog = " + tid.getDialog());
+            LOG.info("Dialog State is " + tid.getDialog().getState());
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
             try {
@@ -677,16 +657,16 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 		Request info = dialog.createRequest(Request.INFO);
                 		ClientTransaction infoct = this.provider.getNewClientTransaction(info);
                 		infoct.sendRequest();
-                		logger.info("Sent INFO");
+                		LOG.info("Sent INFO");
                 		Thread.sleep(500);
                 		Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                		logger.info("Ack request to send = " + ackRequest);
-                		logger.info("Sending ACK");
+                		LOG.info("Ack request to send = " + ackRequest);
+                		LOG.info("Sending ACK");
                 		dialog.sendAck(ackRequest);
                 	} else {
                 		Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                		logger.info("Ack request to send = " + ackRequest);
-                		logger.info("Sending ACK");
+                		LOG.info("Ack request to send = " + ackRequest);
+                		LOG.info("Sending ACK");
                 		dialog.sendAck(ackRequest);
 
                 		Thread.sleep(100);
@@ -701,7 +681,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 		ClientTransaction ct = provider.getNewClientTransaction(inviteRequest);
                 		dialog.sendRequest(ct);
                 		reInviteCount++;
-                		logger.info("RE-INVITE sent");}
+                		LOG.info("RE-INVITE sent");}
 
                 } else if (response.getStatusCode() == Response.BUSY_HERE) {
                 	this.busyHereReceived = true;
@@ -710,7 +690,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             } catch (Exception ex) {
                 ex.printStackTrace();
 
-                logger.error(ex);
+                LOG.error(ex);
                 ReInviteInfoAckOverlapTest.fail("unexpceted exception");
             }
 
@@ -718,8 +698,8 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-            logger.info("Transaction Time out");
-            logger.info("TimeoutEvent " + timeoutEvent.getTimeout());
+            LOG.info("Transaction Time out");
+            LOG.info("TimeoutEvent " + timeoutEvent.getTimeout());
         }
 
         public SipProvider createSipProvider() {
@@ -730,7 +710,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 provider = protocolObjects.sipStack.createSipProvider(listeningPoint);
                 return provider;
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 ReInviteInfoAckOverlapTest.fail("unable to create provider");
                 return null;
             }
@@ -870,7 +850,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 this.inviteTid.sendRequest();
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 ReInviteInfoAckOverlapTest.fail("unexpected exception");
             }
         }
@@ -887,7 +867,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("IO Exception!");
+            LOG.error("IO Exception!");
             ReInviteInfoAckOverlapTest.fail("Unexpected exception");
 
         }
@@ -900,7 +880,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
 
-            logger.info("Transaction Terminated Event!");
+            LOG.info("Transaction Terminated Event!");
         }
 
         /*
@@ -909,7 +889,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
          * @see javax.sip.SipListener#processDialogTerminated(javax.sip.DialogTerminatedEvent)
          */
         public void processDialogTerminated(DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog Terminated Event!");
+            LOG.info("Dialog Terminated Event!");
             fail("shootist: unexpected event -- dialog terminated!");
 
         }

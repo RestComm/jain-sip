@@ -1,18 +1,39 @@
 package examples.refer;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Properties;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ReferToHeader;
+import javax.sip.header.SubscriptionStateHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This example shows an out-of-dialog REFER scenario:
@@ -24,6 +45,8 @@ import java.util.*;
  */
 
 public class Referer implements SipListener {
+
+    private static final Logger LOG = LogManager.getLogger(Referer.class);
 
     private SipProvider sipProvider;
 
@@ -41,19 +64,6 @@ public class Referer implements SipListener {
 
     private int count;
 
-    private static Logger logger = Logger.getLogger(Referer.class);
-
-    static {
-        try {
-            logger.setLevel(Level.INFO);
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "refereroutputlog.txt"));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
     private ClientTransaction subscribeTid;
 
     private ListeningPoint listeningPoint;
@@ -63,7 +73,7 @@ public class Referer implements SipListener {
             + ">>>> is your class path set to the root?";
 
     private static void usage() {
-        logger.info(usageString);
+        LOG.info(usageString);
         System.exit(0);
 
     }
@@ -74,11 +84,11 @@ public class Referer implements SipListener {
                 .getServerTransaction();
         String viaBranch = ((ViaHeader)(request.getHeaders(ViaHeader.NAME).next())).getParameter("branch");
 
-        logger.info("\n\nRequest " + request.getMethod() + " received at "
+        LOG.info("\n\nRequest " + request.getMethod() + " received at "
                 + sipStack.getStackName() + " with server transaction id "
                 + serverTransactionId +
                 " branch ID = " + viaBranch);
-        logger.info( request );
+        LOG.info(request );
         if (request.getMethod().equals(Request.NOTIFY))
             processNotify(requestReceivedEvent, serverTransactionId);
 
@@ -89,26 +99,26 @@ public class Referer implements SipListener {
         SipProvider provider = (SipProvider) requestEvent.getSource();
         Request notify = requestEvent.getRequest();
         try {
-            logger.info("referer:  got a notify count  " + this.count++ );
+            LOG.info("referer:  got a notify count  " + this.count++ );
             if (serverTransactionId == null) {
-                logger.info("referer:  null TID.");
+                LOG.info("referer:  null TID.");
                 serverTransactionId = provider.getNewServerTransaction(notify);
             }
             Dialog dialog = serverTransactionId.getDialog();
-            logger.info("Dialog = " + dialog);
+            LOG.info("Dialog = " + dialog);
 
             if (dialog != null) {
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("Dialog State = " + dialog.getState());
             }
             Response response = messageFactory.createResponse(200, notify);
             // SHOULD add a Contact
             ContactHeader contact = (ContactHeader) contactHeader.clone();
             ((SipURI)contact.getAddress().getURI()).setParameter( "id", "sub" );
             response.addHeader( contact );
-            logger.info("Transaction State = " + serverTransactionId.getState());
+            LOG.info("Transaction State = " + serverTransactionId.getState());
             serverTransactionId.sendResponse(response);
             if (dialog != null ) {
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("Dialog State = " + dialog.getState());
             }
             SubscriptionStateHeader subscriptionState = (SubscriptionStateHeader) notify
                     .getHeader(SubscriptionStateHeader.NAME);
@@ -118,32 +128,32 @@ public class Referer implements SipListener {
             if (state.equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
                 dialog.delete();
             } else {
-                logger.info("Referer: state now " + state);
+                LOG.info("Referer: state now " + state);
             }
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            logger.error("Unexpected exception",ex);
+            LOG.error("Unexpected exception", ex);
             System.exit(0);
 
         }
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         Transaction tid = responseReceivedEvent.getClientTransaction();
 
-        logger.info("Response received with client transaction id " + tid
+        LOG.info("Response received with client transaction id " + tid
                 + ":\n" + response.getStatusCode()  );
         if (tid == null) {
-            logger.info("Stray response -- dropping ");
+            LOG.info("Stray response -- dropping ");
             return;
         }
-        logger.info("transaction state is " + tid.getState());
-        logger.info("Dialog = " + tid.getDialog());
+        LOG.info("transaction state is " + tid.getState());
+        LOG.info("Dialog = " + tid.getDialog());
         if ( tid.getDialog () != null )
-        logger.info("Dialog State is " + tid.getDialog().getState());
+        LOG.info("Dialog State is " + tid.getDialog().getState());
 
     }
 
@@ -247,13 +257,13 @@ public class Referer implements SipListener {
             );
             request.addHeader( referTo );
 
-            logger.info("Refer Dialog = " + subscribeTid.getDialog());
+            LOG.info("Refer Dialog = " + subscribeTid.getDialog());
 
             // send the request out.
             subscribeTid.sendRequest();
 
         } catch (Throwable ex) {
-            logger.info(ex.getMessage());
+            LOG.info(ex.getMessage());
             ex.printStackTrace();
             usage();
         }
@@ -283,7 +293,7 @@ public class Referer implements SipListener {
         properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "32");
 
         sipStack = sipFactory.createSipStack(properties);
-        logger.info("createSipStack " + sipStack);
+        LOG.info("createSipStack " + sipStack);
         headerFactory = sipFactory.createHeaderFactory();
         addressFactory = sipFactory.createAddressFactory();
         messageFactory = sipFactory.createMessageFactory();
@@ -296,22 +306,22 @@ public class Referer implements SipListener {
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("io exception event recieved");
+        LOG.info("io exception event recieved");
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent tte) {
-        logger.info("transaction terminated:" + tte );
+        LOG.info("transaction terminated:" + tte );
 
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("dialog terminated event recieved");
+        LOG.info("dialog terminated event recieved");
     }
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 }

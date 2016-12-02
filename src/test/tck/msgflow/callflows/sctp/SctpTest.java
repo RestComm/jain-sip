@@ -23,7 +23,6 @@
 package test.tck.msgflow.callflows.sctp;
 
 import java.util.EventObject;
-
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.RequestEvent;
@@ -32,9 +31,8 @@ import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -45,17 +43,11 @@ import test.tck.msgflow.callflows.ScenarioHarness;
  */
 public class SctpTest extends ScenarioHarness implements SipListener {
 
-
     protected Shootist shootist;
 
     private Shootme shootme;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();

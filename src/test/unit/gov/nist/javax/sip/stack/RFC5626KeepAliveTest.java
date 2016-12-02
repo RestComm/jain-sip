@@ -12,7 +12,6 @@ import gov.nist.javax.sip.stack.ConnectionOrientedMessageProcessor;
 import gov.nist.javax.sip.stack.MessageProcessor;
 import gov.nist.javax.sip.stack.SIPTransactionStack;
 import gov.nist.javax.sip.stack.TCPMessageChannel;
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.EventObject;
@@ -20,7 +19,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -46,9 +44,8 @@ import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -61,21 +58,13 @@ import test.tck.msgflow.callflows.ScenarioHarness;
  */
 public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListenerExt {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
-    
+
     protected Shootme shootme;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-            logger.addAppender(console);
-        }
-    }
-
     class Shootme  implements SipListenerExt {
-
-
         private ProtocolObjects  protocolObjects;
         private ListeningPoint listeningPoint;
 
@@ -115,7 +104,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 Iterator<ConnectionOrientedMessageChannel> itr = tcpMessageChannels.values().iterator();
                 while (itr.hasNext()) {
                 	ConnectionOrientedMessageChannel tcpMessageChannel = itr.next();
-					logger.info("tcpMessageChannel port " + tcpMessageChannel.getPort() + " peerPort " + tcpMessageChannel.getPeerPort());					
+					LOG.info("tcpMessageChannel port " + tcpMessageChannel.getPort() + " peerPort " + tcpMessageChannel.getPeerPort());
 				}
                 return tcpMessageChannels.values().iterator().next();
             } catch (Exception e) {
@@ -130,7 +119,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
             ServerTransaction serverTransactionId = requestEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod()
+            LOG.info("\n\nRequest " + request.getMethod()
                     + " received at " + protocolObjects.sipStack.getStackName()
                     + " with server transaction id " + serverTransactionId);
 
@@ -147,7 +136,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 ServerTransaction serverTransaction) {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
-            logger.info("Got an INVITE  " + request);
+            LOG.info("Got an INVITE  " + request);
             try {
                 Response response = protocolObjects.messageFactory.createResponse(180, request);
                 ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
@@ -161,23 +150,23 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
                 if (st == null) {
                     st = sipProvider.getNewServerTransaction(request);
-                    logger.info("Server transaction created!" + request);
+                    LOG.info("Server transaction created!" + request);
 
-                    logger.info("Dialog = " + st.getDialog());
+                    LOG.info("Dialog = " + st.getDialog());
                 }
 
                 byte[] content = request.getRawContent();
                 if (content != null) {
-                    logger.info(" content = " + new String(content));
+                    LOG.info(" content = " + new String(content));
                     ContentTypeHeader contentTypeHeader = protocolObjects.headerFactory
                             .createContentTypeHeader("application", "sdp");
-                    logger.info("response = " + response);
+                    LOG.info("response = " + response);
                     response.setContent(content, contentTypeHeader);
                 }
                 dialog = st.getDialog();
                 if (dialog != null) {
-                    logger.info("Dialog " + dialog);
-                    logger.info("Dialog state " + dialog.getState());
+                    LOG.info("Dialog " + dialog);
+                    LOG.info("Dialog state " + dialog.getState());
                 }
                 st.sendResponse(response);
                 response = protocolObjects.messageFactory.createResponse(200, request);
@@ -188,23 +177,23 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 st.sendResponse(response);
                 reSendSt = st;
                 reSendResponse = response;
-                logger.info("TxState after sendResponse = " + st.getState());
+                LOG.info("TxState after sendResponse = " + st.getState());
                 this.inviteTid = st;
             } catch (Exception ex) {
                 String s = "unexpected exception";
 
-                logger.error(s,ex);
+                LOG.error(s, ex);
                 AckReTransmissionTest.fail(s);
             }
         }
 
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response");
+            LOG.info("Got a response");
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id "
+            LOG.info("Response received with client transaction id "
                     + tid + ":\n" + response);
             try {
                 if (response.getStatusCode() == Response.OK
@@ -217,11 +206,11 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 }
                 if ( tid != null ) {
                     Dialog dialog = tid.getDialog();
-                    logger.info("Dialog State = " + dialog.getState());
+                    LOG.info("Dialog State = " + dialog.getState());
                 }
             } catch (Exception ex) {
                 String s = "Unexpected exception";
-                logger.error(s,ex);
+                LOG.error(s, ex);
                 AckReTransmissionTest.fail(s);
             }
 
@@ -234,11 +223,11 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("state = " + transaction.getState());
-            logger.info("dialog = " + transaction.getDialog());
-            logger.info("dialogState = "
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = "
                     + transaction.getDialog().getState());
-            logger.info("Transaction Time out");
+            LOG.info("Transaction Time out");
         }
 
 
@@ -265,11 +254,11 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("Shootme An IO Exception was detected : "
+            LOG.info("Shootme An IO Exception was detected : "
                     + exceptionEvent.getHost());
             keepAliveTimeoutFired |= (exceptionEvent instanceof IOExceptionEventExt && ((IOExceptionEventExt)exceptionEvent).getReason() == Reason.KeepAliveTimeout);
 
-            logger.info("Shootme KeepAlive Time out " + keepAliveTimeoutFired);         
+            LOG.info("Shootme KeepAlive Time out " + keepAliveTimeoutFired);
         }
 
         /*
@@ -279,7 +268,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
          */
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.info("Tx terminated event ");
+            LOG.info("Tx terminated event ");
 
         }
 
@@ -290,7 +279,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
          */
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog terminated event detected ");
+            LOG.info("Dialog terminated event detected ");
 
         }
 
@@ -330,14 +319,14 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
 //                assertTrue(shootist.getTestMessageProcessor().setKeepAliveTimeout(
 //                        Shootme.myAddress, Shootme.myPort, 1000));
-				logger.info("keepAliveSent =" + keepAliveSent + " / KeepAliveToSend ="+keepAliveToSend);
+				LOG.info("keepAliveSent =" + keepAliveSent + " / KeepAliveToSend ="+keepAliveToSend);
 				
             	if(((SipStackImpl)shootist.protocolObjects.sipStack).isAlive() && (keepAliveToSend < 0 || keepAliveSent <= keepAliveToSend)) {
 	                try {
 	                    ((ListeningPointExt)shootist.listeningPoint).sendHeartbeat( Shootme.myAddress, Shootme.myPort);
 	                    keepAliveSent++;
 	                } catch (Exception e) {
-	                	logger.info("keepAliveSender received Exception =" + e + " ,cancelling keepalivesender timer");
+	                	LOG.info("keepAliveSender received Exception =" + e + " ,cancelling keepalivesender timer");
 	                    e.printStackTrace();
 	                    this.cancel();
 //	                    fail();
@@ -363,16 +352,16 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-        	logger.info("Got a response");
+        	LOG.info("Got a response");
 
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id " + tid
+            LOG.info("Response received with client transaction id " + tid
                     + ":\n" + response.getStatusCode());
             if (tid != null) {
-				logger.info("Dialog = " + responseReceivedEvent.getDialog());
-				logger.info("Dialog State is "
+				LOG.info("Dialog = " + responseReceivedEvent.getDialog());
+				LOG.info("Dialog State is "
 						+ responseReceivedEvent.getDialog().getState());
 			}
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
@@ -385,12 +374,12 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                     Dialog dialog = responseReceivedEvent.getDialog();
                     CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
                     Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                    logger.info("Ack request to send = " + ackRequest);
-                    logger.info("Sending ACK");
+                    LOG.info("Ack request to send = " + ackRequest);
+                    LOG.info("Sending ACK");
                     dialog.sendAck(ackRequest);
                 }
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 ex.printStackTrace();
                 RFC5626KeepAliveTest.fail("unexpected exception");
             }
@@ -416,7 +405,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
                 return provider;
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 fail("unable to create provider");
                 return null;
             }
@@ -563,7 +552,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 this.inviteTid.sendRequest();
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 fail("unexpected exception");
             }
         }
@@ -594,10 +583,10 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("Shootist IO Exception ! ");
+            LOG.info("Shootist IO Exception ! ");
             keepAliveTimeoutFired |= (exceptionEvent instanceof IOExceptionEventExt && ((IOExceptionEventExt)exceptionEvent).getReason() == Reason.KeepAliveTimeout);
 
-            logger.info("Shootist KeepAlive Time out " + keepAliveTimeoutFired);              
+            LOG.info("Shootist KeepAlive Time out " + keepAliveTimeoutFired);
         }
 
         /*
@@ -608,7 +597,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
 
-            logger.info("Transaction Terminated Event!");
+            LOG.info("Transaction Terminated Event!");
         }
 
         /*
@@ -618,7 +607,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
          */
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog Terminated Event!");
+            LOG.info("Dialog Terminated Event!");
 
         }
 

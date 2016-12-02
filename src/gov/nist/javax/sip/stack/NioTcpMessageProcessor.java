@@ -242,11 +242,11 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
         		socketChannel.finishConnect();
         	} catch (IOException e) {
         		selectionKey.cancel();
-        		logger.logError("Cant connect", e);
+        		LOG.logError("Cant connect", e);
         		return;
         	}
             synchronized (socketChannel) {
-            	logger.logDebug("Notifying to wake up the blocking connect");
+            	LOG.logDebug("Notifying to wake up the blocking connect");
             	socketChannel.notify();
             }
 

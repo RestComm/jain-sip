@@ -21,12 +21,8 @@ package test.tck.msgflow.callflows.router;
 
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.NonSipUriRouter;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -41,17 +37,11 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
         SipListener {
 
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
 
     protected Shootme shootme;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-            logger.addAppender(console);
-        }
-    }
 
     public AbstractRouterTestCase() {
         super("routeteluri", true);
@@ -61,7 +51,7 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
         try {
             super.setUp();
 
-            logger.info("RouterTest: setup()");
+            LOG.info("RouterTest: setup()");
             shootist = new Shootist(getTiProtocolObjects());
             SipProvider shootistProvider = shootist.createProvider();
             providerTable.put(shootistProvider, shootist);
@@ -77,7 +67,7 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
                 getTiProtocolObjects().start();
             getRiProtocolObjects().start();
         } catch (Exception ex) {
-            logger.error("unexpected excecption ", ex);
+            LOG.error("unexpected excecption ", ex);
             fail("unexpected exception");
         }
     }
@@ -95,7 +85,7 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
 
             logTestCompleted();
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
         super.tearDown();

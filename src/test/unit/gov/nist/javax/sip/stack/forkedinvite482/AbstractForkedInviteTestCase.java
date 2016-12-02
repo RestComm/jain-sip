@@ -3,34 +3,12 @@
  */
 package test.unit.gov.nist.javax.sip.stack.forkedinvite482;
 
-import gov.nist.javax.sip.SipProviderImpl;
-
-import java.util.EventObject;
 import java.util.Hashtable;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import javax.sip.DialogTerminatedEvent;
-import javax.sip.IOExceptionEvent;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
-import javax.sip.TimeoutEvent;
-import javax.sip.TransactionTerminatedEvent;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
-import test.tck.msgflow.callflows.ProtocolObjects;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ScenarioHarness;
-
-import junit.framework.TestCase;
 
 /**
  * @author M. Ranganathan
@@ -39,24 +17,13 @@ import junit.framework.TestCase;
 public class AbstractForkedInviteTestCase extends ScenarioHarness implements
         SipListener {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     protected Shootist shootist;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
 
     protected Shootme shootme;
 
     private Proxy proxy;
-
-
-
-    static {
-        if ( !logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
-    // private Appender appender;
 
     public AbstractForkedInviteTestCase() {
 
@@ -66,7 +33,7 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
             providerTable = new Hashtable();
 
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
     }
@@ -115,7 +82,7 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
             super.logTestCompleted();
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
     }

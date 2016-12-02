@@ -3,14 +3,11 @@ package test.unit.gov.nist.javax.sip.stack.forkedinvitedialogtimeout;
 import gov.nist.javax.sip.DialogTimeoutEvent;
 import gov.nist.javax.sip.ResponseEventExt;
 import gov.nist.javax.sip.SipListenerExt;
-import gov.nist.javax.sip.SipStackImpl;
 import gov.nist.javax.sip.message.ResponseExt;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Timer;
 import java.util.TimerTask;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogState;
@@ -21,7 +18,6 @@ import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
 import javax.sip.SipException;
-import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.SipStack;
 import javax.sip.TransactionTerminatedEvent;
@@ -42,14 +38,9 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -60,10 +51,11 @@ import org.apache.log4j.helpers.NullEnumeration;
 
 public class Shootist implements SipListenerExt {
 
+    private static final Logger LOG = LogManager.getLogger(Shootist.class);
+
     private ContactHeader contactHeader;
 
     private ClientTransaction inviteTid;
-
 
     private SipProvider sipProvider;
 
@@ -79,16 +71,6 @@ public class Shootist implements SipListenerExt {
 
     private static String unexpectedException = "Unexpected exception ";
 
-    private static Logger logger = Logger.getLogger(Shootist.class);
-
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
-    
     private Dialog originalDialog;
     
     private Dialog earlyDialog;
@@ -179,7 +161,7 @@ public class Shootist implements SipListenerExt {
         ServerTransaction serverTransactionId = requestReceivedEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod() + " received at "
+        LOG.info("\n\nRequest " + request.getMethod() + " received at "
                 +  sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -194,18 +176,18 @@ public class Shootist implements SipListenerExt {
     public void processBye(Request request,
             ServerTransaction serverTransactionId) {
         try {
-            logger.info("shootist:  got a bye .");
+            LOG.info("shootist:  got a bye .");
             if (serverTransactionId == null) {
-                logger.info("shootist:  null TID.");
+                LOG.info("shootist:  null TID.");
                 return;
             }
             Dialog dialog = serverTransactionId.getDialog();
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("Dialog State = " + dialog.getState());
             Response response = messageFactory.createResponse(
                     200, request);
             serverTransactionId.sendResponse(response);
-            logger.info("shootist:  Sending OK.");
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("shootist:  Sending OK.");
+            LOG.info("Dialog State = " + dialog.getState());
 
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -221,9 +203,9 @@ public class Shootist implements SipListenerExt {
             ClientTransaction tid = responseReceivedEvent.getClientTransaction();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
     
-            logger.info("Response received : Status Code = "
+            LOG.info("Response received : Status Code = "
                     + response.getStatusCode() + " " + cseq);
-            logger.info("Response = " + response + " class=" + response.getClass() );            
+            LOG.info("Response = " + response + " class=" + response.getClass() );
     
             Dialog dialog = responseReceivedEvent.getDialog();     
             this.forkedDialogs.add(dialog);
@@ -235,12 +217,12 @@ public class Shootist implements SipListenerExt {
             }
             System.out.println("original Tx " + responseReceivedEvent.getOriginalTransaction());            
             if (tid != null)
-                logger.info("transaction state is " + tid.getState());
+                LOG.info("transaction state is " + tid.getState());
             else
-                logger.info("transaction = " + tid);
+                LOG.info("transaction = " + tid);
     
-            logger.info("Dialog = " + dialog);
-            logger.info("Dialog state is " + dialog.getState());
+            LOG.info("Dialog = " + dialog);
+            LOG.info("Dialog state is " + dialog.getState());
 
             String toTag = ((ResponseExt)response).getToHeader().getTag();
             boolean isFromFork = false;
@@ -249,7 +231,7 @@ public class Shootist implements SipListenerExt {
             } else {
                 isFromFork = toTag != null && !toTag.contains("shootme-5081");
             }
-            logger.info("isRetransmission = " + responseReceivedEvent.isRetransmission() + " isFromForked = " + isFromFork + " isForked = " + responseReceivedEvent.isForkedResponse() + " response "+ response);
+            LOG.info("isRetransmission = " + responseReceivedEvent.isRetransmission() + " isFromForked = " + isFromFork + " isForked = " + responseReceivedEvent.isForkedResponse() + " response "+ response);
             
             if (response.getStatusCode() == Response.OK) {
                 if (cseq.getMethod().equals(Request.INVITE)) {
@@ -283,21 +265,21 @@ public class Shootist implements SipListenerExt {
                         this.byeResponseSeen = true;
                     }
                 } else {
-                    logger.info("Response method = " + cseq.getMethod());
+                    LOG.info("Response method = " + cseq.getMethod());
                 }
             } else if ( response.getStatusCode() == Response.RINGING ) {
                 TestCase.assertEquals( DialogState.EARLY, dialog.getState() );     
                 this.forkedEarlyDialogs.add(dialog);
                 // Proxy will fork. This make sure the forked early dialog is not the same as the first one.
                 if(isFromFork) {
-                    logger.info("forked early dialog= " + dialog + " for response " + response);
+                    LOG.info("forked early dialog= " + dialog + " for response " + response);
                     ResponseEventExt responseEventExt  = (ResponseEventExt) responseReceivedEvent;
                     TestCase.assertTrue("forked event must set flag",responseEventExt.isForkedResponse());
                     TestCase.assertNotSame(dialog, earlyDialog);                        
                     TestCase.assertSame(earlyDialog, responseEventExt.getOriginalTransaction().getDefaultDialog());
                 } else {
                     earlyDialog = dialog;
-                    logger.info("original early dialog= " + dialog + " for response " + response);
+                    LOG.info("original early dialog= " + dialog + " for response " + response);
                     ResponseEventExt responseEventExt  = (ResponseEventExt) responseReceivedEvent;
                     TestCase.assertFalse("non forked event must not set flag",responseEventExt.isForkedResponse());
                 }
@@ -314,13 +296,13 @@ public class Shootist implements SipListenerExt {
             listeningPoint = sipStack.createListeningPoint(
                     host, port, "udp");
 
-            logger.info("listening point = " + host + " port = " + port);
-            logger.info("listening point = " + listeningPoint);
+            LOG.info("listening point = " + host + " port = " + port);
+            LOG.info("listening point = " + listeningPoint);
             sipProvider = sipStack
                     .createSipProvider(listeningPoint);
             return sipProvider;
         } catch (Exception ex) {
-            logger.error(unexpectedException, ex);
+            LOG.error(unexpectedException, ex);
             TestCase.fail(unexpectedException);
             return null;
         }
@@ -343,7 +325,7 @@ public class Shootist implements SipListenerExt {
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     public void sendInvite(int forkCount) {
@@ -498,14 +480,14 @@ public class Shootist implements SipListenerExt {
             
 
         } catch (Exception ex) {
-            logger.error(unexpectedException, ex);
+            LOG.error(unexpectedException, ex);
             TestCase.fail(unexpectedException);
 
         }
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.error("IOException happened for " + exceptionEvent.getHost()
+        LOG.error("IOException happened for " + exceptionEvent.getHost()
                 + " port = " + exceptionEvent.getPort());
         TestCase.fail("Unexpected exception");
 
@@ -513,12 +495,12 @@ public class Shootist implements SipListenerExt {
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Transaction terminated event recieved");
+        LOG.info("Transaction terminated event recieved");
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("dialog Id " + dialogTerminatedEvent.getDialog().getDialogId());
+        LOG.info("dialog Id " + dialogTerminatedEvent.getDialog().getDialogId());
         TestCase.assertTrue("Only want one DTE per dialog",!this.dialogTerminatedEvents.contains(dialogTerminatedEvent.getDialog()));
         this.dialogTerminatedEvents.add(dialogTerminatedEvent.getDialog());
         if(this.timedOutDialog.contains((Dialog)dialogTerminatedEvent.getDialog() )) {
@@ -553,14 +535,14 @@ public class Shootist implements SipListenerExt {
                 originalDialog = sipProvider.getNewDialog(inviteTid);
                 TestCase.fail("Should not be able to create Dialog after request sent");
             } catch (SipException e) {
-                logger.info("Got the expected SIP Exception");
+                LOG.info("Got the expected SIP Exception");
             }
         }
     }
 
     public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
 
-        logger.info("Got a DialogTimeoutEvent " + timeoutEvent.getDialog());
+        LOG.info("Got a DialogTimeoutEvent " + timeoutEvent.getDialog());
         this.timeoutEventSeen = true;
         if (timedOutDialog.size() > 0 ) {
         TestCase.assertTrue ("Should find timeout dialog in cancelSet", 

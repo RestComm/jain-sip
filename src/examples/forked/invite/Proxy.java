@@ -1,12 +1,7 @@
 package examples.forked.invite;
 
-import gov.nist.javax.sip.address.SipUri;
-
-import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Properties;
-
 import javax.sip.ClientTransaction;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
@@ -14,31 +9,21 @@ import javax.sip.ListeningPoint;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
-import javax.sip.SipFactory;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
-import javax.sip.SipStack;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 import javax.sip.address.Address;
-import javax.sip.address.AddressFactory;
 import javax.sip.address.SipURI;
 import javax.sip.header.CSeqHeader;
-import javax.sip.header.HeaderFactory;
 import javax.sip.header.RecordRouteHeader;
 import javax.sip.header.RouteHeader;
-import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
-import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * A very simple forking proxy server.
@@ -51,7 +36,7 @@ public class Proxy extends TestCase implements SipListener {
 
 
 
-    //private ServerTransaction st;
+    private static final Logger LOG = LogManager.getLogger(Proxy.class);
 
     private SipProvider inviteServerTxProvider;
 
@@ -66,17 +51,6 @@ public class Proxy extends TestCase implements SipListener {
     private SipProvider sipProvider;
 
     private static String unexpectedException = "Unexpected exception";
-
-    private static Logger logger = Logger.getLogger(Proxy.class);
-
-    static {
-        try {
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    ProtocolObjects.logFileDirectory + "proxlog.txt"));
-        } catch (Exception ex) {
-            throw new RuntimeException("could not open shootistconsolelog.txt");
-        }
-    }
 
     public void processRequest(RequestEvent requestEvent) {
         try {
@@ -149,7 +123,7 @@ public class Proxy extends TestCase implements SipListener {
             } else {
                 // Remove the topmost route header
                 // The route header will make sure it gets to the right place.
-                logger.info("proxy: Got a request " + request.getMethod());
+                LOG.info("proxy: Got a request " + request.getMethod());
                 Request newRequest = (Request) request.clone();
                 newRequest.removeFirst(RouteHeader.NAME);
                 sipProvider.sendRequest(newRequest);
@@ -167,7 +141,7 @@ public class Proxy extends TestCase implements SipListener {
         try {
             Response response = responseEvent.getResponse();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
-            logger.info("ClientTxID = " + responseEvent.getClientTransaction()
+            LOG.info("ClientTxID = " + responseEvent.getClientTransaction()
                     + " client tx id " + ((ViaHeader) response.getHeader(ViaHeader.NAME)).getBranch()
                     + " CSeq header = " + response.getHeader(CSeqHeader.NAME)
                     + " status code = " + response.getStatusCode());
@@ -200,7 +174,7 @@ public class Proxy extends TestCase implements SipListener {
                 }
             } else {
                 // Can be BYE due to Record-Route
-                logger.info("Got a non-invite response " + response);
+                LOG.info("Got a non-invite response " + response);
                 SipProvider p = (SipProvider) responseEvent.getSource();
                 response.removeFirst( ViaHeader.NAME );
                 p.sendResponse( response );
@@ -212,11 +186,11 @@ public class Proxy extends TestCase implements SipListener {
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
-        logger.info("Timeout occured");
+        LOG.info("Timeout occured");
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("IOException occured");
+        LOG.info("IOException occured");
     }
     public SipProvider createSipProvider() {
         try {
@@ -227,7 +201,7 @@ public class Proxy extends TestCase implements SipListener {
                     .createSipProvider(listeningPoint);
             return sipProvider;
         } catch (Exception ex) {
-            logger.error(unexpectedException, ex);
+            LOG.error(unexpectedException, ex);
             fail(unexpectedException);
             return null;
         }
@@ -236,7 +210,7 @@ public class Proxy extends TestCase implements SipListener {
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Transaction terminated event occured -- cleaning up");
+        LOG.info("Transaction terminated event occured -- cleaning up");
         if (!transactionTerminatedEvent.isServerTransaction()) {
             ClientTransaction ct = transactionTerminatedEvent
                     .getClientTransaction();
@@ -247,24 +221,21 @@ public class Proxy extends TestCase implements SipListener {
                 }
             }
         } else {
-            logger.info("Server tx terminated! ");
+            LOG.info("Server tx terminated! ");
         }
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("HUH!! why do i see this event??");
+        LOG.info("HUH!! why do i see this event??");
     }
 
 
     public static void main(String[] args) throws Exception {
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects.init("proxy",false);
         Proxy proxy = new Proxy();
         proxy.createSipProvider();
         proxy.sipProvider.addSipListener(proxy);
-
-
     }
 
 }

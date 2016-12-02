@@ -2,30 +2,23 @@ package test.tck;
 
 import gov.nist.javax.sip.address.AddressFactoryImpl;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Enumeration;
 import java.util.Properties;
-
 import javax.sip.SipFactory;
 import javax.sip.address.AddressFactory;
 import javax.sip.header.HeaderFactory;
 import javax.sip.message.MessageFactory;
-
 import junit.framework.TestCase;
 import junit.framework.TestResult;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class TestHarness extends TestCase {
+
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     private static final String PATH_GOV_NIST = "gov.nist";
 
@@ -78,22 +71,13 @@ public class TestHarness extends TestCase {
 
     protected TestResult testResult;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
     private static String currentMethodName;
 
     private static String currentClassName;
 
-    protected static Appender console = new ConsoleAppender(new SimpleLayout());
-
-
     static {
         try {
             Properties tckProperties = new Properties();
-
-
-//            tckProperties.load(TestHarness.class.getClassLoader()
-//                    .getResourceAsStream("tck.properties"));
             tckProperties.load(new FileInputStream("tck.properties"));
             Enumeration props = tckProperties.propertyNames();
             while (props.hasMoreElements()) {
@@ -109,19 +93,6 @@ public class TestHarness extends TestCase {
             if (lf != null)
                 logFileName = lf;
             abortOnFail = (flag != null && flag.equalsIgnoreCase("true"));
-
-            // JvB: init log4j
-            //PropertyConfigurator.configure("log4j.properties");
-
-            BasicConfigurator.configure();
-
-            // If already created a print writer then just use it.
-            if (lf != null)
-                logger.addAppender(new FileAppender(new SimpleLayout(),
-                        logFileName));
-            else
-                logger.addAppender(new FileAppender(new SimpleLayout(),
-                        "tckoutput.txt"));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -129,7 +100,7 @@ public class TestHarness extends TestCase {
     }
 
     private static void println(String messageToPrint) {
-        logger.info(messageToPrint);
+        LOG.info(messageToPrint);
     }
 
     /**
@@ -167,7 +138,7 @@ public class TestHarness extends TestCase {
         //  className = className.substring(ind + 1);
         //}
 
-        logger.info(className + ":" + frame.getMethodName() + "(" +
+        LOG.info(className + ":" + frame.getMethodName() + "(" +
                         frame.getFileName() + ":"+ frame.getLineNumber() + ")" +  " : Status =  passed ! ");
         String methodName = frame.getMethodName();
 
@@ -191,7 +162,7 @@ public class TestHarness extends TestCase {
         //if (ind != -1) {
         //  className = className.substring(ind + 1);
         //}
-        logger.info(className + ":" + frame.getMethodName() + ": Status =  passed ! ");
+        LOG.info(className + ":" + frame.getMethodName() + ": Status =  passed ! ");
         String methodName = frame.getMethodName();
 
         if (!(currentMethodName != null && methodName.equals(currentMethodName) && currentClassName
@@ -360,7 +331,7 @@ public class TestHarness extends TestCase {
 
     public static void fail(String message, Exception ex) {
         logFailure(message);
-        logger.error(message,ex);
+        LOG.error(message, ex);
         TestCase.fail( message );
     }
 
@@ -445,12 +416,12 @@ public class TestHarness extends TestCase {
 
     public void logTestCompleted() {
     	TestCase.assertTrue( testPassed );
-        logger.info(this.getName() + " Completed");
+        LOG.info(this.getName() + " Completed");
     }
 
     public void logTestCompleted(String info) {
       TestCase.assertTrue( testPassed );
-        logger.info(this.getName() + ":" + info +" Completed");
+        LOG.info(this.getName() + ":" + info +" Completed");
     }
 
 
@@ -489,7 +460,7 @@ public class TestHarness extends TestCase {
         //@see test.tck.msgflow.SipProviderTest.testSendNullRequest
         properties.setProperty("javax.sip.OUTBOUND_PROXY", LOCAL_ADDRESS + ":" + TI_PORT + "/udp");
         if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-        	logger.info("\nNIO Enabled\n");
+        	LOG.info("\nNIO Enabled\n");
         	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
         }
 
@@ -522,7 +493,7 @@ public class TestHarness extends TestCase {
         //@see test.tck.msgflow.SipProviderTest.testSendNullRequest
         properties.setProperty("javax.sip.OUTBOUND_PROXY", LOCAL_ADDRESS + ":" + RI_PORT + "/udp");
         if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-        	logger.info("\nNIO Enabled\n");
+        	LOG.info("\nNIO Enabled\n");
         	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
         }
         return properties;

@@ -1,16 +1,31 @@
 package test.tck.msgflow.callflows.prack;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.Logger;
-
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.RequireHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
-
-import java.util.*;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -20,6 +35,8 @@ import java.util.*;
  */
 
 public class Shootme implements SipListener {
+
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     protected static final int PRACK_CODE = 183;
 
@@ -51,8 +68,6 @@ public class Shootme implements SipListener {
 
     public static final int myPort = 5080;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
     public Shootme(ProtocolObjects protObjects) {
         addressFactory = protObjects.addressFactory;
         messageFactory = protObjects.messageFactory;
@@ -66,7 +81,7 @@ public class Shootme implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod() + " received at "
+        LOG.info("\n\nRequest " + request.getMethod() + " received at "
                 + sipStack.getStackName() + " with server transaction id "
                 + serverTransactionId);
 
@@ -86,8 +101,8 @@ public class Shootme implements SipListener {
             ServerTransaction serverTransactionId) {
         prackRequestReceived = true;
         try {
-            logger.info("shootme: got an PRACK! ");
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("shootme: got an PRACK! ");
+            LOG.info("Dialog State = " + dialog.getState());
 
             /**
              * JvB: First, send 200 OK for PRACK
@@ -125,8 +140,8 @@ public class Shootme implements SipListener {
             ServerTransaction serverTransaction) {
 
         try {
-            logger.info("shootme: got an ACK! Sending  a BYE");
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("shootme: got an ACK! Sending  a BYE");
+            LOG.info("Dialog State = " + dialog.getState());
 
             // JvB: there should not be a transaction for ACKs; requestEvent
             // can be used to get it instead
@@ -153,8 +168,8 @@ public class Shootme implements SipListener {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme: got an Invite sending Trying");
-            // logger.info("shootme: " + request);
+            LOG.info("shootme: got an Invite sending Trying");
+            // LOG.info("shootme: " + request);
             Response response = messageFactory.createResponse(Response.TRYING,
                     request);
             ServerTransaction st = requestEvent.getServerTransaction();
@@ -176,7 +191,7 @@ public class Shootme implements SipListener {
             this.inviteTid = st;
             this.inviteRequest = request;
 
-            logger.info("sending reliable provisional response.");
+            LOG.info("sending reliable provisional response.");
 
             RequireHeader requireHeader = headerFactory
                     .createRequireHeader("100rel");
@@ -196,10 +211,10 @@ public class Shootme implements SipListener {
             ServerTransaction serverTransactionId) {
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme:  got a bye sending OK.");
+            LOG.info("shootme:  got a bye sending OK.");
             Response response = messageFactory.createResponse(200, request);
             serverTransactionId.sendResponse(response);
-            logger.info("Dialog State is "
+            LOG.info("Dialog State is "
                     + serverTransactionId.getDialog().getState());
 
         } catch (Exception ex) {
@@ -216,10 +231,10 @@ public class Shootme implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("dialog = " + transaction.getDialog());
-        logger.info("dialogState = " + transaction.getDialog().getState());
-        logger.info("Transaction Time out");
+        LOG.info("state = " + transaction.getState());
+        LOG.info("dialog = " + transaction.getDialog());
+        LOG.info("dialogState = " + transaction.getDialog().getState());
+        LOG.info("Transaction Time out");
     }
 
     public SipProvider createProvider() throws Exception {
@@ -227,25 +242,25 @@ public class Shootme implements SipListener {
                 transport);
 
         sipProvider = sipStack.createSipProvider(lp);
-        logger.info(transport + " SIP provider " + sipProvider);
+        LOG.info(transport + " SIP provider " + sipProvider);
 
         return sipProvider;
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("IOException");
+        LOG.info("IOException");
 
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Transaction terminated event recieved");
+        LOG.info("Transaction terminated event recieved");
 
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("Dialog terminated event recieved");
+        LOG.info("Dialog terminated event recieved");
 
     }
 

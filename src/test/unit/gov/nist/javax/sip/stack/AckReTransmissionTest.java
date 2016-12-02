@@ -24,7 +24,6 @@ package test.unit.gov.nist.javax.sip.stack;
 
 import java.util.ArrayList;
 import java.util.EventObject;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -52,12 +51,8 @@ import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -66,256 +61,240 @@ import test.tck.msgflow.callflows.ScenarioHarness;
  */
 public class AckReTransmissionTest extends ScenarioHarness implements SipListener {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     protected Shootist shootist;
 
     private Shootme shootme;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
-     class Shootme  implements SipListener {
+    class Shootme implements SipListener {
 
 
-            private ProtocolObjects  protocolObjects;
+        private ProtocolObjects protocolObjects;
+
+        // To run on two machines change these to suit.
+        public static final String myAddress = "127.0.0.1";
+
+        public static final int myPort = 5070;
+
+        private ServerTransaction inviteTid;
 
 
-            // To run on two machines change these to suit.
-            public static final String myAddress = "127.0.0.1";
+        private Dialog dialog;
 
-            public static final int myPort = 5070;
+        private ServerTransaction reSendSt = null;
+        private Response reSendResponse = null;
+        private int dropAckCount = 0;
 
-            private ServerTransaction inviteTid;
-
-
-            private Dialog dialog;
-
-            private ServerTransaction reSendSt = null;
-            private Response reSendResponse = null;
-            private int dropAckCount = 0;
-
-            public Shootme(ProtocolObjects protocolObjects) {
-                this.protocolObjects = protocolObjects;
-            }
-
-
-            public void processRequest(RequestEvent requestEvent) {
-                Request request = requestEvent.getRequest();
-                ServerTransaction serverTransactionId = requestEvent
-                        .getServerTransaction();
-
-                logger.info("\n\nRequest " + request.getMethod()
-                        + " received at " + protocolObjects.sipStack.getStackName()
-                        + " with server transaction id " + serverTransactionId);
-
-                if (request.getMethod().equals(Request.INVITE)) {
-                    processInvite(requestEvent, serverTransactionId);
-                } else if (request.getMethod().equals(Request.ACK)) {
-                    processAck(requestEvent, serverTransactionId);
-                }
-
-            }
-
-            /**
-             * Process the ACK request. Send the bye and complete the call flow.
-             */
-            public void processAck(RequestEvent requestEvent,
-                    ServerTransaction serverTransaction) {
-                logger.info("shootme: got an ACK " + requestEvent.getRequest());
-                if (dropAckCount <= 3){
-                    boolean skip = false;
-                    //drop the ACK, resend 200 OK
-                    try {
-                        reSendSt.sendResponse(reSendResponse);
-                        logger.info("shootme: resending the previous 200");
-                    }
-                    catch (Exception ex) {
-                        String s = "Unexpected error";
-                        logger.error(s, ex);
-                        AckReTransmissionTest.fail(s);
-                        skip = true;
-                    }
-                    if(!skip) {
-                        dropAckCount++;
-                        return;
-                    }
-                }
-                SipProvider sipProvider = (SipProvider) requestEvent.getSource();
-                try {
-                    AckReTransmissionTest.assertTrue("ACK was not successfully retransmitted 4 times", 4 == dropAckCount);
-                    //Create BYE request
-                    Request byeRequest = dialog.createRequest(Request.BYE);
-                    ClientTransaction ct = sipProvider.getNewClientTransaction(byeRequest);
-                    dialog.sendRequest(ct);
-                    reSendSt = null;
-                    reSendResponse = null;
-                    logger.info("shootme: Sending a BYE");
-                } catch (Exception ex) {
-                    String s = "Unexpected error";
-                    logger.error(s,ex);
-                    AckReTransmissionTest.fail(s);
-                }
-            }
-
-            /**
-             * Process the invite request.
-             */
-            public void processInvite(RequestEvent requestEvent,
-                    ServerTransaction serverTransaction) {
-                SipProvider sipProvider = (SipProvider) requestEvent.getSource();
-                Request request = requestEvent.getRequest();
-                logger.info("Got an INVITE  " + request);
-                try {
-                    Response response = protocolObjects.messageFactory.createResponse(180, request);
-                    ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
-                    toHeader.setTag("4321");
-                    Address address = protocolObjects.addressFactory.createAddress("Shootme <sip:"
-                            + myAddress + ":" + myPort + ">");
-                    ContactHeader contactHeader = protocolObjects.headerFactory
-                            .createContactHeader(address);
-                    response.addHeader(contactHeader);
-                    ServerTransaction st = requestEvent.getServerTransaction();
-
-                    if (st == null) {
-                        st = sipProvider.getNewServerTransaction(request);
-                        logger.info("Server transaction created!" + request);
-
-                        logger.info("Dialog = " + st.getDialog());
-                    }
-
-                    byte[] content = request.getRawContent();
-                    if (content != null) {
-                        logger.info(" content = " + new String(content));
-                        ContentTypeHeader contentTypeHeader = protocolObjects.headerFactory
-                                .createContentTypeHeader("application", "sdp");
-                        logger.info("response = " + response);
-                        response.setContent(content, contentTypeHeader);
-                    }
-                    dialog = st.getDialog();
-                    if (dialog != null) {
-                        logger.info("Dialog " + dialog);
-                        logger.info("Dialog state " + dialog.getState());
-                    }
-                    st.sendResponse(response);
-                    response = protocolObjects.messageFactory.createResponse(200, request);
-                    toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
-                    toHeader.setTag("4321");
-                    // Application is supposed to set.
-                    response.addHeader(contactHeader);
-                    st.sendResponse(response);
-                    reSendSt = st;
-                    reSendResponse = response;
-                    logger.info("TxState after sendResponse = " + st.getState());
-                    this.inviteTid = st;
-                } catch (Exception ex) {
-                    String s = "unexpected exception";
-
-                    logger.error(s,ex);
-                    AckReTransmissionTest.fail(s);
-                }
-            }
-
-
-            public void processResponse(ResponseEvent responseReceivedEvent) {
-                logger.info("Got a response");
-                Response response = (Response) responseReceivedEvent.getResponse();
-                Transaction tid = responseReceivedEvent.getClientTransaction();
-
-                logger.info("Response received with client transaction id "
-                        + tid + ":\n" + response);
-                try {
-                    if (response.getStatusCode() == Response.OK
-                            && ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
-                                    .getMethod().equals(Request.INVITE)) {
-                        Dialog dialog = tid.getDialog();
-                        CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
-                        Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                        dialog.sendAck(ackRequest);
-                    }
-                    if ( tid != null ) {
-                        Dialog dialog = tid.getDialog();
-                        logger.info("Dialog State = " + dialog.getState());
-                    }
-                } catch (Exception ex) {
-                    String s = "Unexpected exception";
-                    logger.error(s,ex);
-                    AckReTransmissionTest.fail(s);
-                }
-
-            }
-
-            public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
-                Transaction transaction;
-                if (timeoutEvent.isServerTransaction()) {
-                    transaction = timeoutEvent.getServerTransaction();
-                } else {
-                    transaction = timeoutEvent.getClientTransaction();
-                }
-                logger.info("state = " + transaction.getState());
-                logger.info("dialog = " + transaction.getDialog());
-                logger.info("dialogState = "
-                        + transaction.getDialog().getState());
-                logger.info("Transaction Time out");
-            }
-
-
-
-
-            public SipProvider createSipProvider() throws Exception {
-                ListeningPoint lp = protocolObjects.sipStack.createListeningPoint(myAddress,
-                        myPort, protocolObjects.transport);
-
-
-                SipProvider sipProvider = protocolObjects.sipStack.createSipProvider(lp);
-                return sipProvider;
-            }
-
-
-
-
-            public void checkState() {
-                AckReTransmissionTest.assertTrue("ACK was not successfully retransmitted 4 times", 4==dropAckCount);
-            }
-            /*
-             * (non-Javadoc)
-             *
-             * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
-             */
-            public void processIOException(IOExceptionEvent exceptionEvent) {
-                logger.error("An IO Exception was detected : "
-                        + exceptionEvent.getHost());
-
-            }
-
-            /*
-             * (non-Javadoc)
-             *
-             * @see javax.sip.SipListener#processTransactionTerminated(javax.sip.TransactionTerminatedEvent)
-             */
-            public void processTransactionTerminated(
-                    TransactionTerminatedEvent transactionTerminatedEvent) {
-                logger.info("Tx terminated event ");
-
-            }
-
-            /*
-             * (non-Javadoc)
-             *
-             * @see javax.sip.SipListener#processDialogTerminated(javax.sip.DialogTerminatedEvent)
-             */
-            public void processDialogTerminated(
-                    DialogTerminatedEvent dialogTerminatedEvent) {
-                logger.info("Dialog terminated event detected ");
-
-            }
-
+        public Shootme(ProtocolObjects protocolObjects) {
+            this.protocolObjects = protocolObjects;
         }
 
-    class Shootist  implements SipListener {
+
+        public void processRequest(RequestEvent requestEvent) {
+            Request request = requestEvent.getRequest();
+            ServerTransaction serverTransactionId = requestEvent
+                    .getServerTransaction();
+
+            LOG.info("\n\nRequest " + request.getMethod()
+                             + " received at " + protocolObjects.sipStack.getStackName()
+                             + " with server transaction id " + serverTransactionId);
+
+            if (request.getMethod().equals(Request.INVITE)) {
+                processInvite(requestEvent, serverTransactionId);
+            } else if (request.getMethod().equals(Request.ACK)) {
+                processAck(requestEvent, serverTransactionId);
+            }
+        }
+
+        /**
+         * Process the ACK request. Send the bye and complete the call flow.
+         */
+        public void processAck(
+                RequestEvent requestEvent,
+                ServerTransaction serverTransaction) {
+            LOG.info("shootme: got an ACK " + requestEvent.getRequest());
+            if (dropAckCount <= 3) {
+                boolean skip = false;
+                //drop the ACK, resend 200 OK
+                try {
+                    reSendSt.sendResponse(reSendResponse);
+                    LOG.info("shootme: resending the previous 200");
+                } catch (Exception ex) {
+                    String s = "Unexpected error";
+                    LOG.error(s, ex);
+                    AckReTransmissionTest.fail(s);
+                    skip = true;
+                }
+                if (!skip) {
+                    dropAckCount++;
+                    return;
+                }
+            }
+            SipProvider sipProvider = (SipProvider) requestEvent.getSource();
+            try {
+                AckReTransmissionTest.assertTrue("ACK was not successfully retransmitted 4 times", 4 == dropAckCount);
+                //Create BYE request
+                Request byeRequest = dialog.createRequest(Request.BYE);
+                ClientTransaction ct = sipProvider.getNewClientTransaction(byeRequest);
+                dialog.sendRequest(ct);
+                reSendSt = null;
+                reSendResponse = null;
+                LOG.info("shootme: Sending a BYE");
+            } catch (Exception ex) {
+                String s = "Unexpected error";
+                LOG.error(s, ex);
+                AckReTransmissionTest.fail(s);
+            }
+        }
+
+        /**
+         * Process the invite request.
+         */
+        public void processInvite(
+                RequestEvent requestEvent,
+                ServerTransaction serverTransaction) {
+            SipProvider sipProvider = (SipProvider) requestEvent.getSource();
+            Request request = requestEvent.getRequest();
+            LOG.info("Got an INVITE  " + request);
+            try {
+                Response response = protocolObjects.messageFactory.createResponse(180, request);
+                ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
+                toHeader.setTag("4321");
+                Address address = protocolObjects.addressFactory.createAddress("Shootme <sip:"
+                                                                                       + myAddress + ":" + myPort + ">");
+                ContactHeader contactHeader = protocolObjects.headerFactory
+                        .createContactHeader(address);
+                response.addHeader(contactHeader);
+                ServerTransaction st = requestEvent.getServerTransaction();
+
+                if (st == null) {
+                    st = sipProvider.getNewServerTransaction(request);
+                    LOG.info("Server transaction created!" + request);
+
+                    LOG.info("Dialog = " + st.getDialog());
+                }
+
+                byte[] content = request.getRawContent();
+                if (content != null) {
+                    LOG.info(" content = " + new String(content));
+                    ContentTypeHeader contentTypeHeader = protocolObjects.headerFactory
+                            .createContentTypeHeader("application", "sdp");
+                    LOG.info("response = " + response);
+                    response.setContent(content, contentTypeHeader);
+                }
+                dialog = st.getDialog();
+                if (dialog != null) {
+                    LOG.info("Dialog " + dialog);
+                    LOG.info("Dialog state " + dialog.getState());
+                }
+                st.sendResponse(response);
+                response = protocolObjects.messageFactory.createResponse(200, request);
+                toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
+                toHeader.setTag("4321");
+                // Application is supposed to set.
+                response.addHeader(contactHeader);
+                st.sendResponse(response);
+                reSendSt = st;
+                reSendResponse = response;
+                LOG.info("TxState after sendResponse = " + st.getState());
+                this.inviteTid = st;
+            } catch (Exception ex) {
+                String s = "unexpected exception";
+
+                LOG.error(s, ex);
+                AckReTransmissionTest.fail(s);
+            }
+        }
+
+
+        public void processResponse(ResponseEvent responseReceivedEvent) {
+            LOG.info("Got a response");
+            Response response = (Response) responseReceivedEvent.getResponse();
+            Transaction tid = responseReceivedEvent.getClientTransaction();
+
+            LOG.info("Response received with client transaction id "
+                             + tid + ":\n" + response);
+            try {
+                if (response.getStatusCode() == Response.OK
+                        && ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
+                        .getMethod().equals(Request.INVITE)) {
+                    Dialog dialog = tid.getDialog();
+                    CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
+                    Request ackRequest = dialog.createAck(cseq.getSeqNumber());
+                    dialog.sendAck(ackRequest);
+                }
+                if (tid != null) {
+                    Dialog dialog = tid.getDialog();
+                    LOG.info("Dialog State = " + dialog.getState());
+                }
+            } catch (Exception ex) {
+                String s = "Unexpected exception";
+                LOG.error(s, ex);
+                AckReTransmissionTest.fail(s);
+            }
+        }
+
+        public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
+            Transaction transaction;
+            if (timeoutEvent.isServerTransaction()) {
+                transaction = timeoutEvent.getServerTransaction();
+            } else {
+                transaction = timeoutEvent.getClientTransaction();
+            }
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = "
+                             + transaction.getDialog().getState());
+            LOG.info("Transaction Time out");
+        }
+
+
+        public SipProvider createSipProvider() throws Exception {
+            ListeningPoint lp = protocolObjects.sipStack.createListeningPoint(myAddress,
+                                                                              myPort, protocolObjects.transport);
+
+            SipProvider sipProvider = protocolObjects.sipStack.createSipProvider(lp);
+            return sipProvider;
+        }
+
+
+        public void checkState() {
+            AckReTransmissionTest.assertTrue("ACK was not successfully retransmitted 4 times", 4 == dropAckCount);
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
+         */
+        public void processIOException(IOExceptionEvent exceptionEvent) {
+            LOG.error("An IO Exception was detected : "
+                              + exceptionEvent.getHost());
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see javax.sip.SipListener#processTransactionTerminated(javax.sip.TransactionTerminatedEvent)
+         */
+        public void processTransactionTerminated(
+                TransactionTerminatedEvent transactionTerminatedEvent) {
+            LOG.info("Tx terminated event ");
+        }
+
+        /*
+         * (non-Javadoc)
+         *
+         * @see javax.sip.SipListener#processDialogTerminated(javax.sip.DialogTerminatedEvent)
+         */
+        public void processDialogTerminated(
+                DialogTerminatedEvent dialogTerminatedEvent) {
+            LOG.info("Dialog terminated event detected ");
+        }
+    }
+
+    class Shootist implements SipListener {
 
         private SipProvider provider;
 
@@ -327,11 +306,11 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
         private int counter;
 
-        private  String PEER_ADDRESS = Shootme.myAddress;
+        private String PEER_ADDRESS = Shootme.myAddress;
 
-        private  int PEER_PORT = Shootme.myPort;
+        private int PEER_PORT = Shootme.myPort;
 
-        private  String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+        private String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
 
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
@@ -341,22 +320,15 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
         protected ClientTransaction inviteTid;
 
 
-
-
         private ProtocolObjects protocolObjects;
 
         private Dialog dialog;
 
 
-
-
-
         public Shootist(ProtocolObjects protocolObjects) {
             super();
             this.protocolObjects = protocolObjects;
-
         }
-
 
 
         public void processRequest(RequestEvent requestReceivedEvent) {
@@ -364,71 +336,71 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
             ServerTransaction serverTransactionId = requestReceivedEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
-                    + protocolObjects.sipStack.getStackName()
-                    + " with server transaction id " + serverTransactionId);
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
+                             + protocolObjects.sipStack.getStackName()
+                             + " with server transaction id " + serverTransactionId);
 
-            if (request.getMethod().equals(Request.BYE))
+            if (request.getMethod().equals(Request.BYE)) {
                 processBye(request, serverTransactionId);
+            }
         }
 
-        public void processBye(Request request,
+        public void processBye(
+                Request request,
                 ServerTransaction serverTransactionId) {
             try {
-                logger.info("shootist:  got a bye .");
+                LOG.info("shootist:  got a bye .");
                 if (serverTransactionId == null) {
-                    logger.info("shootist:  null TID.");
+                    LOG.info("shootist:  null TID.");
                     return;
                 }
                 Response response = protocolObjects.messageFactory.createResponse(
                         200, request);
                 serverTransactionId.sendResponse(response);
             } catch (Exception ex) {
-                logger.error("unexpected exception",ex);
+                LOG.error("unexpected exception", ex);
                 AckReTransmissionTest.fail("unexpected exception");
-
             }
         }
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response");
+            LOG.info("Got a response");
 
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
 
-            logger.info("Response received with client transaction id " + tid
-                    + ":\n" + response.getStatusCode());
+            LOG.info("Response received with client transaction id " + tid
+                             + ":\n" + response.getStatusCode());
             if (tid != null) {
-				logger.info("Dialog = " + responseReceivedEvent.getDialog());
-				logger.info("Dialog State is "
-						+ responseReceivedEvent.getDialog().getState());
-			}
+                LOG.info("Dialog = " + responseReceivedEvent.getDialog());
+                LOG.info("Dialog State is "
+                                 + responseReceivedEvent.getDialog().getState());
+            }
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
 
             try {
                 if (response.getStatusCode() == Response.OK
                         && ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
-                                .getMethod().equals(Request.INVITE)) {
+                        .getMethod().equals(Request.INVITE)) {
 
                     Dialog dialog = responseReceivedEvent.getDialog();
                     CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
                     Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                    logger.info("Ack request to send = " + ackRequest);
-                    logger.info("Sending ACK");
+                    LOG.info("Ack request to send = " + ackRequest);
+                    LOG.info("Sending ACK");
                     dialog.sendAck(ackRequest);
                 }
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 ex.printStackTrace();
                 AckReTransmissionTest.fail("unexpected exception");
             }
-
         }
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-            logger.info("Transaction Time out");
-            logger.info("TimeoutEvent " + timeoutEvent.getTimeout());
+            LOG.info("Transaction Time out");
+            LOG.info("TimeoutEvent " + timeoutEvent.getTimeout());
         }
 
         public SipProvider createSipProvider() {
@@ -440,7 +412,7 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
                         .createSipProvider(listeningPoint);
                 return provider;
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 AckReTransmissionTest.fail("unable to create provider");
                 return null;
             }
@@ -490,11 +462,11 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
                 ArrayList viaHeaders = new ArrayList();
                 int port = provider.getListeningPoint(protocolObjects.transport)
-                        .getPort();
+                                   .getPort();
 
                 ViaHeader viaHeader = protocolObjects.headerFactory
                         .createViaHeader(myAddress, port,
-                                protocolObjects.transport, null);
+                                         protocolObjects.transport, null);
 
                 // add via headers
                 viaHeaders.add(viaHeader);
@@ -506,8 +478,7 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
                 // Create a new CallId header
                 CallIdHeader callIdHeader = provider.getNewCallId();
                 // JvB: Make sure that the implementation matches the messagefactory
-                callIdHeader = protocolObjects.headerFactory.createCallIdHeader( callIdHeader.getCallId() );
-
+                callIdHeader = protocolObjects.headerFactory.createCallIdHeader(callIdHeader.getCallId());
 
                 // Create a new Cseq header
                 CSeqHeader cSeqHeader = protocolObjects.headerFactory
@@ -560,13 +531,13 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
                 Address address = protocolObjects.addressFactory
                         .createAddress("<sip:" + PEER_ADDRESS + ":" + PEER_PORT
-                                + ">");
+                                               + ">");
                 // SipUri sipUri = (SipUri) address.getURI();
                 // sipUri.setPort(PEER_PORT);
 
                 RouteHeader routeHeader = protocolObjects.headerFactory
                         .createRouteHeader(address);
-                ((SipURI)address.getURI()).setLrParam();
+                ((SipURI) address.getURI()).setLrParam();
                 request.addHeader(routeHeader);
                 extensionHeader = protocolObjects.headerFactory.createHeader(
                         "My-Other-Header", "my new header value ");
@@ -585,14 +556,11 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
                 // send the request out.
                 this.inviteTid.sendRequest();
-
-
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 AckReTransmissionTest.fail("unexpected exception");
             }
         }
-
 
 
         /*
@@ -601,9 +569,8 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
          * @see javax.sip.SipListener#processIOException(javax.sip.IOExceptionEvent)
          */
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("IO Exception!");
+            LOG.error("IO Exception!");
             AckReTransmissionTest.fail("Unexpected exception");
-
         }
 
         /*
@@ -614,7 +581,7 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
 
-            logger.info("Transaction Terminated Event!");
+            LOG.info("Transaction Terminated Event!");
         }
 
         /*
@@ -624,8 +591,7 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
          */
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog Terminated Event!");
-
+            LOG.info("Dialog Terminated Event!");
         }
     }
 
@@ -636,8 +602,7 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
         return listener;
     }
 
-    public AckReTransmissionTest()
-    {
+    public AckReTransmissionTest() {
         super("AckReTransmissionTest", true);
     }
 
@@ -658,8 +623,9 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
             shootmeProvider.addSipListener(this);
 
             getRiProtocolObjects().start();
-            if (getTiProtocolObjects() != getRiProtocolObjects())
+            if (getTiProtocolObjects() != getRiProtocolObjects()) {
                 getTiProtocolObjects().start();
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("unexpected exception ");
@@ -675,25 +641,23 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
             Thread.sleep(4000);
             this.shootme.checkState();
             getTiProtocolObjects().destroy();
-            if (getTiProtocolObjects() != getRiProtocolObjects())
+            if (getTiProtocolObjects() != getRiProtocolObjects()) {
                 getRiProtocolObjects().destroy();
+            }
             Thread.sleep(1000);
             this.providerTable.clear();
             logTestCompleted();
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
     public void processRequest(RequestEvent requestEvent) {
         getSipListener(requestEvent).processRequest(requestEvent);
-
     }
 
     public void processResponse(ResponseEvent responseEvent) {
         getSipListener(responseEvent).processResponse(responseEvent);
-
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
@@ -702,21 +666,17 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
         fail("unexpected exception");
-
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
         getSipListener(transactionTerminatedEvent)
                 .processTransactionTerminated(transactionTerminatedEvent);
-
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
         getSipListener(dialogTerminatedEvent).processDialogTerminated(
                 dialogTerminatedEvent);
-
     }
-
 }

@@ -1,17 +1,36 @@
 package examples.simplecallsetup;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import java.text.ParseException;
-import java.util.*;
+import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogState;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.InvalidArgumentException;
+import javax.sip.ListeningPoint;
+import javax.sip.PeerUnavailableException;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipException;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionState;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.ToHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 
 /**
  * This class is a UAS template.
@@ -252,15 +271,6 @@ public class Shootme implements SipListener {
     }
 
     public void init() {
-    	
-    	ConsoleAppender console = new ConsoleAppender(); //create appender
-    	  //configure the appender
-    	  String PATTERN = "%d [%p|%c|%C{1}] %m%n";
-    	  console.setLayout(new PatternLayout(PATTERN)); 
-    	  console.setThreshold(Level.DEBUG);
-    	  console.activateOptions();
-    	  //add appender to any Logger (here is root)
-    	  Logger.getRootLogger().addAppender(console);
         SipFactory sipFactory = null;
         sipStack = null;
         sipFactory = SipFactory.getInstance();

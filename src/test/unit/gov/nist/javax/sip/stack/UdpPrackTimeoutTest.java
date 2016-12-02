@@ -1,7 +1,6 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 import java.util.ArrayList;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -31,26 +30,19 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
+
     protected Shootist shootist;
 
     protected Shootme shootme;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-            logger.addAppender(console);
-        }
-    }
 
     public UdpPrackTimeoutTest() {
         super("reliableResponseTimeout", true);
@@ -63,7 +55,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             super.transport = "udp";
             super.setUp();
 
-            logger.info("PrackTest: setup()");
+            LOG.info("PrackTest: setup()");
             shootist = new Shootist(getTiProtocolObjects());
             SipProvider shootistProvider = shootist.createProvider();
             providerTable.put(shootistProvider, shootist);
@@ -79,7 +71,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 getTiProtocolObjects().start();
             getRiProtocolObjects().start();
         } catch (Exception ex) {
-            logger.error("unexpected excecption ", ex);
+            LOG.error("unexpected excecption ", ex);
             fail("unexpected exception");
         }
     }
@@ -97,7 +89,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
             logTestCompleted();
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
         super.tearDown();
@@ -145,7 +137,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                     myPort, transport);
 
             sipProvider = sipStack.createSipProvider(lp);
-            logger.info(transport + " SIP provider " + sipProvider);
+            LOG.info(transport + " SIP provider " + sipProvider);
 
             return sipProvider;
         }
@@ -156,7 +148,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             ServerTransaction serverTransactionId = requestReceivedEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod()
+            LOG.info("\n\nRequest " + request.getMethod()
                     + " received at " + sipStack.getStackName()
                     + " with server transaction id " + serverTransactionId);
 
@@ -169,17 +161,17 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
         public void processBye(Request request,
                 ServerTransaction serverTransactionId) {
             try {
-                logger.info("shootist:  got a bye .");
+                LOG.info("shootist:  got a bye .");
                 if (serverTransactionId == null) {
-                    logger.info("shootist:  null TID.");
+                    LOG.info("shootist:  null TID.");
                     return;
                 }
                 Dialog dialog = serverTransactionId.getDialog();
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("Dialog State = " + dialog.getState());
                 Response response = messageFactory.createResponse(200, request);
                 serverTransactionId.sendResponse(response);
-                logger.info("shootist:  Sending OK.");
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("shootist:  Sending OK.");
+                LOG.info("Dialog State = " + dialog.getState());
 
             } catch (Exception ex) {
                 TestHarness.fail(ex.getMessage());
@@ -189,13 +181,13 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
         }
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-            logger.info("Got a response");
+            LOG.info("Got a response");
             Response response = (Response) responseReceivedEvent.getResponse();
             lastResponse = response;
             ClientTransaction tid = responseReceivedEvent.getClientTransaction();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-            logger.info("Response received : Status Code = "
+            LOG.info("Response received : Status Code = "
                     + response.getStatusCode() + " " + cseq);
 
             if (cseq.getMethod() == Request.PRACK) {
@@ -203,12 +195,12 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             }
 
             if (tid == null) {
-                logger.info("Stray response -- dropping ");
+                LOG.info("Stray response -- dropping ");
                 return;
             }
-            logger.info("transaction state is " + tid.getState());
-            logger.info("Dialog = " + tid.getDialog());
-            logger.info("Dialog State is " + tid.getDialog().getState());
+            LOG.info("transaction state is " + tid.getState());
+            LOG.info("Dialog = " + tid.getDialog());
+            LOG.info("Dialog State is " + tid.getDialog().getState());
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
             dialog = tid.getDialog();
 
@@ -216,7 +208,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 if (response.getStatusCode() == Response.OK) {
                     if (cseq.getMethod().equals(Request.INVITE)) {
                         Request ackRequest = dialog.createAck(((CSeqHeader) response.getHeader(CSeqHeader.NAME)).getSeqNumber());
-                        logger.info("Sending ACK");
+                        LOG.info("Sending ACK");
                         dialog.sendAck(ackRequest);
                     }
 
@@ -244,7 +236,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
         public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-            logger.info("Transaction Time out");
+            LOG.info("Transaction Time out");
         }
 
         public void sendInvite() {
@@ -354,7 +346,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("IOException happened for "
+            LOG.info("IOException happened for "
                     + exceptionEvent.getHost() + " port = "
                     + exceptionEvent.getPort());
 
@@ -362,12 +354,12 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.info("Transaction terminated event recieved");
+            LOG.info("Transaction terminated event recieved");
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("dialogTerminatedEvent");
+            LOG.info("dialogTerminatedEvent");
         }
 
         public void checkState() {
@@ -425,7 +417,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             ServerTransaction serverTransactionId = requestEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId);
 
@@ -445,8 +437,8 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 ServerTransaction serverTransactionId) {
             prackRequestReceived = true;
             try {
-                logger.info("shootme: got an PRACK! ");
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("shootme: got an PRACK! ");
+                LOG.info("Dialog State = " + dialog.getState());
 
                 /**
                  * JvB: First, send 200 OK for PRACK
@@ -484,8 +476,8 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 ServerTransaction serverTransaction) {
 
             try {
-                logger.info("shootme: got an ACK! Sending  a BYE");
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("shootme: got an ACK! Sending  a BYE");
+                LOG.info("Dialog State = " + dialog.getState());
 
                 // JvB: there should not be a transaction for ACKs; requestEvent
                 // can be used to get it instead
@@ -512,8 +504,8 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme: got an Invite sending Trying");
-                // logger.info("shootme: " + request);
+                LOG.info("shootme: got an Invite sending Trying");
+                // LOG.info("shootme: " + request);
                 Response response = messageFactory.createResponse(Response.TRYING,
                         request);
                 ServerTransaction st = requestEvent.getServerTransaction();
@@ -535,7 +527,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 this.inviteTid = st;
                 this.inviteRequest = request;
 
-                logger.info("sending reliable provisional response.");
+                LOG.info("sending reliable provisional response.");
 
                 RequireHeader requireHeader = headerFactory
                         .createRequireHeader("100rel");
@@ -555,10 +547,10 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 ServerTransaction serverTransactionId) {
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme:  got a bye sending OK.");
+                LOG.info("shootme:  got a bye sending OK.");
                 Response response = messageFactory.createResponse(200, request);
                 serverTransactionId.sendResponse(response);
-                logger.info("Dialog State is "
+                LOG.info("Dialog State is "
                         + serverTransactionId.getDialog().getState());
 
             } catch (Exception ex) {
@@ -575,10 +567,10 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("state = " + transaction.getState());
-            logger.info("dialog = " + transaction.getDialog());
-            logger.info("dialogState = " + transaction.getDialog().getState());
-            logger.info("Transaction Timed out");
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = " + transaction.getDialog().getState());
+            LOG.info("Transaction Timed out");
             transactionTimedOut = true;
             if(transaction instanceof ServerTransaction) {
                 try {
@@ -605,25 +597,25 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                     transport);
 
             sipProvider = sipStack.createSipProvider(lp);
-            logger.info(transport + " SIP provider " + sipProvider);
+            LOG.info(transport + " SIP provider " + sipProvider);
 
             return sipProvider;
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("IOException");
+            LOG.info("IOException");
 
         }
 
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.info("Transaction terminated event recieved");
+            LOG.info("Transaction terminated event recieved");
 
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Dialog terminated event recieved");
+            LOG.info("Dialog terminated event recieved");
 
         }
 

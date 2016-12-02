@@ -1,22 +1,30 @@
 package test.tck.msgflow.callflows.forkedinvite;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
+import java.util.Hashtable;
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.Transaction;
+import javax.sip.TransactionState;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
-
-
-
-import java.util.*;
-
-import junit.framework.TestCase;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -27,8 +35,7 @@ import junit.framework.TestCase;
 
 public class Shootme   implements SipListener {
 
-
-
+    private static final Logger LOG = LogManager.getLogger(Shootme.class);
 
     private static final String myAddress = "127.0.0.1";
 
@@ -40,13 +47,9 @@ public class Shootme   implements SipListener {
 
     private static String unexpectedException = "Unexpected exception ";
 
-    private static Logger logger = Logger.getLogger(Shootme.class);
-
     private ProtocolObjects protocolObjects;
 
-
     private boolean inviteSeen;
-
 
     private boolean byeSeen;
 
@@ -67,7 +70,7 @@ public class Shootme   implements SipListener {
         ServerTransaction serverTx;
 
         public MyTimerTask(RequestEvent requestEvent,ServerTransaction tx) {
-            logger.info("MyTimerTask ");
+            LOG.info("MyTimerTask ");
             this.requestEvent = requestEvent;
             // this.toTag = toTag;
             this.serverTx = tx;
@@ -87,7 +90,7 @@ public class Shootme   implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + protocolObjects.sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -111,11 +114,11 @@ public class Shootme   implements SipListener {
      */
     public void processAck(RequestEvent requestEvent,
             ServerTransaction serverTransaction) {
-        logger.info("shootme: got an ACK! ");
-        logger.info("Dialog = " + requestEvent.getDialog());
+        LOG.info("shootme: got an ACK! ");
+        LOG.info("Dialog = " + requestEvent.getDialog());
         if ( requestEvent.getDialog() != null ) {
             /* Could be late arriving ACK */
-            logger.info("Dialog State = " + requestEvent.getDialog().getState());
+            LOG.info("Dialog State = " + requestEvent.getDialog().getState());
         }
 
         this.ackSeen = true;
@@ -129,17 +132,17 @@ public class Shootme   implements SipListener {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme: got an Invite sending Trying");
-            // logger.info("shootme: " + request);
+            LOG.info("shootme: got an Invite sending Trying");
+            // LOG.info("shootme: " + request);
 
             ServerTransaction st = requestEvent.getServerTransaction();
 
             if (st == null) {
-                logger.info("null server tx -- getting a new one");
+                LOG.info("null server tx -- getting a new one");
                 st = sipProvider.getNewServerTransaction(request);
             }
 
-            logger.info("getNewServerTransaction : " + st);
+            LOG.info("getNewServerTransaction : " + st);
 
             String txId = ((ViaHeader)request.getHeader(ViaHeader.NAME)).getBranch();
             this.serverTxTable.put(txId, st);
@@ -183,9 +186,9 @@ public class Shootme   implements SipListener {
 
     private  void sendInviteOK(RequestEvent requestEvent, ServerTransaction inviteTid) {
         try {
-            logger.info("sendInviteOK: " + inviteTid);
+            LOG.info("sendInviteOK: " + inviteTid);
             if (inviteTid.getState() != TransactionState.COMPLETED) {
-                logger.info("shootme: Dialog state before OK: "
+                LOG.info("shootme: Dialog state before OK: "
                         + inviteTid.getDialog().getState());
 
                 SipProvider sipProvider = (SipProvider) requestEvent.getSource();
@@ -201,11 +204,11 @@ public class Shootme   implements SipListener {
                         .createContactHeader(address);
                 okResponse.addHeader(contactHeader);
                 inviteTid.sendResponse(okResponse);
-                //logger.info("shootme: Dialog state after OK: "
+                //LOG.info("shootme: Dialog state after OK: "
                 //      + inviteTid.getDialog().getState());
                 // TestHarness.assertEquals( DialogState.CONFIRMED , inviteTid.getDialog().getState() );
             } else {
-                logger.info("semdInviteOK: inviteTid = " + inviteTid + " state = " + inviteTid.getState());
+                LOG.info("semdInviteOK: inviteTid = " + inviteTid + " state = " + inviteTid.getState());
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -219,14 +222,14 @@ public class Shootme   implements SipListener {
             ServerTransaction serverTransactionId) {
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme:  got a bye sending OK.");
-            logger.info("shootme:  dialog = " + requestEvent.getDialog());
-            logger.info("shootme:  dialogState = " + requestEvent.getDialog().getState());
+            LOG.info("shootme:  got a bye sending OK.");
+            LOG.info("shootme:  dialog = " + requestEvent.getDialog());
+            LOG.info("shootme:  dialogState = " + requestEvent.getDialog().getState());
             Response response = protocolObjects.messageFactory.createResponse(200, request);
             if ( serverTransactionId != null) {
                 serverTransactionId.sendResponse(response);
             }
-            logger.info("shootme:  dialogState = " + requestEvent.getDialog().getState());
+            LOG.info("shootme:  dialogState = " + requestEvent.getDialog().getState());
 
             this.byeSeen = true;
 
@@ -243,7 +246,7 @@ public class Shootme   implements SipListener {
         Request request = requestEvent.getRequest();
         SipProvider sipProvider = (SipProvider)requestEvent.getSource();
         try {
-            logger.info("shootme:  got a cancel. " );
+            LOG.info("shootme:  got a cancel. " );
             // Because this is not an In-dialog request, you will get a null server Tx id here.
             if (serverTransactionId == null) {
                 serverTransactionId = sipProvider.getNewServerTransaction(request);
@@ -274,11 +277,11 @@ public class Shootme   implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("dialog = " + transaction.getDialog());
-        logger.info("dialogState = "
+        LOG.info("state = " + transaction.getState());
+        LOG.info("dialog = " + transaction.getDialog());
+        LOG.info("dialogState = "
                 + transaction.getDialog().getState());
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     public SipProvider createProvider() {
@@ -288,11 +291,11 @@ public class Shootme   implements SipListener {
                     myPort, protocolObjects.transport);
 
             sipProvider = protocolObjects.sipStack.createSipProvider(lp);
-            logger.info("provider " + sipProvider);
-            logger.info("sipStack = " + protocolObjects.sipStack);
+            LOG.info("provider " + sipProvider);
+            LOG.info("sipStack = " + protocolObjects.sipStack);
             return sipProvider;
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             TestHarness.fail(unexpectedException);
             return null;
 
@@ -308,19 +311,19 @@ public class Shootme   implements SipListener {
 
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("IOException");
+        LOG.info("IOException");
 
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Transaction terminated event recieved");
+        LOG.info("Transaction terminated event recieved");
 
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("Dialog terminated event recieved");
+        LOG.info("Dialog terminated event recieved");
 
     }
 

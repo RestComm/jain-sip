@@ -175,12 +175,12 @@ public class DialogIdentityTest extends TestCase {
             Request request = requestEvent.getRequest();
     		ListIterator li = request.getHeaders("Route");
     		if(li == null || !li.hasNext()) {
-    			//logger.info("No route headers in that invite. It must be means for someone else");
+    			//LOG.info("No route headers in that invite. It must be means for someone else");
     			return;
     		}
     		li.next(); // skip the first Route which is pointing to us here, we need the second
     		if(!li.hasNext()) {
-    			//logger.info("No route headers in that invite. It must be means for someone else");
+    			//LOG.info("No route headers in that invite. It must be means for someone else");
     			return;
     		}
     		RouteHeader route = (RouteHeader) li.next();

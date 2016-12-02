@@ -1,18 +1,42 @@
 package examples.tpcc;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
-import java.util.*;
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Properties;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.InvalidArgumentException;
+import javax.sip.ListeningPoint;
+import javax.sip.PeerUnavailableException;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.AllowHeader;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * The Click to dial third party call controller flow IV application.
@@ -39,6 +63,8 @@ import java.text.ParseException;
 
 public class Controller4 implements SipListener {
 
+    private static final Logger LOG = LogManager.getLogger(Controller4.class);
+
     private static SipProvider sipProvider;
 
     private static AddressFactory addressFactory;
@@ -59,6 +85,7 @@ public class Controller4 implements SipListener {
 
     private String currentState;
 
+
     String transport = "udp";
 
 
@@ -66,11 +93,8 @@ public class Controller4 implements SipListener {
             + "examples.ctd.ctdControll \n"
             + ">>>> is your class path set to the root?";
 
-
     private Dialog firstDialog;
-
     private Dialog secondDialog;
-    private static Logger logger = Logger.getLogger(Controller4.class);
 
     private String auser = "AGuy";
 
@@ -99,7 +123,7 @@ public class Controller4 implements SipListener {
         ServerTransaction serverTransactionId = requestReceivedEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod() + " received at "
+        LOG.info("\n\nRequest " + request.getMethod() + " received at "
                 + sipStack.getStackName() + " with server transaction id "
                 + serverTransactionId);
 
@@ -113,19 +137,19 @@ public class Controller4 implements SipListener {
             ServerTransaction serverTransactionId) {
 
         try {
-            logger.info("Controller4:  got a bye .");
+            LOG.info("Controller4:  got a bye .");
             if (serverTransactionId == null) {
-                logger.info("Controller4:  null TID.");
+                LOG.info("Controller4:  null TID.");
                 return;
             }
 
-            logger.info("Create OK para BYE: ");
+            LOG.info("Create OK para BYE: ");
             // 1: OK BYE
             Response ok = messageFactory.createResponse(Response.OK, request);
             serverTransactionId.sendResponse(ok);
 
             // 2do: BYE for the other side (send a new clientTransaction)
-            logger.info("Send BYE in new clientTransaction");
+            LOG.info("Send BYE in new clientTransaction");
 
             Dialog secondBye = (Dialog) (serverTransactionId.getDialog()
                     .getApplicationData());
@@ -142,31 +166,31 @@ public class Controller4 implements SipListener {
     }
 
     public synchronized void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         ClientTransaction tid = responseReceivedEvent.getClientTransaction();
         CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-        logger.info("Response received : Status Code = "
+        LOG.info("Response received : Status Code = "
                 + response.getStatusCode() + " " + cseq);
         if (tid == null) {
-            logger.info("Stray response -- dropping ");
+            LOG.info("Stray response -- dropping ");
             return;
         }
-        logger.info("transaction state is " + tid.getState());
-        logger.info("Dialog = " + tid.getDialog());
-        logger.info("Dialog State is " + tid.getDialog().getState());
+        LOG.info("transaction state is " + tid.getState());
+        LOG.info("Dialog = " + tid.getDialog());
+        LOG.info("Dialog State is " + tid.getDialog().getState());
 
         try {
             if (response.getStatusCode() == Response.OK) {
                 if (cseq.getMethod().equals(Request.INVITE)) {
                     if (currentState.equals("first")) {
-                        logger.info("processResponse FIRST");
+                        LOG.info("processResponse FIRST");
                         // send ACK
                         this.firstDialog = tid.getDialog();
                         Request ackRequest = firstDialog.createAck(cseq
                                 .getSeqNumber());
-                        logger.info("Sending ACK firtInvite no media");
+                        LOG.info("Sending ACK firtInvite no media");
                         firstDialog.sendAck(ackRequest);
 
                         // invite second no SDP
@@ -182,10 +206,10 @@ public class Controller4 implements SipListener {
                         inviteSecond = sipProvider
                                 .getNewClientTransaction(requestSecond);
                         inviteSecond.sendRequest();
-                        logger.info("INVITE second sent:\n" + requestSecond);
+                        LOG.info("INVITE second sent:\n" + requestSecond);
 
                     } else if (currentState.equals("second")) {
-                        logger.info("processResponse SECOND");
+                        LOG.info("processResponse SECOND");
                         // get offer of second
                         byte[] content = response.getRawContent();
                         ContentTypeHeader cth = (ContentTypeHeader) response
@@ -202,16 +226,16 @@ public class Controller4 implements SipListener {
                         firstDialog.sendRequest(ct);
                         this.secondDialog = tid.getDialog();
                         this.secondDialogOK = response;
-                        logger.info("RE-INVITE sent:\n" + reinvite);
+                        LOG.info("RE-INVITE sent:\n" + reinvite);
                         currentState = "re-invite";
 
                     } else if (currentState.equals("re-invite")) {
-                        logger.info("processResponse re-invite");
+                        LOG.info("processResponse re-invite");
                         // send ack
                         CSeqHeader cseq2 = (CSeqHeader) this.secondDialogOK.getHeader(CSeqHeader.NAME);
                         Request ackRequest = secondDialog.createAck(cseq2
                                 .getSeqNumber());// secondDialog.createRequest(Request.ACK);
-                        logger.info("Sending ACK second " + secondDialog);
+                        LOG.info("Sending ACK second " + secondDialog);
                         secondDialog.sendAck(ackRequest);// secondDialog.sendAck(ackRequest);
 
                         Request ackRequestFirst = this.firstDialog.createAck(
@@ -220,7 +244,7 @@ public class Controller4 implements SipListener {
                                 (ContentTypeHeader) (response
                                         .getHeader("Content-Type")));
 
-                        logger.info("Sending ACK first");
+                        LOG.info("Sending ACK first");
                         firstDialog.sendAck(ackRequestFirst);
 
                         // save the dialog of the other side, for the bye...
@@ -261,7 +285,7 @@ public class Controller4 implements SipListener {
             toSipAddressDomain = aSipAddressDomain;
             toDisplayName = aDisplayName;
         }
-        logger.info("CreateInvite ");
+        LOG.info("CreateInvite ");
 
         // create >From Header
         SipURI fromAddress = addressFactory.createSipURI(fromVal,
@@ -354,13 +378,9 @@ public class Controller4 implements SipListener {
         properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "DEBUG");
         properties.setProperty("gov.nist.javax.sip.LOG_MESSAGE_CONTENT", "true");
 
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-        logger.addAppender(new FileAppender(new SimpleLayout(),
-                "controllerconsolelog.txt"));
-
         try {
             sipStack = sipFactory.createSipStack(properties);
-            logger.info("createSipStack " + sipStack);
+            LOG.info("createSipStack " + sipStack);
 
             headerFactory = sipFactory.createHeaderFactory();
             addressFactory = sipFactory.createAddressFactory();
@@ -376,12 +396,12 @@ public class Controller4 implements SipListener {
             System.err.println(e.getMessage());
             System.exit(0);
         } catch (Exception e) {
-            logger.info("Creating Listener Points");
-            logger.info(e.getMessage());
+            LOG.info("Creating Listener Points");
+            LOG.info(e.getMessage());
             e.printStackTrace();
         }
         try {
-            logger.info("ProcessCTD ");
+            LOG.info("ProcessCTD ");
             first++;
             this.currentState = "first";
             Request request = this.createInvite(currentState, String
@@ -404,11 +424,11 @@ public class Controller4 implements SipListener {
             inviteFirst = sipProvider.getNewClientTransaction(request);
             // send the request out.
             inviteFirst.sendRequest();
-            logger.info("INVITE first sent:\n" + request);
+            LOG.info("INVITE first sent:\n" + request);
 
         } catch (Exception e) {
-            logger.info("Creating call CreateInvite()");
-            logger.info(e.getMessage());
+            LOG.info("Creating call CreateInvite()");
+            LOG.info(e.getMessage());
             e.printStackTrace();
         }
     }
@@ -418,21 +438,21 @@ public class Controller4 implements SipListener {
     }
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("IOException happened for " + exceptionEvent.getHost()
+        LOG.info("IOException happened for " + exceptionEvent.getHost()
                 + " port = " + exceptionEvent.getPort());
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("Transaction terminated event recieved");
+        LOG.info("Transaction terminated event recieved");
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("dialogTerminatedEvent");
+        LOG.info("dialogTerminatedEvent");
     }
 }

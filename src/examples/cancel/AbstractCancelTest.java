@@ -5,9 +5,6 @@ package examples.cancel;
 
 import java.util.EventObject;
 import java.util.Hashtable;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.RequestEvent;
@@ -16,15 +13,6 @@ import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
 import junit.framework.TestCase;
 
 /**
@@ -36,18 +24,6 @@ public abstract class AbstractCancelTest extends TestCase implements SipListener
     private Hashtable providerTable;
 
     protected Shootist shootist;
-
-    private static Logger logger = Logger.getLogger(AbstractCancelTest.class);
-
-    static {
-        if (logger.getAllAppenders() instanceof NullEnumeration )
-            PropertyConfigurator.configure("log4j.properties");
-
-
-
-    }
-
-    //private Appender appender;
 
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();
@@ -76,30 +52,9 @@ public abstract class AbstractCancelTest extends TestCase implements SipListener
         }
     }
 
-    public void setUp() {
-
-            try {
-                //appender = new ConsoleAppender(new SimpleLayout());
-                //logger.addAppender(appender);
-
-            } catch (Exception ex) {
-                throw new RuntimeException("Unexpected error initializing logging",
-                        ex);
-            }
-
-
-    }
-
     public void tearDown() {
-
         ProtocolObjects.destroy();
-        //logger.removeAppender(appender);
-
     }
-
-
-
-
 
     public void processRequest(RequestEvent requestEvent) {
         getSipListener(requestEvent).processRequest(requestEvent);
@@ -133,5 +88,4 @@ public abstract class AbstractCancelTest extends TestCase implements SipListener
                 dialogTerminatedEvent);
 
     }
-
 }

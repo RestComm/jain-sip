@@ -5,11 +5,6 @@ import android.javax.sip.address.*;
 import android.javax.sip.header.*;
 import android.javax.sip.message.*;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import java.text.ParseException;
 import java.util.*;
 

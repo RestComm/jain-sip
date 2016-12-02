@@ -21,12 +21,8 @@ package test.tck.msgflow.callflows.subsnotify;
 
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -41,6 +37,7 @@ import test.tck.msgflow.callflows.ScenarioHarness;
 public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness implements
         SipListener {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     protected Notifier notifier1;
 
@@ -50,16 +47,6 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
 
     protected Forker forker;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-
-            logger.addAppender(console);
-
-        }
-    }
-
     public AbstractSubsnotifyTestCase() {
         super("subsnotify", true);
     }
@@ -68,7 +55,7 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
         try {
             super.setUp(1,3);
 
-            logger.info("SubsNotifyTest: setup()");
+            LOG.info("SubsNotifyTest: setup()");
 
             notifier1 = new Notifier(getTiProtocolObjects(0));
             SipProvider notifier1Provider = notifier1.createProvider(5070);
@@ -93,7 +80,7 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
 
             super.start();
         } catch (Exception ex) {
-            logger.error("unexpected excecption ", ex);
+            LOG.error("unexpected excecption ", ex);
             fail("unexpected exception");
         }
     }
@@ -109,7 +96,7 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
             notifier2.checkState();
             logTestCompleted();
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
         super.tearDown();

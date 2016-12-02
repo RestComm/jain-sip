@@ -92,7 +92,7 @@ public class ServerLog implements ServerLogger {
 
     private void setProperties(Properties configurationProperties) {
         this.configurationProperties = configurationProperties;
-        // Set a descriptive name for the message trace logger.
+        // Set a descriptive name for the message trace LOG.
         this.description = configurationProperties.getProperty("javax.sip.STACK_NAME");
         this.stackIpAddress = configurationProperties.getProperty("javax.sip.IP_ADDRESS");
         this.logFileName = configurationProperties.getProperty("gov.nist.javax.sip.SERVER_LOG");

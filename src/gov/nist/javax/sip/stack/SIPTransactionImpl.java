@@ -291,7 +291,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         }
 
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -331,7 +331,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         }
 
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -849,7 +849,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             						}
             					}
                                                 
-                                                public Object getThreadHash() {
+                                                public String getThreadHash() {
                                                     return messageToSend.getCallId().getCallId();
                                                 }
             				};
@@ -881,7 +881,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             						}
             					}
                                                 
-                                                public Object getThreadHash() {
+                                                public String getThreadHash() {
                                                     return messageToSend.getCallId().getCallId();
                                                 }
             				};
@@ -909,7 +909,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     								}
     							}
                                                         
-                                                        public Object getThreadHash() {
+                                                        public String getThreadHash() {
                                                             return messageToSend.getCallId().getCallId();
                                                         }
     						};

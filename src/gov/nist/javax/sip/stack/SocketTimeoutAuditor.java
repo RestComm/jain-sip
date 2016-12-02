@@ -45,7 +45,7 @@ public class SocketTimeoutAuditor extends SIPStackTimerTask {
 	}
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return null;
         }        
 	

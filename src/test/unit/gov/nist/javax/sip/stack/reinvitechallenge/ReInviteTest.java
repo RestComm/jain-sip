@@ -22,14 +22,8 @@
  */
 package test.unit.gov.nist.javax.sip.stack.reinvitechallenge;
 
-import gov.nist.javax.sip.SipProviderImpl;
 import gov.nist.javax.sip.SipStackImpl;
-
 import java.util.EventObject;
-import java.util.Hashtable;
-import java.util.Timer;
-import java.util.TimerTask;
-
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.RequestEvent;
@@ -38,38 +32,16 @@ import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
-import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
-import test.tck.TestHarness;
-
-import junit.framework.TestCase;
 
 /**
  * @author M. Ranganathan
- *
  */
 public class ReInviteTest extends ScenarioHarness implements SipListener {
-
 
     protected Shootist shootist;
 
     private Shootme shootme;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        //if (!logger.isAttached(console))
-        //    logger.addAppender(console);
-    }
 
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();
@@ -88,9 +60,9 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
             this.transport = "udp";
 
             super.setUp();
-            
+
             shootist = new Shootist(getRiProtocolObjects());
-            
+
             SipProvider shootistProvider = shootist.createSipProvider();
             providerTable.put(shootistProvider, shootist);
 
@@ -99,13 +71,14 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
             providerTable.put(shootmeProvider, shootme);
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
-            
-            ((SipStackImpl)getTiProtocolObjects().sipStack).setIsBackToBackUserAgent(false);
-            ((SipStackImpl)getRiProtocolObjects().sipStack).setIsBackToBackUserAgent(false);
+
+            ((SipStackImpl) getTiProtocolObjects().sipStack).setIsBackToBackUserAgent(false);
+            ((SipStackImpl) getRiProtocolObjects().sipStack).setIsBackToBackUserAgent(false);
 
             getRiProtocolObjects().start();
-            if (getTiProtocolObjects() != getRiProtocolObjects())
+            if (getTiProtocolObjects() != getRiProtocolObjects()) {
                 getTiProtocolObjects().start();
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("unexpected exception ");
@@ -128,17 +101,14 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
         } catch (Exception ex) {
             ex.printStackTrace();
         }
-
     }
 
     public void processRequest(RequestEvent requestEvent) {
         getSipListener(requestEvent).processRequest(requestEvent);
-
     }
 
     public void processResponse(ResponseEvent responseEvent) {
         getSipListener(responseEvent).processResponse(responseEvent);
-
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
@@ -147,21 +117,17 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
         fail("unexpected exception");
-
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
         getSipListener(transactionTerminatedEvent)
                 .processTransactionTerminated(transactionTerminatedEvent);
-
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
         getSipListener(dialogTerminatedEvent).processDialogTerminated(
                 dialogTerminatedEvent);
-
     }
-
 }

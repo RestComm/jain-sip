@@ -198,7 +198,7 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                     }
 
                     @Override
-                    public Object getThreadHash() {
+                    public String getThreadHash() {
                         return sipMessage.getCallId().getCallId();
                     }
                 };
@@ -243,7 +243,7 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
         this.sendMessage(msg, sipMessage instanceof SIPRequest);
 
         // message was sent without any exception so let's set set port and
-        // address before we feed it to the logger
+        // address before we feed it to the LOG
         sipMessage.setRemoteAddress(this.peerAddress);
         sipMessage.setRemotePort(this.peerPort);
         sipMessage.setLocalAddress(this.getMessageProcessor().getIpAddress());
@@ -838,7 +838,7 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
     }
     class KeepAliveTimeoutTimerTask extends SIPStackTimerTask {
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return null;
         } 
         

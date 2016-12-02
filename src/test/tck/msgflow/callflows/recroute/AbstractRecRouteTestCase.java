@@ -1,12 +1,10 @@
 package test.tck.msgflow.callflows.recroute;
 
 import java.util.Hashtable;
-
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -17,22 +15,13 @@ import test.tck.msgflow.callflows.ScenarioHarness;
 public class AbstractRecRouteTestCase extends ScenarioHarness implements
         SipListener {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     protected Shootist shootist;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
 
     protected Shootme shootme;
 
     private Proxy proxy;
-
-    static {
-        if ( !logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
-    // private Appender appender;
 
     public AbstractRecRouteTestCase() {
 
@@ -42,7 +31,7 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
             providerTable = new Hashtable();
 
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
     }
@@ -71,7 +60,7 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
             if (getTiProtocolObjects() != getRiProtocolObjects())
                 getRiProtocolObjects().start();
         } catch (Exception ex) {
-            logger.error("Unexpected exception",ex);
+            LOG.error("Unexpected exception", ex);
             fail("unexpected exception ");
         }
     }
@@ -89,7 +78,7 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
 
             super.logTestCompleted();
         } catch (Exception ex) {
-            logger.error("unexpected exception", ex);
+            LOG.error("unexpected exception", ex);
             fail("unexpected exception ");
         }
     }

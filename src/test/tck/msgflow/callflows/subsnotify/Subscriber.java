@@ -19,20 +19,45 @@
 */
 package test.tck.msgflow.callflows.subsnotify;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogState;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionState;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.EventHeader;
+import javax.sip.header.ExpiresHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.RouteHeader;
+import javax.sip.header.SubscriptionStateHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
-
-import java.util.*;
 
 /**
  * This class is a Subscriber template.
@@ -46,6 +71,8 @@ import java.util.*;
  */
 
 public class Subscriber implements SipListener {
+
+    private static final Logger LOG = LogManager.getLogger(Subscriber.class);
 
     private SipProvider sipProvider;
 
@@ -64,19 +91,6 @@ public class Subscriber implements SipListener {
     private int count;
 
     private HashSet dialogs;
-
-    private static Logger logger = Logger.getLogger(Subscriber.class);
-
-    static {
-        try {
-            logger.setLevel(Level.INFO);
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "logs/subscriberoutputlog.txt"));
-        } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
-            TestHarness.fail("Failed to initialize Subscriber, because of " + ex.getMessage());
-        }
-    }
 
     private ClientTransaction subscribeTid;
 
@@ -103,7 +117,7 @@ public class Subscriber implements SipListener {
                 .getServerTransaction();
         String viaBranch = ((ViaHeader)(request.getHeaders(ViaHeader.NAME).next())).getParameter("branch");
 
-        logger.info("\n\nRequest " + request.getMethod() + " received at "
+        LOG.info("\n\nRequest " + request.getMethod() + " received at "
                 + sipStack.getStackName() + " with server transaction id "
                 + serverTransactionId +
                 " branch ID = " + viaBranch);
@@ -119,9 +133,9 @@ public class Subscriber implements SipListener {
         AbstractSubsnotifyTestCase.assertTrue("provider must be the same as my provider ", provider == this.sipProvider);
         Request notify = requestEvent.getRequest();
         try {
-            logger.info("subscriber:  got a notify count  " + this.count++ );
+            LOG.info("subscriber:  got a notify count  " + this.count++ );
             if (serverTransactionId == null) {
-                logger.info("subscriber:  null TID.");
+                LOG.info("subscriber:  null TID.");
                 serverTransactionId = provider.getNewServerTransaction(notify);
             }
             Dialog dialog = serverTransactionId.getDialog();
@@ -137,7 +151,7 @@ public class Subscriber implements SipListener {
             }
 
             this.dialogs.add(dialog);
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("Dialog State = " + dialog.getState());
 
             AbstractSubsnotifyTestCase.assertTrue("Dialog state should be confirmed ", dialog.getState() == DialogState.CONFIRMED);
 
@@ -146,11 +160,11 @@ public class Subscriber implements SipListener {
             ContactHeader contact = (ContactHeader) contactHeader.clone();
             ((SipURI)contact.getAddress().getURI()).setParameter( "id", "sub" );
             response.addHeader( contact );
-            logger.info("Transaction State = " + serverTransactionId.getState());
+            LOG.info("Transaction State = " + serverTransactionId.getState());
             AbstractSubsnotifyTestCase.assertTrue("transaction state should be trying",
                     serverTransactionId.getState() == TransactionState.TRYING);
             serverTransactionId.sendResponse(response);
-            logger.info("Dialog State = " + dialog.getState());
+            LOG.info("Dialog State = " + dialog.getState());
             SubscriptionStateHeader subscriptionState = (SubscriptionStateHeader) notify
                     .getHeader(SubscriptionStateHeader.NAME);
 
@@ -159,12 +173,12 @@ public class Subscriber implements SipListener {
             if (state.equalsIgnoreCase(SubscriptionStateHeader.TERMINATED)) {
                 dialog.delete();
             } else if (state.equalsIgnoreCase(SubscriptionStateHeader.ACTIVE)) {
-                logger.info("Subscriber: sending unSUBSCRIBE");
+                LOG.info("Subscriber: sending unSUBSCRIBE");
 
                 // Else we end it ourselves
                 Request unsubscribe = dialog.createRequest(Request.SUBSCRIBE);
 
-                logger.info( "dialog created:" + unsubscribe );
+                LOG.info("dialog created:" + unsubscribe );
                 // SHOULD add a Contact (done by dialog), lets mark it to test updates
                 ((SipURI) dialog.getLocalParty().getURI()).setParameter( "id", "unsub" );
                 ExpiresHeader expires = headerFactory.createExpiresHeader(0);
@@ -173,8 +187,8 @@ public class Subscriber implements SipListener {
                 unsubscribe.addHeader(notify.getHeader(EventHeader.NAME)); // copy
                                             // event
                                             // header
-                logger.info("Sending Unsubscribe : " + unsubscribe);
-                logger.info("unsubscribe dialog  " + dialog);
+                LOG.info("Sending Unsubscribe : " + unsubscribe);
+                LOG.info("unsubscribe dialog  " + dialog);
                 ClientTransaction ct = sipProvider.getNewClientTransaction(unsubscribe);
                 AbstractSubsnotifyTestCase.assertTrue( "Dialog mismatch " + ct.getDialog() + " dialog " + dialog, ct.getDialog() == dialog );
 
@@ -182,7 +196,7 @@ public class Subscriber implements SipListener {
 
 
             } else {
-                logger.info("Subscriber: state now " + state);// pending
+                LOG.info("Subscriber: state now " + state);// pending
                 // usually
                 AbstractSubsnotifyTestCase.assertTrue("State should be pending was "
                         + state, state.equalsIgnoreCase(SubscriptionStateHeader.PENDING ));
@@ -190,7 +204,7 @@ public class Subscriber implements SipListener {
             }
 
         } catch (Exception ex) {
-            logger.error("Unexpected exception",ex);
+            LOG.error("Unexpected exception", ex);
             TestHarness.fail("Failed to process Notify, because of " + ex.getMessage());
 
 
@@ -199,20 +213,20 @@ public class Subscriber implements SipListener {
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         Transaction tid = responseReceivedEvent.getClientTransaction();
 
-        logger.info("Response received with client transaction id " + tid
+        LOG.info("Response received with client transaction id " + tid
                 + ":\n" + response.getStatusCode()  );
         if (tid == null) {
-            logger.warn("Stray response -- dropping ");
+            LOG.warn("Stray response -- dropping ");
             return;
         }
-        logger.info("transaction state is " + tid.getState());
-        logger.info("Dialog = " + tid.getDialog());
+        LOG.info("transaction state is " + tid.getState());
+        LOG.info("Dialog = " + tid.getDialog());
         if ( tid.getDialog () != null )
-            logger.info("Dialog State is " + tid.getDialog().getState());
+            LOG.info("Dialog State is " + tid.getDialog().getState());
 
         if ( tid.getDialog() != null ) this.dialogs.add(tid.getDialog());
 
@@ -227,10 +241,10 @@ public class Subscriber implements SipListener {
 
             this.sipProvider = sipStack.createSipProvider(listeningPoint);
             this.sipProvider.setAutomaticDialogSupportEnabled(true);
-            logger.info("udp provider " + sipProvider);
+            LOG.info("udp provider " + sipProvider);
 
         } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
+            LOG.info(ex.getMessage(), ex);
             TestHarness.fail("Failed to create SIP Provider on port " + newPort + ", because of " + ex.getMessage());
             sipProvider = null;
         }
@@ -341,7 +355,7 @@ public class Subscriber implements SipListener {
             eventHeader.setEventId("foo");
             request.addHeader(eventHeader);
 
-            logger.info("Subscribe Dialog = " + subscribeTid.getDialog());
+            LOG.info("Subscribe Dialog = " + subscribeTid.getDialog());
 
             // send the request out.
 
@@ -350,29 +364,29 @@ public class Subscriber implements SipListener {
 
             subscribeTid.sendRequest();
             } catch (Throwable ex) {
-            logger.info(ex.getMessage(), ex);
+            LOG.info(ex.getMessage(), ex);
             TestHarness.fail("Failed to send Subscribe to notifier port" + notifierPort + ", because of " + ex.getMessage());
         }
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        logger.info("io exception event recieved");
+        LOG.info("io exception event recieved");
     }
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        logger.info("transaction terminated");
+        LOG.info("transaction terminated");
 
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        logger.info("dialog terminated event recieved");
+        LOG.info("dialog terminated event recieved");
     }
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     public void checkState() {

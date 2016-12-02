@@ -129,7 +129,7 @@ public interface StackLogger extends LogLevels {
     public void setStackProperties(Properties stackProperties);
     
     /**
-     * The category for the logger.
+     * The category for the LOG.
      * @return
      */
     public String getLoggerName();

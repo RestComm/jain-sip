@@ -1,18 +1,38 @@
 package test.unit.gov.nist.javax.sip.stack.dialog.termination;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
+import java.util.ArrayList;
+import java.util.Properties;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ProtocolObjects;
-
-import java.util.*;
 
 /**
  * Concurrent calls test. The client creates 20 concurrent dialogs on the
@@ -23,8 +43,10 @@ import java.util.*;
 
 public class Shootist implements SipListener {
 
+    private static final Logger LOG = LogManager.getLogger(Shootist.class);
     private ListeningPoint listeningPoint;
     private ProtocolObjects protocolObjects;
+
     /* move variables as class variables from init() */
     private SipURI requestURI;
 
@@ -41,8 +63,8 @@ public class Shootist implements SipListener {
     private Address fromNameAddress;
 
     private ContentTypeHeader contentTypeHeader;
-
     private ContactHeader contactHeader;
+
     // If you want to try TCP transport change the following to
     // String transport = "tcp";
     String transport = "udp";
@@ -68,16 +90,6 @@ public class Shootist implements SipListener {
 
     private boolean stateIsOk = true;
 
-    private static Logger logger = Logger.getLogger(Shootist.class);
-
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
-
     public Shootist(ProtocolObjects protocolObjects) {
         super();
         this.protocolObjects = protocolObjects;
@@ -98,7 +110,7 @@ public class Shootist implements SipListener {
                     .createSipProvider(listeningPoint);
             return sipProvider;
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             DialogTerminationOn50XTest
                     .fail("Shootist: unable to create provider");
             return null;

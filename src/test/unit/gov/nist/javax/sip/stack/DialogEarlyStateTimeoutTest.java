@@ -8,10 +8,8 @@ import gov.nist.javax.sip.SipStackExt;
 import gov.nist.javax.sip.header.HeaderFactoryExt;
 import gov.nist.javax.sip.message.MessageFactoryExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
 import java.util.ArrayList;
 import java.util.Properties;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -24,7 +22,6 @@ import javax.sip.ServerTransaction;
 import javax.sip.SipFactory;
 import javax.sip.SipListener;
 import javax.sip.TimeoutEvent;
-import javax.sip.TransactionState;
 import javax.sip.TransactionTerminatedEvent;
 import javax.sip.address.Address;
 import javax.sip.address.AddressFactory;
@@ -33,7 +30,6 @@ import javax.sip.header.CSeqHeader;
 import javax.sip.header.CallIdHeader;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.ExpiresHeader;
 import javax.sip.header.FromHeader;
 import javax.sip.header.MaxForwardsHeader;
 import javax.sip.header.RouteHeader;
@@ -41,13 +37,9 @@ import javax.sip.header.ToHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-
-import test.unit.gov.nist.javax.sip.stack.CtxExpiredTest.Shootist;
-import test.unit.gov.nist.javax.sip.stack.CtxExpiredTest.Shootme;
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class DialogEarlyStateTimeoutTest extends TestCase {
     AddressFactory addressFactory;
@@ -70,10 +62,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
 
     private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
 
-    private static Logger logger = Logger.getLogger(CtxExpiredTest.class);
-    static {
-        logger.addAppender(new ConsoleAppender());
-    }
+    private static final Logger LOG = LogManager.getLogger(CtxExpiredTest.class);
 
     class Shootist implements SipListenerExt {
 
@@ -236,7 +225,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
                 this.inviteTid.sendRequest();
 
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 TestCase.fail("unexpected exception");
             }
         }
@@ -275,7 +264,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
         
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.debug("Transaction Terminated Event seen");
+            LOG.debug("Transaction Terminated Event seen");
 
         }
 
@@ -292,7 +281,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
                 cancelTx.sendRequest();
             } catch (Exception exception) {
                 exception.printStackTrace();
-                logger.error("Unexpected exception", exception);
+                LOG.error("Unexpected exception", exception);
                 TestCase.fail("unexpected exception");
             }
 
@@ -369,7 +358,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
 
                 }
             } catch (Exception ex) {
-                logger.error("Unexpected exception", ex);
+                LOG.error("Unexpected exception", ex);
                 TestCase.fail("Unexpected exception");
             }
         }
@@ -426,7 +415,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
             properties.setProperty(
                     "gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS", "30");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             this.shootistStack = (SipStackExt) sipFactory
@@ -444,7 +433,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
             properties.setProperty(
                     "gov.nist.javax.sip.EARLY_DIALOG_TIMEOUT_SECONDS", "30");
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             this.shootmeStack = (SipStackExt) sipFactory

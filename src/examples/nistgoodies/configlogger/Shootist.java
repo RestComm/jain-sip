@@ -213,7 +213,7 @@ public class Shootist implements SipListener {
         // Your code will limp at 32 but it is best for debugging.
         properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "TRACE");
 
-        // Register a custom logger with the stack.
+        // Register a custom LOG with the stack.
         properties.setProperty("gov.nist.javax.sip.LOG_FACTORY", LogRecordFactoryImpl.class.getName());
 
         try {

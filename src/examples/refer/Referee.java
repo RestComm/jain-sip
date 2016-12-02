@@ -1,16 +1,46 @@
 package examples.refer;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
 import java.text.ParseException;
-import java.util.*;
-
-import org.apache.log4j.*;
-
-
+import java.util.ArrayList;
+import java.util.Properties;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.InvalidArgumentException;
+import javax.sip.ListeningPoint;
+import javax.sip.PeerUnavailableException;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipException;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.CSeqHeader;
+import javax.sip.header.CallIdHeader;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ContentTypeHeader;
+import javax.sip.header.EventHeader;
+import javax.sip.header.ExpiresHeader;
+import javax.sip.header.FromHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.MaxForwardsHeader;
+import javax.sip.header.ReferToHeader;
+import javax.sip.header.SubscriptionStateHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This example shows an out-of-dialog REFER scenario:
@@ -26,6 +56,8 @@ import org.apache.log4j.*;
  */
 public class Referee implements SipListener {
 
+    private static final Logger LOG = LogManager.getLogger(Referee.class) ;
+
     private static AddressFactory addressFactory;
 
     private static MessageFactory messageFactory;
@@ -34,14 +66,11 @@ public class Referee implements SipListener {
 
     private static SipStack sipStack;
 
-
     private int port;
 
     protected SipProvider udpProvider;
 
     protected Dialog dialog;
-
-    private static Logger logger = Logger.getLogger(Referee.class) ;
 
     private EventHeader referEvent;
 
@@ -50,7 +79,7 @@ public class Referee implements SipListener {
             + ">>>> is your class path set to the root?";
 
     private static void usage() {
-        logger.info(usageString);
+        LOG.info(usageString);
         System.exit(0);
 
     }
@@ -60,11 +89,11 @@ public class Referee implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId
                 + " and dialog id " + requestEvent.getDialog() );
-        logger.info( request.toString() );
+        LOG.info(request.toString() );
         if (request.getMethod().equals(Request.REFER)) {
             try {
                 processRefer(requestEvent, serverTransactionId);
@@ -205,14 +234,14 @@ public class Referee implements SipListener {
             // Let the other side know that the tx is pending acceptance
             //
             dialog.sendRequest(ct2);
-            logger.info("NOTIFY Branch ID " +
+            LOG.info("NOTIFY Branch ID " +
                 ((ViaHeader)notifyRequest.getHeader(ViaHeader.NAME)).getParameter("branch"));
-            logger.info("Dialog " + dialog);
-            logger.info("Dialog state after NOTIFY: " + dialog.getState());
+            LOG.info("Dialog " + dialog);
+            LOG.info("Dialog state after NOTIFY: " + dialog.getState());
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        logger.info("Got a response");
+        LOG.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         Transaction tid = responseReceivedEvent.getClientTransaction();
 
@@ -252,11 +281,11 @@ public class Referee implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("dialog = " + transaction.getDialog());
-        logger.info("dialogState = "
+        LOG.info("state = " + transaction.getState());
+        LOG.info("dialog = " + transaction.getDialog());
+        LOG.info("dialogState = "
                 + transaction.getDialog().getState());
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     public void sendInvite( ReferToHeader to ) {
@@ -337,7 +366,7 @@ public class Referee implements SipListener {
             inviteTid.sendRequest();
 
         } catch (Throwable ex) {
-            logger.info(ex.getMessage());
+            LOG.info(ex.getMessage());
             ex.printStackTrace();
             usage();
         }
@@ -349,9 +378,6 @@ public class Referee implements SipListener {
         sipFactory.setPathName("gov.nist");
         Properties properties = new Properties();
 
-        logger.addAppender(new FileAppender
-            ( new SimpleLayout(),"refereeoutputlog.txt" ));
-
         properties.setProperty("javax.sip.STACK_NAME", "referee" );
         // You need 16 for logging traces. 32 for debug + traces.
         // Your code will limp at 32 but it is best for debugging.
@@ -362,11 +388,10 @@ public class Referee implements SipListener {
         properties.setProperty("gov.nist.javax.sip.SERVER_LOG",
                 "refereelog.txt");
 
-
         try {
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            logger.info("sipStack = " + sipStack);
+            LOG.info("sipStack = " + sipStack);
         } catch (PeerUnavailableException e) {
             // could not find
             // gov.nist.jain.protocol.ip.sip.SipStackImpl
@@ -396,10 +421,10 @@ public class Referee implements SipListener {
                     this.port, "udp");
 
             this.udpProvider = sipStack.createSipProvider(lp);
-            logger.info("udp provider " + udpProvider);
+            LOG.info("udp provider " + udpProvider);
 
         } catch (Exception ex) {
-            logger.info(ex.getMessage());
+            LOG.info(ex.getMessage());
             ex.printStackTrace();
             usage();
         }
@@ -425,13 +450,13 @@ public class Referee implements SipListener {
     public void processTransactionTerminated(
             TransactionTerminatedEvent tte) {
 
-        logger.info("transaction terminated:" + tte );
+        LOG.info("transaction terminated:" + tte );
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
 
-        logger.info("dialog terminated:" + dialogTerminatedEvent );
+        LOG.info("dialog terminated:" + dialogTerminatedEvent );
     }
 
 }

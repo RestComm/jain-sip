@@ -1,17 +1,29 @@
 package examples.cancel;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-
-import java.util.*;
-
+import java.util.Timer;
+import java.util.TimerTask;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogState;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.Transaction;
+import javax.sip.TransactionState;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
 import junit.framework.TestCase;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -22,7 +34,7 @@ import junit.framework.TestCase;
 
 public class Shootme extends TestCase implements SipListener {
 
-
+    private static final Logger LOG = LogManager.getLogger(Shootme.class);
 
     private static final String myAddress = "127.0.0.1";
 
@@ -39,8 +51,6 @@ public class Shootme extends TestCase implements SipListener {
     private SipProvider sipProvider;
 
     private Dialog dialog;
-
-    private static Logger logger = Logger.getLogger(Shootme.class);
 
     private static final String unexpectedException = "Unexpected Exception ";
 
@@ -69,7 +79,7 @@ public class Shootme extends TestCase implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + ProtocolObjects.sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -99,12 +109,12 @@ public class Shootme extends TestCase implements SipListener {
                 Request byeRequest = dialog.createRequest(Request.BYE);
                 ClientTransaction tr = sipProvider
                         .getNewClientTransaction(byeRequest);
-                logger.info("shootme: got an ACK -- sending bye! ");
+                LOG.info("shootme: got an ACK -- sending bye! ");
                 dialog.sendRequest(tr);
-                logger.info("Dialog State = " + dialog.getState());
+                LOG.info("Dialog State = " + dialog.getState());
             }
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             fail(unexpectedException);
         }
     }
@@ -117,8 +127,8 @@ public class Shootme extends TestCase implements SipListener {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme: got an Invite sending RINGING");
-            // logger.info("shootme: " + request);
+            LOG.info("shootme: got an Invite sending RINGING");
+            // LOG.info("shootme: " + request);
             Response response = ProtocolObjects.messageFactory.createResponse(180, request);
             ToHeader toHeader = (ToHeader) response.getHeader(ToHeader.NAME);
             toHeader.setTag("4321"); // Application is supposed to set.
@@ -131,7 +141,7 @@ public class Shootme extends TestCase implements SipListener {
 
             if (st == null) {
                 st = sipProvider.getNewServerTransaction(request);
-                logger.info("Created a new server transaction for "
+                LOG.info("Created a new server transaction for "
                         + request.getMethod() + " serverTransaction = " + st);
             }
             dialog = st.getDialog();
@@ -147,7 +157,7 @@ public class Shootme extends TestCase implements SipListener {
 
             new Timer().schedule(new MyTimerTask(this), 300);
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             fail(unexpectedException);
         }
     }
@@ -155,11 +165,11 @@ public class Shootme extends TestCase implements SipListener {
     private void sendInviteOK() {
         try {
             if (inviteTid.getState() != TransactionState.COMPLETED) {
-                logger.info("shootme: got an Invite sending OK");
+                LOG.info("shootme: got an Invite sending OK");
                 inviteTid.sendResponse(okResponse);
             }
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
         }
     }
 
@@ -171,14 +181,14 @@ public class Shootme extends TestCase implements SipListener {
 
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme:  got a bye sending OK.");
+            LOG.info("shootme:  got a bye sending OK.");
             Response response = ProtocolObjects.messageFactory.createResponse(200, request);
             serverTransactionId.sendResponse(response);
-            logger.info("Dialog State is "
+            LOG.info("Dialog State is "
                     + serverTransactionId.getDialog().getState());
 
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             fail(unexpectedException);
 
         }
@@ -189,9 +199,9 @@ public class Shootme extends TestCase implements SipListener {
 
         Request request = requestEvent.getRequest();
         try {
-            logger.info("shootme:  got a cancel.");
+            LOG.info("shootme:  got a cancel.");
             if (serverTransactionId == null) {
-                logger.info("shootme:  null tid.");
+                LOG.info("shootme:  null tid.");
                 return;
             }
             TestCase.assertTrue(inviteTid != serverTransactionId);
@@ -204,7 +214,7 @@ public class Shootme extends TestCase implements SipListener {
             }
 
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             fail(unexpectedException);
 
         }
@@ -217,11 +227,11 @@ public class Shootme extends TestCase implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("dialog = " + transaction.getDialog());
-        logger.info("dialogState = "
+        LOG.info("state = " + transaction.getState());
+        LOG.info("dialog = " + transaction.getDialog());
+        LOG.info("dialogState = "
                 + transaction.getDialog().getState());
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     public SipProvider createProvider() {
@@ -231,10 +241,10 @@ public class Shootme extends TestCase implements SipListener {
                     myPort, transport);
 
             sipProvider = ProtocolObjects.sipStack.createSipProvider(lp);
-            logger.info("udp provider " + sipProvider);
+            LOG.info("udp provider " + sipProvider);
             return sipProvider;
         } catch (Exception ex) {
-            logger.error(ex);
+            LOG.error(ex);
             fail(unexpectedException);
             return null;
 
@@ -246,7 +256,6 @@ public class Shootme extends TestCase implements SipListener {
 
 
     public static void main(String args[])throws Exception  {
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects.init("shootme");
         Shootme shootme = new Shootme();
         shootme.createProvider();
@@ -266,7 +275,7 @@ public class Shootme extends TestCase implements SipListener {
 
             String method = serverTx.getRequest().getMethod();
 
-            logger.info("Server Tx : " + method + " terminated ");
+            LOG.info("Server Tx : " + method + " terminated ");
         }
     }
 

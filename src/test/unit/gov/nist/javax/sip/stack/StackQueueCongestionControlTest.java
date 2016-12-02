@@ -1,12 +1,9 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 import gov.nist.javax.sip.DialogExt;
-import gov.nist.javax.sip.SipProviderExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
 import java.util.ArrayList;
 import java.util.Properties;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -39,12 +36,6 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
-
 import junit.framework.TestCase;
 
 /**
@@ -487,10 +478,6 @@ public class StackQueueCongestionControlTest extends TestCase {
             // You need 16 (or TRACE) for logging traces. 32 (or DEBUG) for debug + traces.
             // Your code will limp at 32 but it is best for debugging.
             properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "LOG4J");
-            Logger root = Logger.getRootLogger();
-            root.setLevel(Level.WARN);
-            root.addAppender(new ConsoleAppender(
-                new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
             if(threads!=null) {
             	
             	properties.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "true");

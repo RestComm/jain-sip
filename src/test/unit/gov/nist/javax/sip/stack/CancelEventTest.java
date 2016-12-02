@@ -1,11 +1,9 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-
 import java.util.ArrayList;
 import java.util.Properties;
 import java.util.Random;
-
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogTerminatedEvent;
@@ -38,16 +36,16 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
 import junit.framework.TestCase;
-
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 public class CancelEventTest extends  ScenarioHarness {
 
+    private static final Logger LOG = LogManager.getLogger("test.tck");
     private static String transport = "udp";
+
     private static String unexpectedException = "Unexpected Exception ";
 
     private static String host = "127.0.0.1";
@@ -55,13 +53,6 @@ public class CancelEventTest extends  ScenarioHarness {
     private static int port = 6050;
 
     private static int peerPort = 6060;
-
-    private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
 
     public CancelEventTest() {
         super("CanceEventTest",true);
@@ -129,7 +120,7 @@ public class CancelEventTest extends  ScenarioHarness {
                     new Integer(logLevel).toString());
 
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             
@@ -171,7 +162,7 @@ public class CancelEventTest extends  ScenarioHarness {
             ServerTransaction serverTransactionId = requestReceivedEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId);
 
@@ -179,7 +170,7 @@ public class CancelEventTest extends  ScenarioHarness {
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
             Response response = (Response) responseReceivedEvent.getResponse();
-            logger.info("Got a response"
+            LOG.info("Got a response"
                     + ((CSeqHeader) response.getHeader(CSeqHeader.NAME))
                             .getMethod());
 
@@ -187,18 +178,18 @@ public class CancelEventTest extends  ScenarioHarness {
                     .getClientTransaction();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-            logger.info("Response received : Status Code = "
+            LOG.info("Response received : Status Code = "
                     + response.getStatusCode() + " " + cseq);
             if (tid == null) {
-                logger.info("Stray response -- dropping ");
+                LOG.info("Stray response -- dropping ");
                 return;
             }
-            logger.info("transaction state is " + tid.getState());
-            logger.info("Dialog = " + tid.getDialog());
-            logger.info("Dialog State is " + tid.getDialog().getState());
+            LOG.info("transaction state is " + tid.getState());
+            LOG.info("Dialog = " + tid.getDialog());
+            LOG.info("Dialog State is " + tid.getDialog().getState());
 
             if (dialog == null) {
-                logger.info("SETTING DIALOG SINCE IT WAS NULL!!!!!!");
+                LOG.info("SETTING DIALOG SINCE IT WAS NULL!!!!!!");
                 dialog = tid.getDialog();
             }
 
@@ -208,7 +199,7 @@ public class CancelEventTest extends  ScenarioHarness {
             {
                 cancelOk = true;
             } else {
-                logger.info("Got weird response:" + response);
+                LOG.info("Got weird response:" + response);
             }
 
         }
@@ -220,16 +211,16 @@ public class CancelEventTest extends  ScenarioHarness {
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("state = " + transaction.getState());
-            logger.info("dialog = " + transaction.getDialog());
-            logger.info("dialogState = " + transaction.getDialog().getState());
-            logger.info("Transaction Time out");
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = " + transaction.getDialog().getState());
+            LOG.info("Transaction Time out");
             fail("Timeout Shouldnt happen on UAC side!!!");
         }
 
         private void sendCancel() {
             try {
-                logger.info("Sending cancel");
+                LOG.info("Sending cancel");
 
                 Request cancelRequest = inviteTid.createCancel();
                 ClientTransaction cancelTid = sipProvider
@@ -238,7 +229,7 @@ public class CancelEventTest extends  ScenarioHarness {
                 cancelSent = true;
             } catch (Exception ex) {
                 ex.printStackTrace();
-                logger.error(unexpectedException, ex);
+                LOG.error(unexpectedException, ex);
                 fail(unexpectedException);
             }
         }
@@ -251,7 +242,7 @@ public class CancelEventTest extends  ScenarioHarness {
                 sipProvider = sipStack.createSipProvider(listeningPoint);
                 return sipProvider;
             } catch (Exception ex) {
-                logger.error(unexpectedException, ex);
+                LOG.error(unexpectedException, ex);
                 fail(unexpectedException);
                 return null;
             }
@@ -331,10 +322,10 @@ public class CancelEventTest extends  ScenarioHarness {
 
                 inviteTid.sendRequest();
                 dialog = inviteTid.getDialog();
-                logger.info("SET DIALOG TO[" + dialog + "]");
+                LOG.info("SET DIALOG TO[" + dialog + "]");
             } catch (Exception e) {
 
-                logger.error("Unexpected exception", e);
+                LOG.error("Unexpected exception", e);
                 fail("Unexpected exception");
 
             }
@@ -342,7 +333,7 @@ public class CancelEventTest extends  ScenarioHarness {
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.info("Got an IO Exception");
+            LOG.info("Got an IO Exception");
             fail("unexpected event");
 
         }
@@ -355,7 +346,7 @@ public class CancelEventTest extends  ScenarioHarness {
 
                 String method = clientTx.getRequest().getMethod();
 
-                logger.info("Server Tx : " + method + " terminated ");
+                LOG.info("Server Tx : " + method + " terminated ");
                 if (method.equals("INVITE")) {
                     inviteTxTerm = true;
                 } else if (method.equals("CANCEL")) {
@@ -368,9 +359,9 @@ public class CancelEventTest extends  ScenarioHarness {
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("Got a dialog terminated event");
+            LOG.info("Got a dialog terminated event");
             if (dialog == dialogTerminatedEvent.getDialog()) {
-                logger.info("Dialog matches dialog created before");
+                LOG.info("Dialog matches dialog created before");
                 dialogTerminated = true;
             }
 
@@ -467,7 +458,7 @@ public class CancelEventTest extends  ScenarioHarness {
                     new Integer(logLevel).toString());
 
             if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
-            	logger.info("\nNIO Enabled\n");
+            	LOG.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
             
@@ -509,7 +500,7 @@ public class CancelEventTest extends  ScenarioHarness {
             ServerTransaction serverTransactionId = requestEvent
                     .getServerTransaction();
 
-            logger.info("\n\nRequest " + request.getMethod() + " received at "
+            LOG.info("\n\nRequest " + request.getMethod() + " received at "
                     + sipStack.getStackName() + " with server transaction id "
                     + serverTransactionId);
 
@@ -533,8 +524,8 @@ public class CancelEventTest extends  ScenarioHarness {
             SipProvider sipProvider = (SipProvider) requestEvent.getSource();
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme: got an Invite sending RINGING");
-                // logger.info("shootme: " + request);
+                LOG.info("shootme: got an Invite sending RINGING");
+                // LOG.info("shootme: " + request);
                 Response response = messageFactory.createResponse(180, request);
                 ToHeader toHeader = (ToHeader) response
                         .getHeader(ToHeader.NAME);
@@ -548,7 +539,7 @@ public class CancelEventTest extends  ScenarioHarness {
 
                 if (st == null) {
                     st = sipProvider.getNewServerTransaction(request);
-                    logger.info("Created a new server transaction for "
+                    LOG.info("Created a new server transaction for "
                             + request.getMethod() + " serverTransaction = "
                             + st);
                 }
@@ -559,7 +550,7 @@ public class CancelEventTest extends  ScenarioHarness {
                 st.sendResponse(response);
 
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 fail(unexpectedException);
             }
         }
@@ -569,9 +560,9 @@ public class CancelEventTest extends  ScenarioHarness {
 
             Request request = requestEvent.getRequest();
             try {
-                logger.info("shootme:  got a cancel.");
+                LOG.info("shootme:  got a cancel.");
                 if (serverTransactionId == null) {
-                    logger.info("shootme:  null tid.");
+                    LOG.info("shootme:  null tid.");
                     return;
                 }
                 TestCase.assertTrue(inviteTid != serverTransactionId);
@@ -588,7 +579,7 @@ public class CancelEventTest extends  ScenarioHarness {
                 	dialogOnCancelTx = false;
                 }
             } catch (Exception ex) {
-                // logger.error(ex);
+                // LOG.error(ex);
                 ex.printStackTrace();
                 fail(unexpectedException);
 
@@ -602,10 +593,10 @@ public class CancelEventTest extends  ScenarioHarness {
             } else {
                 transaction = timeoutEvent.getClientTransaction();
             }
-            logger.info("state = " + transaction.getState());
-            logger.info("dialog = " + transaction.getDialog());
-            logger.info("dialogState = " + transaction.getDialog().getState());
-            logger.info("Transaction Time out");
+            LOG.info("state = " + transaction.getState());
+            LOG.info("dialog = " + transaction.getDialog());
+            LOG.info("dialogState = " + transaction.getDialog().getState());
+            LOG.info("Transaction Time out");
             fail("Timeout Shouldnt happen on UAS side!!!");
         }
 
@@ -616,10 +607,10 @@ public class CancelEventTest extends  ScenarioHarness {
                         myPort, transport);
 
                 sipProvider = sipStack.createSipProvider(lp);
-                logger.info("udp provider " + sipProvider);
+                LOG.info("udp provider " + sipProvider);
                 return sipProvider;
             } catch (Exception ex) {
-                logger.error(ex);
+                LOG.error(ex);
                 fail(unexpectedException);
                 return null;
 
@@ -640,7 +631,7 @@ public class CancelEventTest extends  ScenarioHarness {
 
                 String method = serverTx.getRequest().getMethod();
 
-                logger.info("Server Tx : " + method + " terminated ");
+                LOG.info("Server Tx : " + method + " terminated ");
                 if (method.equals("INVITE")) {
                     inviteTxTerm = true;
                 } else if (method.equals("CANCEL")) {
