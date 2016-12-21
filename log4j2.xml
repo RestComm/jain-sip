@@ -6,10 +6,10 @@
 
     <Appenders>
         <Console name="Console">
-            <PatternLayout pattern="%d [%-6p] %c - %m%n"/>
+            <PatternLayout pattern=" - %m%n"/>
         </Console>
         <File name="File" fileName="${filename}">
-            <PatternLayout pattern="%d [%-6p] %c - %m%n"/>
+            <PatternLayout pattern=" - %m%n"/>
         </File>
         <Async name="Async">
             <AppenderRef ref="File"/>
