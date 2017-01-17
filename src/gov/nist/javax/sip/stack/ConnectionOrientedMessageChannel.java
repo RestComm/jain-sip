@@ -381,7 +381,8 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
               }
               else
               {
-            	  logger.logInfo("We did not use recived and rport");
+            	  if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            		  logger.logDebug("We did not use recived and rport");
               }
                 // Use this for outgoing messages as well.
                 if (!this.isCached && mySock != null) { // self routing makes
