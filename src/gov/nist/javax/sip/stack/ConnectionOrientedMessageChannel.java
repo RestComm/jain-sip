@@ -336,6 +336,8 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                     }
                 }
                 
+              if(!sipStack.isPatchReceivedRport())  
+              {
                 try {
                 	if (mySock != null) { // selfrouting makes socket = null
                         				 // https://jain-sip.dev.java.net/issues/show_bug.cgi?id=297
@@ -376,6 +378,11 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                 } catch (java.text.ParseException ex) {
                     InternalErrorHandler.handleException(ex);
                 }
+              }
+              else
+              {
+            	  logger.logInfo("We did not use recived and rport");
+              }
                 // Use this for outgoing messages as well.
                 if (!this.isCached && mySock != null) { // self routing makes
 									                    // mySock=null

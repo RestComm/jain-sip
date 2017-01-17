@@ -1389,6 +1389,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 		super.setPatchRport(Boolean.parseBoolean(configurationProperties.getProperty(
 				"gov.nist.javax.sip.ALWAYS_ADD_RPORT", "false")));
 		
+		super.setPatchReceivedRport(Boolean.parseBoolean(configurationProperties.getProperty(
+				"gov.nist.javax.sip.NEVER_ADD_RECEIVED_RPORT", "false")));
+		
 		super.cancelClientTransactionChecked = configurationProperties
 				.getProperty(
 						"gov.nist.javax.sip.CANCEL_CLIENT_TRANSACTION_CHECKED",
