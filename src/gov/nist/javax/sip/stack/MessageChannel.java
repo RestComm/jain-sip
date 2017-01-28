@@ -234,7 +234,7 @@ public abstract class MessageChannel {
                                 }
                             }
                             
-                            public String getThreadHash() {
+                            public Object getThreadHash() {
                                 return sipMessage.getCallId().getCallId();
                             }
                         };
@@ -286,7 +286,7 @@ public abstract class MessageChannel {
         sendMessage(bytes, receiverAddress, receiverPort, sipMessage instanceof SIPRequest);
 
         // we successfully sent the message without an exception so let's
-        // set port and address before we feed it to the LOG.
+        // set port and address before we feed it to the logger.
         sipMessage.setRemoteAddress(receiverAddress);
         sipMessage.setRemotePort(receiverPort);
         sipMessage.setLocalPort(this.getPort());

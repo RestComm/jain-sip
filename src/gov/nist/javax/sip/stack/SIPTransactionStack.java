@@ -455,9 +455,9 @@ public abstract class SIPTransactionStack implements
         }
         
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             return null;
-        }         
+        }
 
         public void runTask() {
             // Check if we still have a timer (it may be null after shutdown)
@@ -489,11 +489,11 @@ public abstract class SIPTransactionStack implements
         public RemoveForkedTransactionTimerTask(String forkId) {
             this.forkId = forkId;
         }
-        
+
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             return null;
-        }         
+        }
 
         @Override
         public void runTask() {
@@ -544,7 +544,7 @@ public abstract class SIPTransactionStack implements
         // The default (identity) address lookup scheme
 
         this.addressResolver = new DefaultAddressResolver();
-        
+
         // Init vavles list
         this.sipMessageValves = new ArrayList<SIPMessageValve>();
 
@@ -772,7 +772,7 @@ public abstract class SIPTransactionStack implements
             logger.logStackTrace();
         dialogTable.put(dialogId, dialog);
         putMergeDialog(dialog);
-        
+
         return dialog;
     }
 
@@ -882,22 +882,22 @@ public abstract class SIPTransactionStack implements
             SIPResponse sipResponse) {
         return new SIPDialog(sipProvider, sipResponse);
     }
-    
+
     /**
      * Creates a new dialog based on a received NOTIFY. The dialog state is
      * initialized appropriately. The NOTIFY differs in the From tag
-     * 
+     *
      * Made this a separate method to clearly distinguish what's happening here
      * - this is a non-trivial case
-     * 
+     *
      * @param subscribeTx
      *            - the transaction started with the SUBSCRIBE that we sent
      * @param notifyST
      *            - the ServerTransaction created for an incoming NOTIFY
      * @return -- a new dialog created from the subscribe original SUBSCRIBE
      *         transaction.
-     * 
-     * 
+     *
+     *
      */
     public SIPDialog createDialog(SIPClientTransaction subscribeTx, SIPTransaction notifyST) {
       return new SIPDialog(subscribeTx, notifyST);
@@ -978,13 +978,13 @@ public abstract class SIPTransactionStack implements
 			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 				logger.logDebug("Tyring to remove Dialog from serverDialogMerge table with Merge Dialog Id " + mergeId);
 			}
-			SIPDialog sipDialog = serverDialogMergeTestTable.remove(mergeId);		
+			SIPDialog sipDialog = serverDialogMergeTestTable.remove(mergeId);
 			if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG) && sipDialog != null) {
 				logger.logDebug("removed Dialog " + sipDialog + " from serverDialogMerge table with Merge Dialog Id " + mergeId);
 			}
 		}
 	}
-	
+
 	protected void putMergeDialog(SIPDialog sipDialog) {
 		if(sipDialog != null) {
 			String mergeId = sipDialog.getMergeId();
@@ -996,7 +996,7 @@ public abstract class SIPTransactionStack implements
 			}
 		}
 	}
-    
+
     /**
      * Return the dialog for a given dialog ID. If compatibility is enabled then
      * we do not assume the presence of tags and hence need to add a flag to
@@ -1041,7 +1041,7 @@ public abstract class SIPTransactionStack implements
      * "active" or "pending", it creates a new subscription and a new dialog
      * (unless they have already been created by a matching response, as
      * described above).
-     * 
+     *
      * Due to different app chaining scenarios (ie B2BUA to Proxy), the RFC matching
      * is not enough alone. It maybe several transactions matches the defined
      * criteria. For that reason, some complementary conditions are included. These
@@ -1052,7 +1052,7 @@ public abstract class SIPTransactionStack implements
      * See https://github.com/RestComm/jain-sip/issues/60 for more info.
      * Complementary are also used to stop the searching, and return the matched tx. This
      * is because we are iterating the whole client transaction table, which may be
-     * big effort. 
+     * big effort.
      *
      * @param notifyMessage
      * @return -- the matching ClientTransaction with semaphore aquired or null
@@ -1106,7 +1106,7 @@ public abstract class SIPTransactionStack implements
                     	logger.logDebug("ct.req.reqURI = " + ct.getOriginalRequest().getRequestURI());
                     logger.logDebug("msg.Contact= " + notifyMessage.getContactHeader());
                     logger.logDebug("msg.reqURI " + notifyMessage.getRequestURI());
-                    
+
                 }
 
                 if (  fromTag.equalsIgnoreCase(thisToTag)
@@ -1119,7 +1119,7 @@ public abstract class SIPTransactionStack implements
                     }
                     if (retval == null) {
                         //take first matching tx, just in case
-                        retval = ct;                    	
+                        retval = ct;
                     }
                     //https://github.com/RestComm/jain-sip/issues/60
                     //Now check complementary conditions, to override selected ct, and break
@@ -1456,7 +1456,7 @@ public abstract class SIPTransactionStack implements
         }
         // http://java.net/jira/browse/JSIP-429
         // get the merge id from the tx instead of the request to avoid reparsing on aggressive cleanup
-        String key = tr.getMergeId();        
+        String key = tr.getMergeId();
         if (key != null) {
             this.mergeTable.remove(key);
         }
@@ -1516,7 +1516,7 @@ public abstract class SIPTransactionStack implements
         if(sipMessageValves.size() != 0) {
         	// https://java.net/jira/browse/JSIP-511
         	// catching all exceptions so it doesn't make JAIN SIP to fail
-        	try {	
+        	try {
         		for (SIPMessageValve sipMessageValve : this.sipMessageValves) {
         			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                         logger.logDebug(
@@ -1534,8 +1534,8 @@ public abstract class SIPTransactionStack implements
         	} catch(Exception e) {
         		if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                     logger.logError(
-                            "An issue happening the valve on request " + 
-                            		requestReceived + 
+                            "An issue happening the valve on request " +
+                            		requestReceived +
                             		" thus the message will not be processed further", e);
                 }
         		return null;
@@ -1674,8 +1674,8 @@ public abstract class SIPTransactionStack implements
         	} catch(Exception e) {
         		if(logger.isLoggingEnabled(LogWriter.TRACE_ERROR)) {
                     logger.logError(
-                            "An issue happening the valve on response " + 
-                            		responseReceived + 
+                            "An issue happening the valve on response " +
+                            		responseReceived +
                             		" thus the message will not be processed further", e);
                 }
         		return null;
@@ -1954,7 +1954,7 @@ public abstract class SIPTransactionStack implements
         				" mergetTable %d " +
         				" terminatedServerTransactionsPendingAck %d  " +
         				" forkedClientTransactionTable %d " +
-        				" pendingTransactions %d " , 
+        				" pendingTransactions %d " ,
         				clientTransactionTable.size(),
         				serverTransactionTable.size(),
         				mergeTable.size(),
@@ -2014,7 +2014,7 @@ public abstract class SIPTransactionStack implements
             String key = sipRequest.getTransactionId();
             existingTx = clientTransactionTable.putIfAbsent(key,
                     (SIPClientTransaction) sipTransaction);
-            
+
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 logger
                         .logDebug(" putTransactionHash : " + " key = " + key);
@@ -2134,7 +2134,7 @@ public abstract class SIPTransactionStack implements
      */
     public void stopStack() {
         // Prevent NPE on two concurrent stops
-        this.toExit = true;        
+        this.toExit = true;
 
         // JvB: set it to null, SIPDialog tries to schedule things after stop
         this.pendingTransactions.clear();
@@ -2144,7 +2144,7 @@ public abstract class SIPTransactionStack implements
         synchronized (this.clientTransactionTable) {
             clientTransactionTable.notifyAll();
         }
-        
+
         if(selfRoutingThreadpoolExecutor != null && selfRoutingThreadpoolExecutor instanceof ExecutorService) {
         	((ExecutorService)selfRoutingThreadpoolExecutor).shutdown();
         }
@@ -2172,7 +2172,7 @@ public abstract class SIPTransactionStack implements
         this.serverLogger.closeLogFile();
 
     }
-    
+
     public void closeAllSockets() {
     	this.ioHandler.closeAll();
     	for(MessageProcessor p : messageProcessors) {
@@ -2234,10 +2234,10 @@ public abstract class SIPTransactionStack implements
     }
 
     /**
-     * Get the LOG. This method should be deprected.
-     * Use static LOG = CommonLogger.getLogger() instead
+     * Get the logger. This method should be deprected.
+     * Use static logger = CommonLogger.getLogger() instead
      *
-     * @return --the LOG for the sip stack. Each stack has its own LOG
+     * @return --the logger for the sip stack. Each stack has its own logger
      *         instance.
      */
     @Deprecated
@@ -2632,7 +2632,7 @@ public abstract class SIPTransactionStack implements
     }
 
     /**
-     * Set the LOG factory.
+     * Set the logger factory.
      *
      * @param logRecordFactory
      *            -- the log record factory to set.

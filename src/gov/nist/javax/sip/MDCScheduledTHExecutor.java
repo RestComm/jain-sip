@@ -11,7 +11,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.RunnableScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.logging.log4j.ThreadContext;
+import org.apache.log4j.MDC;
 
 public class MDCScheduledTHExecutor extends ScheduledThreadPoolExecutor {
 
@@ -115,10 +115,10 @@ public class MDCScheduledTHExecutor extends ScheduledThreadPoolExecutor {
                     Map<String, String> mdcVars = mTask.getMDCVars();
                     if (mdcVars != null) {
                         for (String varKey : mdcVars.keySet()) {
-                            ThreadContext.remove(varKey);
+                            MDC.remove(varKey);
                         }
                     } else {
-                        ThreadContext.remove(AFFINITY_THREAD_VAR);
+                        MDC.remove(AFFINITY_THREAD_VAR);
                     }
                 }
             }
@@ -135,11 +135,11 @@ public class MDCScheduledTHExecutor extends ScheduledThreadPoolExecutor {
                     Map<String, String> mdcVars = mTask.getMDCVars();
                     if (mdcVars != null) {
                         for (String varKey : mdcVars.keySet()) {
-                            ThreadContext.put(varKey, mdcVars.get(varKey));
+                            MDC.put(varKey, mdcVars.get(varKey));
                         }
                     } else {
                         if (mTask.getThreadHash() != null) {
-                            ThreadContext.put(AFFINITY_THREAD_VAR, mTask.getThreadHash());
+                            MDC.put(AFFINITY_THREAD_VAR, mTask.getThreadHash());
                         }
                     }
                 }

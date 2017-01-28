@@ -163,17 +163,17 @@ public class ThreadAffinityExecutor implements ScheduledExecutorService {
             Runnable r = new Runnable() {
                 public void run() {
                     try {
-                        if (LOG.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-                            LOG.logDebug("Purging canceled timer tasks...");
+                        if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
+                            logger.logDebug("Purging canceled timer tasks...");
                         }
                         for (MDCScheduledTHExecutor serv : executors) {
                             serv.purge();
                         }
-                        if (LOG.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
-                            LOG.logDebug("Purging canceled timer tasks completed.");
+                        if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
+                            logger.logDebug("Purging canceled timer tasks completed.");
                         }
                     } catch (Exception e) {
-                        LOG.logError("failed to execute purge", e);
+                        logger.logError("failed to execute purge", e);
                     }
                 }
             };

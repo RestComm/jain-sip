@@ -20,6 +20,7 @@
 package test.tck.msgflow;
 
 import java.util.TooManyListenersException;
+
 import javax.sip.ClientTransaction;
 import javax.sip.RequestEvent;
 import javax.sip.ServerTransaction;
@@ -30,8 +31,9 @@ import javax.sip.header.ContactHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
+
 import test.tck.TckInternalError;
 import test.tck.TiUnexpectedError;
 
@@ -44,7 +46,7 @@ import test.tck.TiUnexpectedError;
  */
 
 public class TransactionTimeoutEventTest extends MessageFlowHarness {
-    private static final Logger LOG = LogManager
+    private static Logger logger = Logger
             .getLogger(InviteClientTransactionsStateMachineTest.class);
 
     public TransactionTimeoutEventTest(String name) {
@@ -92,7 +94,7 @@ public class TransactionTimeoutEventTest extends MessageFlowHarness {
             assertTrue("Timeout event type ", timeoutEvent.getTimeout().equals(
                     Timeout.TRANSACTION));
         } catch (Exception ex) {
-            LOG.error("unexpected exception ", ex);
+            logger.error("unexpected exception ", ex);
             ex.printStackTrace();
             fail("unexpected exception");
         }
@@ -142,7 +144,7 @@ public class TransactionTimeoutEventTest extends MessageFlowHarness {
                 //.getTimeout().equals(Timeout.TRANSACTION));
 
         } catch (Exception ex) {
-            LOG.error("unexpected exception ", ex);
+            logger.error("unexpected exception ", ex);
             ex.printStackTrace();
             fail("unexpected exception");
         }
@@ -192,7 +194,7 @@ public class TransactionTimeoutEventTest extends MessageFlowHarness {
                     .getTimeout().equals(Timeout.RETRANSMIT));
 
         } catch (Exception ex) {
-            LOG.error("unexpected exception ", ex);
+            logger.error("unexpected exception ", ex);
             ex.printStackTrace();
             fail("unexpected exception");
         }

@@ -1,25 +1,19 @@
 package test.tck.factory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.text.ParseException;
-import java.util.Calendar;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.TimeZone;
+// import gov.nist.javax.sip.header.*;
+import java.lang.reflect.*;
+
 import javax.sip.address.SipURI;
 import javax.sip.address.TelURL;
 import javax.sip.address.URI;
-import javax.sip.header.ContactHeader;
-import javax.sip.header.DateHeader;
-import javax.sip.header.FromHeader;
-import javax.sip.header.Header;
-import javax.sip.header.Parameters;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import test.tck.TckInternalError;
-import test.tck.TiUnexpectedError;
+import javax.sip.header.*;
+
+import org.apache.log4j.Logger;
+// import gov.nist.core.*;
+import java.util.*;
+import java.text.*;
+
+import test.tck.*;
 
 /**
  * Generate header test cases based on RI. This assumes the correctness
@@ -29,7 +23,7 @@ import test.tck.TiUnexpectedError;
 
 public class HeaderFactoryTest extends FactoryTestHarness {
 
-    private static final Logger LOG = LogManager.getLogger(HeaderFactoryTest.class);
+    private static Logger logger = Logger.getLogger(HeaderFactoryTest.class);
 
     // Header definitions for valid headers.
 
@@ -42,7 +36,7 @@ public class HeaderFactoryTest extends FactoryTestHarness {
         Header referenceHeader,
         Header headerToTest) {
         Iterator it = ((ParametersHeader) referenceHeader).getParameterNames();
-        //LOG.info(referenceHeader.getClass());
+        //logger.info(referenceHeader.getClass());
         while (it.hasNext()) {
             String name = (String) it.next();
             String value = ((Parameters) headerToTest).getParameter(name);
@@ -81,7 +75,7 @@ public class HeaderFactoryTest extends FactoryTestHarness {
                     break;
             }
             if (j == implementedInterfaces.length) {
-                LOG.fatal(
+                logger.fatal(
                     "Hmm... could not find it" + refHeader.getClass());
                 throw new TckInternalError("Header not implemented");
             }
@@ -202,7 +196,7 @@ public class HeaderFactoryTest extends FactoryTestHarness {
                         body.toString().trim());
                 assertTrue(headerToTest != null);
 
-                LOG.info("Testing header: " + name + " = " + body );
+                logger.info( "Testing header: " + name + " = " + body );
 
                 testGetMethods(riHeader, headerToTest);
             }

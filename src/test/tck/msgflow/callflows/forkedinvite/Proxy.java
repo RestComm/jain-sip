@@ -2,6 +2,7 @@ package test.tck.msgflow.callflows.forkedinvite;
 
 import java.util.Hashtable;
 import java.util.Iterator;
+
 import javax.sip.ClientTransaction;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
@@ -21,8 +22,9 @@ import javax.sip.header.RouteHeader;
 import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
+
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
@@ -34,7 +36,7 @@ import test.tck.msgflow.callflows.ProtocolObjects;
  */
 public class Proxy extends TestHarness implements SipListener {
 
-    private static final Logger LOG = LogManager.getLogger(Proxy.class);
+    // private ServerTransaction st;
 
     private SipProvider inviteServerTxProvider;
 
@@ -47,6 +49,8 @@ public class Proxy extends TestHarness implements SipListener {
     private SipProvider sipProvider;
 
     private static String unexpectedException = "Unexpected exception";
+
+    private static Logger logger = Logger.getLogger(Proxy.class);
 
     private ProtocolObjects protocolObjects;
 
@@ -126,7 +130,7 @@ public class Proxy extends TestHarness implements SipListener {
             } else {
                 // Remove the topmost route header
                 // The route header will make sure it gets to the right place.
-                LOG.info("proxy: Got a request " + request);
+                logger.info("proxy: Got a request " + request);
                 Request newRequest = (Request) request.clone();
                 newRequest.removeFirst(RouteHeader.NAME);
                 sipProvider.sendRequest(newRequest);
@@ -143,7 +147,7 @@ public class Proxy extends TestHarness implements SipListener {
         try {
             Response response = responseEvent.getResponse();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
-            LOG.info("ClientTxID = "
+            logger.info("ClientTxID = "
                     + responseEvent.getClientTransaction()
                     + " client tx id "
                     + ((ViaHeader) response.getHeader(ViaHeader.NAME))
@@ -182,7 +186,7 @@ public class Proxy extends TestHarness implements SipListener {
                 }
             } else {
                 // this is the OK for the cancel.
-                LOG.info("Got a non-invite response " + response);
+                logger.info("Got a non-invite response " + response);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -191,12 +195,12 @@ public class Proxy extends TestHarness implements SipListener {
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
-        LOG.error("Timeout occured");
+        logger.error("Timeout occured");
         fail("unexpected event");
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        LOG.info("IOException occured");
+        logger.info("IOException occured");
         fail("unexpected exception io exception");
     }
 
@@ -210,7 +214,7 @@ public class Proxy extends TestHarness implements SipListener {
         //  sipProvider.setAutomaticDialogSupportEnabled(false);
             return sipProvider;
         } catch (Exception ex) {
-            LOG.error(unexpectedException, ex);
+            logger.error(unexpectedException, ex);
             fail(unexpectedException);
             return null;
         }
@@ -219,7 +223,7 @@ public class Proxy extends TestHarness implements SipListener {
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        LOG.info("Transaction terminated event occured -- cleaning up");
+        logger.info("Transaction terminated event occured -- cleaning up");
         if (!transactionTerminatedEvent.isServerTransaction()) {
             ClientTransaction ct = transactionTerminatedEvent
                     .getClientTransaction();
@@ -230,7 +234,7 @@ public class Proxy extends TestHarness implements SipListener {
                 }
             }
         } else {
-            LOG.info("Server tx terminated! ");
+            logger.info("Server tx terminated! ");
         }
     }
 

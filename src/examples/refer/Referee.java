@@ -1,46 +1,16 @@
 package examples.refer;
 
+import javax.sip.*;
+import javax.sip.address.*;
+import javax.sip.header.*;
+import javax.sip.message.*;
+
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Properties;
-import javax.sip.ClientTransaction;
-import javax.sip.Dialog;
-import javax.sip.DialogTerminatedEvent;
-import javax.sip.IOExceptionEvent;
-import javax.sip.InvalidArgumentException;
-import javax.sip.ListeningPoint;
-import javax.sip.PeerUnavailableException;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
-import javax.sip.ServerTransaction;
-import javax.sip.SipException;
-import javax.sip.SipFactory;
-import javax.sip.SipListener;
-import javax.sip.SipProvider;
-import javax.sip.SipStack;
-import javax.sip.Transaction;
-import javax.sip.TransactionTerminatedEvent;
-import javax.sip.address.Address;
-import javax.sip.address.AddressFactory;
-import javax.sip.address.SipURI;
-import javax.sip.header.CSeqHeader;
-import javax.sip.header.CallIdHeader;
-import javax.sip.header.ContactHeader;
-import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.EventHeader;
-import javax.sip.header.ExpiresHeader;
-import javax.sip.header.FromHeader;
-import javax.sip.header.HeaderFactory;
-import javax.sip.header.MaxForwardsHeader;
-import javax.sip.header.ReferToHeader;
-import javax.sip.header.SubscriptionStateHeader;
-import javax.sip.header.ToHeader;
-import javax.sip.header.ViaHeader;
-import javax.sip.message.MessageFactory;
-import javax.sip.message.Request;
-import javax.sip.message.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.*;
+
+import org.apache.log4j.*;
+
+
 
 /**
  * This example shows an out-of-dialog REFER scenario:
@@ -56,8 +26,6 @@ import org.apache.logging.log4j.Logger;
  */
 public class Referee implements SipListener {
 
-    private static final Logger LOG = LogManager.getLogger(Referee.class) ;
-
     private static AddressFactory addressFactory;
 
     private static MessageFactory messageFactory;
@@ -66,11 +34,14 @@ public class Referee implements SipListener {
 
     private static SipStack sipStack;
 
+
     private int port;
 
     protected SipProvider udpProvider;
 
     protected Dialog dialog;
+
+    private static Logger logger = Logger.getLogger(Referee.class) ;
 
     private EventHeader referEvent;
 
@@ -79,7 +50,7 @@ public class Referee implements SipListener {
             + ">>>> is your class path set to the root?";
 
     private static void usage() {
-        LOG.info(usageString);
+        logger.info(usageString);
         System.exit(0);
 
     }
@@ -89,11 +60,11 @@ public class Referee implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        LOG.info("\n\nRequest " + request.getMethod()
+        logger.info("\n\nRequest " + request.getMethod()
                 + " received at " + sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId
                 + " and dialog id " + requestEvent.getDialog() );
-        LOG.info(request.toString() );
+        logger.info( request.toString() );
         if (request.getMethod().equals(Request.REFER)) {
             try {
                 processRefer(requestEvent, serverTransactionId);
@@ -234,14 +205,14 @@ public class Referee implements SipListener {
             // Let the other side know that the tx is pending acceptance
             //
             dialog.sendRequest(ct2);
-            LOG.info("NOTIFY Branch ID " +
+            logger.info("NOTIFY Branch ID " +
                 ((ViaHeader)notifyRequest.getHeader(ViaHeader.NAME)).getParameter("branch"));
-            LOG.info("Dialog " + dialog);
-            LOG.info("Dialog state after NOTIFY: " + dialog.getState());
+            logger.info("Dialog " + dialog);
+            logger.info("Dialog state after NOTIFY: " + dialog.getState());
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        LOG.info("Got a response");
+        logger.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         Transaction tid = responseReceivedEvent.getClientTransaction();
 
@@ -281,11 +252,11 @@ public class Referee implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        LOG.info("state = " + transaction.getState());
-        LOG.info("dialog = " + transaction.getDialog());
-        LOG.info("dialogState = "
+        logger.info("state = " + transaction.getState());
+        logger.info("dialog = " + transaction.getDialog());
+        logger.info("dialogState = "
                 + transaction.getDialog().getState());
-        LOG.info("Transaction Time out");
+        logger.info("Transaction Time out");
     }
 
     public void sendInvite( ReferToHeader to ) {
@@ -366,7 +337,7 @@ public class Referee implements SipListener {
             inviteTid.sendRequest();
 
         } catch (Throwable ex) {
-            LOG.info(ex.getMessage());
+            logger.info(ex.getMessage());
             ex.printStackTrace();
             usage();
         }
@@ -388,10 +359,11 @@ public class Referee implements SipListener {
         properties.setProperty("gov.nist.javax.sip.SERVER_LOG",
                 "refereelog.txt");
 
+
         try {
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            LOG.info("sipStack = " + sipStack);
+            logger.info("sipStack = " + sipStack);
         } catch (PeerUnavailableException e) {
             // could not find
             // gov.nist.jain.protocol.ip.sip.SipStackImpl
@@ -421,10 +393,10 @@ public class Referee implements SipListener {
                     this.port, "udp");
 
             this.udpProvider = sipStack.createSipProvider(lp);
-            LOG.info("udp provider " + udpProvider);
+            logger.info("udp provider " + udpProvider);
 
         } catch (Exception ex) {
-            LOG.info(ex.getMessage());
+            logger.info(ex.getMessage());
             ex.printStackTrace();
             usage();
         }
@@ -450,13 +422,13 @@ public class Referee implements SipListener {
     public void processTransactionTerminated(
             TransactionTerminatedEvent tte) {
 
-        LOG.info("transaction terminated:" + tte );
+        logger.info("transaction terminated:" + tte );
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
 
-        LOG.info("dialog terminated:" + dialogTerminatedEvent );
+        logger.info("dialog terminated:" + dialogTerminatedEvent );
     }
 
 }

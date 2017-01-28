@@ -1,7 +1,11 @@
 package test.unit.gov.nist.javax.sip.stack.forkedinvitedialogtimeout;
 
+import gov.nist.javax.sip.SipStackImpl;
+
 import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Properties;
+
 import javax.sip.ClientTransaction;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
@@ -9,6 +13,8 @@ import javax.sip.ListeningPoint;
 import javax.sip.RequestEvent;
 import javax.sip.ResponseEvent;
 import javax.sip.ServerTransaction;
+import javax.sip.SipException;
+import javax.sip.SipFactory;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.SipStack;
@@ -25,19 +31,23 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
+
 import junit.framework.TestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
+
+import test.tck.TestHarness;
+import test.tck.msgflow.callflows.ProtocolObjects;
 
 /**
  * A very simple forking proxy server.
- * 
+ *
  * @author M. Ranganathan
- * 
+ *
  */
 public class Proxy implements SipListener {
 
-    private static final Logger LOG = LogManager.getLogger(Proxy.class);
+    // private ServerTransaction st;
 
     private SipProvider inviteServerTxProvider;
 
@@ -51,6 +61,8 @@ public class Proxy implements SipListener {
 
     private static String unexpectedException = "Unexpected exception";
 
+    private static Logger logger = Logger.getLogger(Proxy.class);
+
     private static AddressFactory addressFactory;
 
     private static MessageFactory messageFactory;
@@ -63,9 +75,10 @@ public class Proxy implements SipListener {
 
     private int ntargets;
 
+
     private void sendTo(ServerTransaction st, Request request, int targetPort) throws Exception {
         Request newRequest = (Request) request.clone();
-        
+
         SipURI sipUri = addressFactory.createSipURI("UA1", "127.0.0.1");
         sipUri.setPort(targetPort);
         sipUri.setLrParam();
@@ -103,18 +116,18 @@ public class Proxy implements SipListener {
                     st = sipProvider.getNewServerTransaction(request);
 
                 }
-                
+
                 for ( int i = 0; i < ntargets; i++ ) {
                     this.sendTo(st,request,5080 + i);
                 }
 
-             
-               
+
+
 
             } else {
                 // Remove the topmost route header
                 // The route header will make sure it gets to the right place.
-                LOG.info("proxy: Got a request " + request.getMethod());
+                logger.info("proxy: Got a request " + request.getMethod());
                 Request newRequest = (Request) request.clone();
                 newRequest.removeFirst(RouteHeader.NAME);
                 sipProvider.sendRequest(newRequest);
@@ -131,7 +144,7 @@ public class Proxy implements SipListener {
         try {
             Response response = responseEvent.getResponse();
             CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
-            LOG.info("ClientTxID = " + responseEvent.getClientTransaction() + " client tx id "
+            logger.info("ClientTxID = " + responseEvent.getClientTransaction() + " client tx id "
                     + ((ViaHeader) response.getHeader(ViaHeader.NAME)).getBranch()
                     + " CSeq header = " + response.getHeader(CSeqHeader.NAME) + " status code = "
                     + response.getStatusCode());
@@ -164,7 +177,7 @@ public class Proxy implements SipListener {
                 }
             } else {
                 // this is the OK for the cancel.
-                LOG.info("Got a non-invite response " + response);
+                logger.info("Got a non-invite response " + response);
             }
         } catch (Exception ex) {
             ex.printStackTrace();
@@ -173,12 +186,12 @@ public class Proxy implements SipListener {
     }
 
     public void processTimeout(TimeoutEvent timeoutEvent) {
-        LOG.error("Timeout occured");
+        logger.error("Timeout occured");
         TestCase.fail("unexpected event");
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        LOG.info("IOException occured");
+        logger.info("IOException occured");
         TestCase.fail("unexpected exception io exception");
     }
 
@@ -189,7 +202,7 @@ public class Proxy implements SipListener {
             sipProvider = sipStack.createSipProvider(listeningPoint);
             return sipProvider;
         } catch (Exception ex) {
-            LOG.error(unexpectedException, ex);
+            logger.error(unexpectedException, ex);
             TestCase.fail(unexpectedException);
             return null;
         }
@@ -197,7 +210,7 @@ public class Proxy implements SipListener {
     }
 
     public void processTransactionTerminated(TransactionTerminatedEvent transactionTerminatedEvent) {
-        LOG.info("Transaction terminated event occured -- cleaning up");
+        logger.info("Transaction terminated event occured -- cleaning up");
         if (!transactionTerminatedEvent.isServerTransaction()) {
             ClientTransaction ct = transactionTerminatedEvent.getClientTransaction();
             for (Iterator it = this.clientTxTable.values().iterator(); it.hasNext();) {
@@ -206,7 +219,7 @@ public class Proxy implements SipListener {
                 }
             }
         } else {
-            LOG.info("Server tx terminated! ");
+            logger.info("Server tx terminated! ");
         }
     }
 

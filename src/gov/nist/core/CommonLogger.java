@@ -1,36 +1,36 @@
 package gov.nist.core;
 
 import java.util.Properties;
-import org.apache.logging.log4j.LogManager;
 
+import org.apache.log4j.Logger;
 /**
  * This class abstracts away single-instanct and multi0instance loggers
- * legacyLogger is the old-school one LOG per stack reference
- * otherLogger is multiinstance LOG
- * 
+ * legacyLogger is the old-school one logger per stack reference
+ * otherLogger is multiinstance logger
+ *
  * @author Vladimir Ralev
  *
  */
 public class CommonLogger implements StackLogger{
 	private String name;
 	private StackLogger otherLogger;
-	
+
 	public static boolean useLegacyLogger = true;
 	public static StackLogger legacyLogger;
-	
+
 	public CommonLogger(String name) {
 		this.name = name;
 	}
-	
+
 	private StackLogger logger() {
 		if(useLegacyLogger) {
 			if(legacyLogger == null) {
-				return new CommonLoggerLog4j(LogManager.getLogger(name));
+				return new CommonLoggerLog4j(Logger.getLogger(name));
 			}
 			return legacyLogger;
 		} else {
 			if(otherLogger == null) {
-				otherLogger = new CommonLoggerLog4j(LogManager.getLogger(name));
+				otherLogger = new CommonLoggerLog4j(Logger.getLogger(name));
 			}
 			return otherLogger;
 		}

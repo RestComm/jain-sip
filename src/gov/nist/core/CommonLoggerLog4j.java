@@ -30,15 +30,13 @@ package gov.nist.core;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Properties;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Appender;
-import org.apache.logging.log4j.core.LoggerContext;
-import org.apache.logging.log4j.core.config.Configuration;
+
+import org.apache.log4j.Appender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 
 /**
- * A wrapper around log4j2 that is used for logging debug and errors. You can
+ * A wrapper around log4j that is used for logging debug and errors. You can
  * replace this file if you want to change the way in which messages are logged.
  *
  * @version 1.0
@@ -50,7 +48,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 public class CommonLoggerLog4j implements StackLogger {
 
     /**
-     * The LOG to which we will write our logging output.
+     * The logger to which we will write our logging output.
      */
     private Logger logger;
 
@@ -63,7 +61,7 @@ public class CommonLoggerLog4j implements StackLogger {
     }
 
     public void logStackTrace(int traceLevel) {
-        
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             StackTraceElement[] ste = new Exception().getStackTrace();
@@ -89,7 +87,7 @@ public class CommonLoggerLog4j implements StackLogger {
     }
 
     /**
-     * Get the LOG.
+     * Get the logger.
      *
      * @return
      */
@@ -103,21 +101,21 @@ public class CommonLoggerLog4j implements StackLogger {
      * This is useful for the case when you want to log to
      * a different log stream than a file.
      *
-     * @param appender the log4j2 appender to add
+     * @param appender
      */
     public void addAppender(Appender appender) {
-        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
-        final Configuration config = ctx.getConfiguration();
-        appender.start();
-        config.addAppender(appender);
+
+        this.logger.addAppender(appender);
+
     }
 
     /**
      * Log an exception.
      *
-     * @param ex the throwable to log
+     * @param ex
      */
     public void logException(Throwable ex) {
+
         logger.error("Error", ex);
     }
 
@@ -131,7 +129,7 @@ public class CommonLoggerLog4j implements StackLogger {
         logger.debug(message);
 
     }
-    
+
     /*
      * (non-Javadoc)
      * @see gov.nist.core.StackLogger#logDebug(java.lang.String, java.lang.Exception)
@@ -139,7 +137,7 @@ public class CommonLoggerLog4j implements StackLogger {
     public void logDebug(String message, Exception ex) {
         logger.debug(message, ex);
     }
-    
+
     /**
      * Log a message into the log file.
      *
@@ -190,11 +188,11 @@ public class CommonLoggerLog4j implements StackLogger {
     public CommonLoggerLog4j(Logger logger) {
     	this.logger = logger;
     }
-    
+
 	public void setStackProperties(Properties configurationProperties) {
 
         // Do nothing (can't do anything here, this method is called only for legacy)
-        
+
     }
 
     /**
@@ -211,7 +209,7 @@ public class CommonLoggerLog4j implements StackLogger {
      * @param logLevel
      */
     public boolean isLoggingEnabled(int logLevel) {
-        return logger.isEnabled(intToLevel(logLevel));
+        return logger.isEnabledFor(intToLevel(logLevel));
     }
 
 

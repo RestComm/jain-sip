@@ -1,37 +1,18 @@
 package test.tck.msgflow.callflows.redirect;
 
-import java.util.ArrayList;
-import javax.sip.ClientTransaction;
-import javax.sip.Dialog;
-import javax.sip.DialogState;
-import javax.sip.DialogTerminatedEvent;
-import javax.sip.IOExceptionEvent;
-import javax.sip.ListeningPoint;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
-import javax.sip.ServerTransaction;
-import javax.sip.SipListener;
-import javax.sip.SipProvider;
-import javax.sip.TransactionState;
-import javax.sip.TransactionTerminatedEvent;
-import javax.sip.address.Address;
-import javax.sip.address.SipURI;
-import javax.sip.header.CSeqHeader;
-import javax.sip.header.CallIdHeader;
-import javax.sip.header.ContactHeader;
-import javax.sip.header.ContentTypeHeader;
-import javax.sip.header.FromHeader;
-import javax.sip.header.Header;
-import javax.sip.header.MaxForwardsHeader;
-import javax.sip.header.RouteHeader;
-import javax.sip.header.ToHeader;
-import javax.sip.header.ViaHeader;
-import javax.sip.message.Request;
-import javax.sip.message.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import javax.sip.*;
+import javax.sip.address.*;
+import javax.sip.header.*;
+import javax.sip.message.*;
+
+import org.apache.log4j.Logger;
+
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+
+import java.util.*;
+
+import junit.framework.TestCase;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -41,8 +22,6 @@ import test.tck.msgflow.callflows.ProtocolObjects;
  */
 
 public class Shootist extends TestHarness implements SipListener {
-
-    private static final Logger LOG = LogManager.getLogger(Shootist.class);
 
     private SipProvider sipProvider;
 
@@ -76,12 +55,16 @@ public class Shootist extends TestHarness implements SipListener {
 
     private SipURI requestURI;
 
+    private static Logger logger = Logger.getLogger(Shootist.class);
+
+
+
     public void processRequest(RequestEvent requestReceivedEvent) {
         Request request = requestReceivedEvent.getRequest();
         ServerTransaction serverTransactionId = requestReceivedEvent
                 .getServerTransaction();
 
-        LOG.info("\n\nRequest " + request.getMethod()
+        logger.info("\n\nRequest " + request.getMethod()
                 + " received at " + protocolObjects.sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -94,22 +77,22 @@ public class Shootist extends TestHarness implements SipListener {
     public void processBye(Request request,
             ServerTransaction serverTransactionId) {
         try {
-            LOG.info("shootist:  got a bye . ServerTxId = " + serverTransactionId);
+            logger.info("shootist:  got a bye . ServerTxId = " + serverTransactionId);
             this.byeReceived  = true;
             if (serverTransactionId == null) {
-                LOG.info("shootist:  null TID.");
+                logger.info("shootist:  null TID.");
                 return;
             }
 
             Dialog dialog = serverTransactionId.getDialog();
             assertTrue(dialog == this.dialog);
-            LOG.info("Dialog State = " + dialog.getState());
+            logger.info("Dialog State = " + dialog.getState());
             Response response = protocolObjects.messageFactory.createResponse(
                     200, request);
             serverTransactionId.sendResponse(response);
             this.transactionCount++;
-            LOG.info("shootist:  Sending OK.");
-            LOG.info("Dialog State = " + dialog.getState());
+            logger.info("shootist:  Sending OK.");
+            logger.info("Dialog State = " + dialog.getState());
             ViaHeader via = (ViaHeader) request.getHeader(ViaHeader.NAME);
             if (via.getTransport().equalsIgnoreCase("UDP")) {
                 assertEquals("Check for Transaction State of Completed", TransactionState.COMPLETED,serverTransactionId.getState());
@@ -126,28 +109,28 @@ public class Shootist extends TestHarness implements SipListener {
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        LOG.info("Got a response");
+        logger.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         ClientTransaction tid = responseReceivedEvent.getClientTransaction();
         CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-        LOG.info("Response received : Status Code = "
+        logger.info("Response received : Status Code = "
                 + response.getStatusCode() + " " + cseq);
         if (tid == null) {
-            LOG.info("Stray response -- dropping ");
+            logger.info("Stray response -- dropping ");
 
             return;
         }
-        LOG.info("transaction state is " + tid.getState());
-        LOG.info("Dialog = " + tid.getDialog());
-        LOG.info("Dialog State is " + tid.getDialog().getState());
+        logger.info("transaction state is " + tid.getState());
+        logger.info("Dialog = " + tid.getDialog());
+        logger.info("Dialog State is " + tid.getDialog().getState());
 
         try {
             if (response.getStatusCode() == Response.OK) {
-                LOG.info("response = " + response);
+                logger.info("response = " + response);
                 if (cseq.getMethod().equals(Request.INVITE)) {
                     Request ackRequest = dialog.createAck(cseq.getSeqNumber());
-                    LOG.info("Sending ACK");
+                    logger.info("Sending ACK");
                     dialog.sendAck(ackRequest);
                 }
             } else if  (response.getStatusCode() == Response.MOVED_TEMPORARILY) {
@@ -171,7 +154,7 @@ public class Shootist extends TestHarness implements SipListener {
                     // we take the next cseq
                     long seqNo = (((CSeqHeader) response
                             .getHeader(CSeqHeader.NAME)).getSeqNumber());
-                    LOG.info("seqNo = " + seqNo);
+                    logger.info("seqNo = " + seqNo);
                     CSeqHeader cseqNew = protocolObjects.headerFactory
                             .createCSeqHeader(++seqNo, "INVITE");
                     // Create ViaHeaders (either use tcp or udp)
@@ -216,18 +199,18 @@ public class Shootist extends TestHarness implements SipListener {
                         protocolObjects.headerFactory.createRouteHeader(chdr.getAddress());
                     invRequest.addHeader(routeHeader);
 
-                    LOG.info("Sending INVITE to "
+                    logger.info("Sending INVITE to "
                             + contHdr.getAddress().getURI().toString());
                     inviteTid = sipProvider.getNewClientTransaction(invRequest);
                     this.transactionCount++;
 
-                    LOG.info("New TID = " + inviteTid);
+                    logger.info("New TID = " + inviteTid);
                     Thread.sleep(500);
                     inviteTid.sendRequest();
                     // The 100 response could have returned and changed the state of the transaction and hence this test is not valid.
                     // assertEquals("Expected calling state was " + inviteTid.getState(), inviteTid.getState(),TransactionState.CALLING);
 
-                    LOG.info("sendReqeust succeeded " + inviteTid);
+                    logger.info("sendReqeust succeeded " + inviteTid);
                     Dialog dialog = inviteTid.getDialog();
                     assertTrue("Stack must allocate a new dialog", dialog != this.dialog);
                     this.dialogCount ++;
@@ -248,14 +231,14 @@ public class Shootist extends TestHarness implements SipListener {
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        LOG.info("Transaction Time out");
+        logger.info("Transaction Time out");
         fail("Unexpected event");
     }
 
 
 
     public SipProvider createProvider() throws Exception {
-        LOG.info("Shootist: createProvider()");
+        logger.info("Shootist: createProvider()");
         listeningPoint = protocolObjects.sipStack.createListeningPoint(
                 "127.0.0.1", myPort, protocolObjects.transport);
         this.sipProvider = protocolObjects.sipStack
@@ -385,7 +368,7 @@ public class Shootist extends TestHarness implements SipListener {
 
             //assertTrue(inviteTid.getState() == TransactionState.CALLING);
 
-            LOG.info("client tx = " + inviteTid);
+            logger.info("client tx = " + inviteTid);
             this.dialog = inviteTid.getDialog();
             this.dialogCount++;
             assertTrue(this.dialog != null);
@@ -394,7 +377,7 @@ public class Shootist extends TestHarness implements SipListener {
             inviteTid.sendRequest();
 
         } catch (Exception ex) {
-            LOG.error(ex.getMessage(), ex);
+            logger.error(ex.getMessage(),ex);
             fail("unexpected exception");
         }
     }
@@ -408,7 +391,7 @@ public class Shootist extends TestHarness implements SipListener {
 
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        LOG.info("IOException happened for "
+        logger.info("IOException happened for "
                 + exceptionEvent.getHost() + " port = "
                 + exceptionEvent.getPort());
 
@@ -416,7 +399,7 @@ public class Shootist extends TestHarness implements SipListener {
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        LOG.info("Transaction terminated event recieved for " +
+        logger.info("Transaction terminated event recieved for " +
                 transactionTerminatedEvent.getClientTransaction());
         this.transctionTerminatedCount++;
     }
@@ -429,8 +412,8 @@ public class Shootist extends TestHarness implements SipListener {
 
     public void checkState() {
         //assertTrue(dialogTerminatedCount == dialogCount);
-        LOG.info("byeRecieved = " + this.byeReceived);
-        LOG.info("redirectRecieved" + this.redirectReceived);
+        logger.info("byeRecieved = " + this.byeReceived);
+        logger.info("redirectRecieved" + this.redirectReceived);
         assertTrue(this.byeReceived  && this.redirectReceived );
 
     }

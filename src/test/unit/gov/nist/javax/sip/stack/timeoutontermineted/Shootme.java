@@ -3,6 +3,7 @@ package test.unit.gov.nist.javax.sip.stack.timeoutontermineted;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
+
 import javax.sip.Dialog;
 import javax.sip.DialogState;
 import javax.sip.DialogTerminatedEvent;
@@ -24,9 +25,10 @@ import javax.sip.header.ToHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
+
 import junit.framework.TestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -46,7 +48,7 @@ public class Shootme implements SipListener {
 
     private static String unexpectedException = "Unexpected exception ";
 
-    private static Logger logger = LogManager.getLogger(Shootme.class);
+    private static Logger logger = Logger.getLogger(Shootme.class);
 
     private boolean inviteSeen;
 
@@ -115,7 +117,7 @@ public class Shootme implements SipListener {
         Request request = requestEvent.getRequest();
         try {
             logger.info("shootme: got an Invite sending Trying");
-            // LOG.info("shootme: " + request);
+            // logger.info("shootme: " + request);
 
             ServerTransaction st = requestEvent.getServerTransaction();
             inviteTid = st;

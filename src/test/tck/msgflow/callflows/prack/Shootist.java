@@ -1,8 +1,10 @@
 package test.tck.msgflow.callflows.prack;
 
 import java.util.ArrayList;
+
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
+import javax.sip.DialogState;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.ListeningPoint;
@@ -29,8 +31,9 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
+
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
@@ -42,8 +45,6 @@ import test.tck.msgflow.callflows.ProtocolObjects;
  */
 
 public class Shootist implements SipListener {
-
-    private static final Logger LOG = LogManager.getLogger("test.tck");
 
     private static SipProvider sipProvider;
 
@@ -62,11 +63,13 @@ public class Shootist implements SipListener {
     private Dialog dialog;
 
     private String transport;
-    private boolean prackTriggerReceived;
 
+    private boolean prackTriggerReceived;
     private boolean prackConfirmed;
 
     public static final int myPort = 5070;
+
+    private static Logger logger = Logger.getLogger("test.tck");
 
     private String toUser = "LittleGuy";
 
@@ -83,7 +86,7 @@ public class Shootist implements SipListener {
                 myPort, transport);
 
         sipProvider = sipStack.createSipProvider(lp);
-        LOG.info(transport + " SIP provider " + sipProvider);
+        logger.info(transport + " SIP provider " + sipProvider);
 
         return sipProvider;
     }
@@ -94,7 +97,7 @@ public class Shootist implements SipListener {
         ServerTransaction serverTransactionId = requestReceivedEvent
                 .getServerTransaction();
 
-        LOG.info("\n\nRequest " + request.getMethod()
+        logger.info("\n\nRequest " + request.getMethod()
                 + " received at " + sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId);
 
@@ -107,31 +110,32 @@ public class Shootist implements SipListener {
     public void processBye(Request request,
             ServerTransaction serverTransactionId) {
         try {
-            LOG.info("shootist:  got a bye .");
+            logger.info("shootist:  got a bye .");
             if (serverTransactionId == null) {
-                LOG.info("shootist:  null TID.");
+                logger.info("shootist:  null TID.");
                 return;
             }
             Dialog dialog = serverTransactionId.getDialog();
-            LOG.info("Dialog State = " + dialog.getState());
+            logger.info("Dialog State = " + dialog.getState());
             Response response = messageFactory.createResponse(200, request);
             serverTransactionId.sendResponse(response);
-            LOG.info("shootist:  Sending OK.");
-            LOG.info("Dialog State = " + dialog.getState());
+            logger.info("shootist:  Sending OK.");
+            logger.info("Dialog State = " + dialog.getState());
 
         } catch (Exception ex) {
             TestHarness.fail(ex.getMessage());
             System.exit(0);
+
         }
     }
 
     public void processResponse(ResponseEvent responseReceivedEvent) {
-        LOG.info("Got a response");
+        logger.info("Got a response");
         Response response = (Response) responseReceivedEvent.getResponse();
         ClientTransaction tid = responseReceivedEvent.getClientTransaction();
         CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
 
-        LOG.info("Response received : Status Code = "
+        logger.info("Response received : Status Code = "
                 + response.getStatusCode() + " " + cseq);
 
         if (cseq.getMethod() == Request.PRACK) {
@@ -139,12 +143,12 @@ public class Shootist implements SipListener {
         }
 
         if (tid == null) {
-            LOG.info("Stray response -- dropping ");
+            logger.info("Stray response -- dropping ");
             return;
         }
-        LOG.info("transaction state is " + tid.getState());
-        LOG.info("Dialog = " + tid.getDialog());
-        LOG.info("Dialog State is " + tid.getDialog().getState());
+        logger.info("transaction state is " + tid.getState());
+        logger.info("Dialog = " + tid.getDialog());
+        logger.info("Dialog State is " + tid.getDialog().getState());
         SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
         dialog = tid.getDialog();
 
@@ -152,7 +156,7 @@ public class Shootist implements SipListener {
             if (response.getStatusCode() == Response.OK) {
                 if (cseq.getMethod().equals(Request.INVITE)) {
                     Request ackRequest = dialog.createAck(((CSeqHeader) response.getHeader(CSeqHeader.NAME)).getSeqNumber());
-                    LOG.info("Sending ACK");
+                    logger.info("Sending ACK");
                     dialog.sendAck(ackRequest);
                 }
 
@@ -180,7 +184,7 @@ public class Shootist implements SipListener {
 
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
-        LOG.info("Transaction Time out");
+        logger.info("Transaction Time out");
     }
 
     public void sendInvite() {
@@ -290,7 +294,7 @@ public class Shootist implements SipListener {
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-        LOG.info("IOException happened for "
+        logger.info("IOException happened for "
                 + exceptionEvent.getHost() + " port = "
                 + exceptionEvent.getPort());
 
@@ -298,12 +302,12 @@ public class Shootist implements SipListener {
 
     public void processTransactionTerminated(
             TransactionTerminatedEvent transactionTerminatedEvent) {
-        LOG.info("Transaction terminated event recieved");
+        logger.info("Transaction terminated event recieved");
     }
 
     public void processDialogTerminated(
             DialogTerminatedEvent dialogTerminatedEvent) {
-        LOG.info("dialogTerminatedEvent");
+        logger.info("dialogTerminatedEvent");
     }
 
     public void checkState() {

@@ -3,7 +3,7 @@ package gov.nist.core;
 public interface LogLevels {
     /*
      * Each of these levels must be mapped internally to logically equivalent
-     * logging levels in your LOG.
+     * logging levels in your logger.
      */
     public static final int TRACE_NONE  =  0;
     public static final int TRACE_FATAL =  2;

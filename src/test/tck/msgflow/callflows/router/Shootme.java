@@ -19,31 +19,17 @@
 */
 package test.tck.msgflow.callflows.router;
 
-import javax.sip.ClientTransaction;
-import javax.sip.Dialog;
-import javax.sip.DialogTerminatedEvent;
-import javax.sip.IOExceptionEvent;
-import javax.sip.ListeningPoint;
-import javax.sip.RequestEvent;
-import javax.sip.ResponseEvent;
-import javax.sip.ServerTransaction;
-import javax.sip.SipListener;
-import javax.sip.SipProvider;
-import javax.sip.SipStack;
-import javax.sip.Transaction;
-import javax.sip.TransactionTerminatedEvent;
-import javax.sip.address.Address;
-import javax.sip.address.AddressFactory;
-import javax.sip.header.ContactHeader;
-import javax.sip.header.HeaderFactory;
-import javax.sip.header.ToHeader;
-import javax.sip.message.MessageFactory;
-import javax.sip.message.Request;
-import javax.sip.message.Response;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import javax.sip.*;
+import javax.sip.address.*;
+import javax.sip.header.*;
+import javax.sip.message.*;
+
+import org.apache.log4j.Logger;
+
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+
+import java.util.*;
 
 /**
  * This class is a UAC template.
@@ -77,7 +63,7 @@ public class Shootme implements SipListener {
 
     public static final int myPort = 5080;
 
-    private static Logger logger = LogManager.getLogger("test.tck");
+    private static Logger logger = Logger.getLogger("test.tck");
 
     public Shootme(ProtocolObjects protObjects) {
         addressFactory = protObjects.addressFactory;
@@ -143,7 +129,7 @@ public class Shootme implements SipListener {
         Request request = requestEvent.getRequest();
         try {
             logger.info("shootme: got an Invite sending Trying");
-            // LOG.info("shootme: " + request);
+            // logger.info("shootme: " + request);
             Response response = messageFactory.createResponse(Response.TRYING,
                     request);
             ServerTransaction st = requestEvent.getServerTransaction();
