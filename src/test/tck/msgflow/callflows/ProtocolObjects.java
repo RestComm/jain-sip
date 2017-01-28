@@ -1,9 +1,11 @@
 package test.tck.msgflow.callflows;
 
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
+
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Properties;
+
 import javax.sip.ObjectInUseException;
 import javax.sip.SipException;
 import javax.sip.SipFactory;
@@ -12,15 +14,15 @@ import javax.sip.SipStack;
 import javax.sip.address.AddressFactory;
 import javax.sip.header.HeaderFactory;
 import javax.sip.message.MessageFactory;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
 
 /**
  * @author M. Ranganathan
  *
  */
 public class ProtocolObjects {
-	public static Logger logger = LogManager.getLogger(ProtocolObjects.class);
+	public static Logger logger = Logger.getLogger(ProtocolObjects.class);
     public final AddressFactory addressFactory;
 
     public final MessageFactory messageFactory;

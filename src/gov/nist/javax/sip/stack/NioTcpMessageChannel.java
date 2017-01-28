@@ -142,7 +142,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 			}
 		} 
 //		catch (Exception ex) {
-//			InternalErrorHandler.handleException(ex, LOG);
+//			InternalErrorHandler.handleException(ex, logger);
 //		}
 
 	}

@@ -291,7 +291,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         }
 
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -300,7 +300,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             }
         }
     }
-    
+
     /**
      * http://java.net/jira/browse/JSIP-420
      * This timer task will terminate the transaction after a configurable time
@@ -308,15 +308,15 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
      */
     class MaxTxLifeTimeListener extends SIPStackTimerTask {
         SIPTransaction sipTransaction = SIPTransactionImpl.this;
-    
+
         public void runTask() {
-            try {               	
+            try {
             	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                     logger.logDebug("Fired MaxTxLifeTimeListener for tx " +  sipTransaction + " , tx id "+ sipTransaction.getTransactionId() + " , state " + sipTransaction.getState());
             	}
-            	
+
         		raiseErrorEvent(SIPTransactionErrorEvent.TIMEOUT_ERROR);
-        	
+
         		SIPStackTimerTask myTimer = new LingerTimer();
         		if(sipStack.getConnectionLingerTimer() != 0) {
         			sipStack.getTimer().schedule(myTimer, sipStack.getConnectionLingerTimer() * 1000);
@@ -324,14 +324,14 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     	        	myTimer.runTask();
     	        }
                 maxTxLifeTimeListener = null;
-                 
+
             } catch (Exception ex) {
                 logger.logError("unexpected exception", ex);
             }
         }
 
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -354,10 +354,10 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
 
         sipStack = newParentStack;
         this.semaphore = new TransactionSemaphore();
-        
+
         encapsulatedChannel = newEncapsulatedChannel;
-     
-        if (this.isReliable()) {            
+
+        if (this.isReliable()) {
                 encapsulatedChannel.useCount++;
                 if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
                     logger
@@ -409,19 +409,19 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         this.originalRequestBranch = topmostVia.getBranch();
         this.originalRequestHasPort = topmostVia.hasPort();
         int originalRequestViaPort = topmostVia.getPort();
-       
+
         if ( originalRequestViaPort == -1 ) {
             if (topmostVia.getTransport().equalsIgnoreCase("TLS") ) {
-                originalRequestViaPort = 5061;         
+                originalRequestViaPort = 5061;
             } else {
                 originalRequestViaPort = 5060;
             }
         }
-                
+
         // just cache the control information so the
         // original request can be released later.
         this.method = newOriginalRequest.getMethod();
-        
+
         this.transactionId = newTransactionId;
 
         originalRequest.setTransaction(this);
@@ -459,7 +459,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     public Request getRequest() {
         if(getReleaseReferencesStrategy() != ReleaseReferencesStrategy.None && originalRequest == null && originalRequestBytes != null) {
             if(logger.isLoggingEnabled(StackLogger.TRACE_WARN)) {
-                logger.logWarning("reparsing original request " + originalRequestBytes + " since it was eagerly cleaned up, but beware this is not efficient with the aggressive flag set !");                
+                logger.logWarning("reparsing original request " + originalRequestBytes + " since it was eagerly cleaned up, but beware this is not efficient with the aggressive flag set !");
             }
             try {
                 originalRequest = (SIPRequest) sipStack.getMessageParserFactory().createMessageParser(sipStack).parseSIPMessage(originalRequestBytes, true, false, null);
@@ -469,7 +469,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             		logger.logDebug("message " + originalRequestBytes + " could not be reparsed !", e);
             	}
             }
-        }   
+        }
         return (Request) originalRequest;
     }
 
@@ -483,7 +483,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         }
     	return dialogCreatingTransaction.booleanValue();
     }
-    
+
     /**
      * @see gov.nist.javax.sip.stack.SIPTransaction#isInviteTransaction()
      */
@@ -575,11 +575,11 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
         else
             newState = currentState;
         // END OF PATCH
-        
+
         if(newState == TransactionState._COMPLETED) {
         	enableTimeoutTimer(TIMER_H); // timer H must be started around now
         }
-        
+
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug("Transaction:setState " + newState
                     + " " + this + " branchID = " + this.getBranch()
@@ -595,7 +595,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     public int getInternalState() {
         return this.currentState;
     }
-    
+
     /**
      * @see gov.nist.javax.sip.stack.SIPTransaction#getState()
      */
@@ -669,7 +669,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) logger.logDebug("disableTimeoutTimer " + this);
         timeoutTimerTicksLeft = -1;
     }
-    
+
 
     /**
      * @see gov.nist.javax.sip.stack.SIPTransaction#fireTimer()
@@ -695,7 +695,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
                 // Fire the timeout timer
                 fireRetransmissionTimer();
             }
-        } 
+        }
     }
 
     /**
@@ -848,8 +848,8 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             							}
             						}
             					}
-                                                
-                                                public String getThreadHash() {
+
+                                                public Object getThreadHash() {
                                                     return messageToSend.getCallId().getCallId();
                                                 }
             				};
@@ -880,8 +880,8 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
             							}
             						}
             					}
-                                                
-                                                public String getThreadHash() {
+
+                                                public Object getThreadHash() {
                                                     return messageToSend.getCallId().getCallId();
                                                 }
             				};
@@ -896,9 +896,9 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
                     }
                     if (channel instanceof RawMessageChannel) {
                         try {
-                        	
+
                         	ThreadAffinityTask processMessageTask = new ThreadAffinityTask() {
-    							
+
     							public void run() {
     								try {
     									((RawMessageChannel) channel).processMessage((SIPMessage) messageToSend.clone());
@@ -908,8 +908,8 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     						        	}
     								}
     							}
-                                                        
-                                                        public String getThreadHash() {
+
+                                                        public Object getThreadHash() {
                                                             return messageToSend.getCallId().getCallId();
                                                         }
     						};

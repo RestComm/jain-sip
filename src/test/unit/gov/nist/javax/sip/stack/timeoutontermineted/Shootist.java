@@ -1,6 +1,7 @@
 package test.unit.gov.nist.javax.sip.stack.timeoutontermineted;
 
 import java.util.ArrayList;
+
 import javax.sip.ClientTransaction;
 import javax.sip.Dialog;
 import javax.sip.DialogState;
@@ -29,9 +30,10 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
+
 import junit.framework.TestCase;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+
+import org.apache.log4j.Logger;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -61,7 +63,7 @@ public class Shootist implements SipListener {
 
     private static String unexpectedException = "Unexpected exception ";
 
-    private static Logger logger = LogManager.getLogger(Shootist.class);
+    private static Logger logger = Logger.getLogger(Shootist.class);
 
     private final SipStack sipStack;
 

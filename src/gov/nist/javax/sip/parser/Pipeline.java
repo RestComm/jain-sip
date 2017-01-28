@@ -68,7 +68,7 @@ public class Pipeline extends InputStream {
         }
         
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             return null;
         }         
 

@@ -298,7 +298,7 @@ public class SIPRequest extends SIPMessage implements javax.sip.message.Request,
         }
 
         /*
-* RFC 3261 8.1.1.8 The Contact header field MUST be present and contain exactly one SIP
+         * RFC 3261 8.1.1.8 The Contact header field MUST be present and contain exactly one SIP
          * or SIPS URI in any request that can result in the establishment of a dialog. For the
          * methods defined in this specification, that includes only the INVITE request. For these
          * requests, the scope of the Contact is global. That is, the Contact header field value

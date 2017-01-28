@@ -62,12 +62,12 @@ public class Notifier implements SipListener {
 
                     ClientTransaction ct = udpProvider.getNewClientTransaction(request);
                     logger.info("NOTIFY Branch ID " +
-                            ((ViaHeader)request.getHeader(ViaHeader.NAME)).getParameter("branch"));
+                        ((ViaHeader)request.getHeader(ViaHeader.NAME)).getParameter("branch"));
                     this.notifier.dialog.sendRequest(ct);
                     logger.info("Dialog " + dialog);
                     logger.info("Dialog state after active NOTIFY: " + dialog.getState());
                     synchronized (Notifier.this) {
-                        notifyCount ++;
+                    notifyCount ++;
                     }
                 }
 
@@ -122,7 +122,7 @@ public class Notifier implements SipListener {
      * Process the invite request.
      */
     public void processSubscribe(RequestEvent requestEvent,
-                                 ServerTransaction serverTransaction) {
+            ServerTransaction serverTransaction) {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
         try {
@@ -225,7 +225,7 @@ public class Notifier implements SipListener {
             //
             dialog.sendRequest(ct);
             logger.info("NOTIFY Branch ID " +
-                    ((ViaHeader)request.getHeader(ViaHeader.NAME)).getParameter("branch"));
+                ((ViaHeader)request.getHeader(ViaHeader.NAME)).getParameter("branch"));
             logger.info("Dialog " + dialog);
             logger.info("Dialog state after pending NOTIFY: " + dialog.getState());
 

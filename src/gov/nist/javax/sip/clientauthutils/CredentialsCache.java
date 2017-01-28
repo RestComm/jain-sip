@@ -40,7 +40,7 @@ class CredentialsCache {
         }
         
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             return null;
         }         
 

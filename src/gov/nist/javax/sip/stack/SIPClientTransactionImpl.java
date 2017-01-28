@@ -263,14 +263,14 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     }
     
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
             } else {
                 return null;
             }
-        }    
+        }
 
   }
 
@@ -294,22 +294,22 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
         }
       }
     }
-    
+
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
             } else {
                 return null;
             }
-        }    
+        }
 
   }
 
   /**
    * Creates a new client transaction.
-   * 
+   *
    * @param newSIPStack Transaction stack this transaction belongs to.
    * @param newChannelToUse Channel to encapsulate.
    * @return the created client transaction.
@@ -541,7 +541,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
 
     /*
      * JvB: this is now duplicate with code in the other processResponse
-     * 
+     *
      * if (dialog != null && transactionResponse.getStatusCode() != 100 &&
      * (transactionResponse.getTo().getTag() != null || sipStack .isRfc2543Supported())) { //
      * add the route before you process the response. dialog.setLastResponse(this,
@@ -563,13 +563,13 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
 
   /**
    * Implements the state machine for invite client transactions.
-   * 
+   *
    * <pre>
-   * 
-   * 
-   * 
-   * 
-   * 
+   *
+   *
+   *
+   *
+   *
    *                                                         |Request from TU
    *                                                         |send request
    *                                     Timer E             V
@@ -610,14 +610,14 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
    *                               the event           +-----------+
    *                               over the action
    *                               to take
-   *                      
+   *
    *                                       Figure 6: non-INVITE client transaction
-   * 
-   * 
-   * 
-   * 
+   *
+   *
+   *
+   *
    * </pre>
-   * 
+   *
    * @param transactionResponse -- transaction response received.
    * @param sourceChannel - source channel on which the response was received.
    */
@@ -711,9 +711,9 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
               fireTimeoutTimer();
               cleanUpOnTerminated();
             }
-            
+
             @Override
-            public String getThreadHash() {
+            public Object getThreadHash() {
                 Request request = getRequest();
                 if (request != null && request instanceof SIPRequest) {
                     return ((SIPRequest)request).getCallIdHeader().getCallId();
