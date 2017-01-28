@@ -20,17 +20,19 @@
 package test.tck.msgflow;
 
 import java.util.TooManyListenersException;
-
-import javax.sip.*;
+import javax.sip.ClientTransaction;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.SipException;
+import javax.sip.TransactionState;
 import javax.sip.header.ContactHeader;
 import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
-
-import org.apache.log4j.Logger;
-
 import junit.framework.Test;
 import junit.framework.TestSuite;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import test.tck.TckInternalError;
 import test.tck.TiUnexpectedError;
 
@@ -100,7 +102,7 @@ import test.tck.TiUnexpectedError;
 public class InviteClientTransactionsStateMachineTest extends
         MessageFlowHarness {
 
-    private static Logger logger = Logger
+    private static final Logger LOG = LogManager
             .getLogger(InviteClientTransactionsStateMachineTest.class);
 
     public InviteClientTransactionsStateMachineTest(String name) {
@@ -913,7 +915,7 @@ public class InviteClientTransactionsStateMachineTest extends
             RequestEvent ackReceivedEvent = ackCollector
                     .extractCollectedRequestEvent();
             if (ackReceivedEvent != null)
-                logger.error("Shouldn't have received that="
+                LOG.error("Shouldn't have received that="
                         + ackReceivedEvent.getRequest());
             assertNull("The TI sent an ACK to an OK (this is TU's job)!",
                     ackReceivedEvent);

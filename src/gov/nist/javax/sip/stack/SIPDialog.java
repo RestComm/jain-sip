@@ -392,7 +392,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
 
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return getCallId().getCallId();
         }
 
@@ -544,7 +544,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
 
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return getCallId().getCallId();
         }
 
@@ -643,7 +643,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
 
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return getCallId().getCallId();
         }
 
@@ -661,7 +661,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
 
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return getCallId().getCallId();
         }
 
@@ -681,7 +681,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return getCallId().getCallId();
         }        
 
@@ -2408,9 +2408,8 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
     /**
      * The method that actually does the work of creating a request.
      * 
-     * @param method
-     * @param response
-     * @return
+     * @param method the SIP request method
+     * @param topMostViaTransport the top most via transport
      * @throws SipException
      */
     private SIPRequest createRequest(String method, String topMostViaTransport)

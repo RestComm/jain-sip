@@ -263,7 +263,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -324,7 +324,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -372,7 +372,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -430,7 +430,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             Request request = getRequest();
             if (request != null && request instanceof SIPRequest) {
                 return ((SIPRequest)request).getCallIdHeader().getCallId();
@@ -1659,7 +1659,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                         }
                         
                         @Override
-                        public Object getThreadHash() {
+                        public String getThreadHash() {
                             Request request = getRequest();
                             if (request != null && request instanceof SIPRequest) {
                                 return ((SIPRequest)request).getCallIdHeader().getCallId();

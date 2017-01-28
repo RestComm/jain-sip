@@ -1525,7 +1525,7 @@ class DialogFilter implements ServerRequestInterface, ServerResponseInterface {
      * the log file.
      * 
      * @return auxiliary information that we may have generated during the
-     *         message processing which is retrieved by the message logger.
+     *         message processing which is retrieved by the message LOG.
      */
     public String getProcessingInfo() {
         return null;

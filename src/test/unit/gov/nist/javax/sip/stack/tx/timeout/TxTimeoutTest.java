@@ -16,12 +16,8 @@
  package test.unit.gov.nist.javax.sip.stack.tx.timeout;
 
 import gov.nist.javax.sip.SipStackImpl;
-
 import javax.sip.SipProvider;
 import javax.sip.message.Request;
-
-import org.apache.log4j.Logger;
-
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -33,16 +29,14 @@ import test.tck.msgflow.callflows.ScenarioHarness;
  */
 public class TxTimeoutTest extends ScenarioHarness {
 
-	private ProtocolObjects shootistProtocolObjs;
+    private ProtocolObjects shootistProtocolObjs;
 
-	private ProtocolObjects shootmeProtocolObjs;
+    private ProtocolObjects shootmeProtocolObjs;
 
-	    
     protected Shootist shootist;
 
     private Shootme shootme;
     
-    private static final Logger logger = Logger.getLogger("test.tck");
     private static final int TIMEOUT = 60000;
 
     public TxTimeoutTest() {

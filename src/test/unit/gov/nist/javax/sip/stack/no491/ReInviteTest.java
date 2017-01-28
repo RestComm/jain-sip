@@ -23,9 +23,7 @@
 package test.unit.gov.nist.javax.sip.stack.no491;
 
 import gov.nist.javax.sip.SipStackImpl;
-
 import java.util.EventObject;
-
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
 import javax.sip.RequestEvent;
@@ -34,9 +32,6 @@ import javax.sip.SipListener;
 import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
-
-import org.apache.log4j.Logger;
-
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -45,14 +40,10 @@ import test.tck.msgflow.callflows.ScenarioHarness;
  */
 public class ReInviteTest extends ScenarioHarness implements SipListener {
 
-
     protected Shootist shootist;
 
     private Shootme shootme;
 
-    private static Logger logger = Logger.getLogger("test.tck");
-
-   
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();
         SipListener listener = (SipListener) providerTable.get(source);

@@ -15,5 +15,5 @@ public interface ThreadAffinityIdentifier {
      * 
      * @return the object used to hash against the thread pool.
      */
-    public Object getThreadHash();
+    String getThreadHash();
 }

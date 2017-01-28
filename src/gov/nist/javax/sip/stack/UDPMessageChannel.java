@@ -157,7 +157,7 @@ public class UDPMessageChannel extends MessageChannel implements
         }
         
         @Override
-        public Object getThreadHash() {
+        public String getThreadHash() {
             return null;
         }         
 
@@ -755,7 +755,7 @@ public class UDPMessageChannel extends MessageChannel implements
                                 }
                             }
                             
-                            public Object getThreadHash() {
+                            public String getThreadHash() {
                                 return sipMessage.getCallId().getCallId();
                             }
                         };

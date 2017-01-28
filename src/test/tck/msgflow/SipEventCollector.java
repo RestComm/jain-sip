@@ -19,12 +19,18 @@
 */
 package test.tck.msgflow;
 
-import javax.sip.*;
-
-import org.apache.log4j.Logger;
-
 import java.util.TooManyListenersException;
-import test.tck.*;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.TimeoutEvent;
+import javax.sip.TransactionTerminatedEvent;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import test.tck.TckInternalError;
 
 /**
  * <p>
@@ -53,6 +59,8 @@ import test.tck.*;
 class SipEventCollector {
     private static long MESSAGE_QUEUE_EMPTIES_FOR = 500;
 
+    private static final Logger LOG = LogManager.getLogger(SipEventCollector.class);
+
     private RequestCollector requestCollector = null;
 
     private ResponseCollector responseCollector = null;
@@ -62,8 +70,6 @@ class SipEventCollector {
     private DialogTerminationCollector dialogTerminationCollector = null;
 
     private TransactionTerminationCollector transactionTerminationCollector = null;
-
-    private static Logger logger = Logger.getLogger(SipEventCollector.class);
 
     private void initCollectors(SipProvider sipProvider) {
         this.requestCollector = new RequestCollector(sipProvider);
@@ -378,19 +384,19 @@ class SipEventCollector {
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
             // TODO Auto-generated method stub
-            logger.debug("processIOException");
+            LOG.debug("processIOException");
         }
 
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
             // TODO Auto-generated method stub
-            logger.debug("processTransactionTerminated");
+            LOG.debug("processTransactionTerminated");
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
             // TODO Auto-generated method stub
-            logger.debug("processDialogTerminated");
+            LOG.debug("processDialogTerminated");
         }
 
     }
@@ -415,21 +421,21 @@ class SipEventCollector {
         }
 
         public void processTimeout(TimeoutEvent timeoutEvent) {
-            logger.debug("processTimeout");
+            LOG.debug("processTimeout");
         }
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
-            logger.error("processIOException");
+            LOG.error("processIOException");
         }
 
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
-            logger.info("transaction terminated event recieved");
+            LOG.info("transaction terminated event recieved");
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
-            logger.info("processDialogTerminated");
+            LOG.info("processDialogTerminated");
         }
 
     }
@@ -536,19 +542,19 @@ class SipEventCollector {
 
         public void processIOException(IOExceptionEvent exceptionEvent) {
             // TODO Auto-generated method stub
-            logger.info("processIOException");
+            LOG.info("processIOException");
         }
 
         public void processTransactionTerminated(
                 TransactionTerminatedEvent transactionTerminatedEvent) {
             // TODO Auto-generated method stub
-            logger.info("processTransactionTerminated");
+            LOG.info("processTransactionTerminated");
         }
 
         public void processDialogTerminated(
                 DialogTerminatedEvent dialogTerminatedEvent) {
             // TODO Auto-generated method stub
-            logger.info("processDialogTerminated");
+            LOG.info("processDialogTerminated");
         }
     }
 

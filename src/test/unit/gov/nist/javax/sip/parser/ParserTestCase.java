@@ -33,7 +33,7 @@ import java.lang.reflect.Constructor;
 import junit.framework.TestCase;
 
 /**
- * Superclass for all test cases in this directory. The printlns will be replaced with logger
+ * Superclass for all test cases in this directory. The printlns will be replaced with LOG
  * calls.
  * 
  */

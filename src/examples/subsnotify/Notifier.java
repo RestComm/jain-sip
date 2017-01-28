@@ -1,11 +1,36 @@
 package examples.subsnotify;
 
-import javax.sip.*;
-import javax.sip.address.*;
-import javax.sip.header.*;
-import javax.sip.message.*;
-import java.util.*;
-import org.apache.log4j.*;
+import java.util.Properties;
+import javax.sip.ClientTransaction;
+import javax.sip.Dialog;
+import javax.sip.DialogTerminatedEvent;
+import javax.sip.IOExceptionEvent;
+import javax.sip.ListeningPoint;
+import javax.sip.PeerUnavailableException;
+import javax.sip.RequestEvent;
+import javax.sip.ResponseEvent;
+import javax.sip.ServerTransaction;
+import javax.sip.SipFactory;
+import javax.sip.SipListener;
+import javax.sip.SipProvider;
+import javax.sip.SipStack;
+import javax.sip.Transaction;
+import javax.sip.TransactionTerminatedEvent;
+import javax.sip.address.Address;
+import javax.sip.address.AddressFactory;
+import javax.sip.address.SipURI;
+import javax.sip.header.ContactHeader;
+import javax.sip.header.EventHeader;
+import javax.sip.header.ExpiresHeader;
+import javax.sip.header.HeaderFactory;
+import javax.sip.header.SubscriptionStateHeader;
+import javax.sip.header.ToHeader;
+import javax.sip.header.ViaHeader;
+import javax.sip.message.MessageFactory;
+import javax.sip.message.Request;
+import javax.sip.message.Response;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and notifier is
@@ -16,22 +41,22 @@ import org.apache.log4j.*;
 
 public class Notifier implements SipListener {
 
+    private static final Logger LOG = LogManager.getLogger(Notifier.class) ;
+
     private static AddressFactory addressFactory;
 
     private static MessageFactory messageFactory;
 
     private static HeaderFactory headerFactory;
 
-    private static SipStack sipStack;
 
+    private static SipStack sipStack;
 
     private int port;
 
     protected SipProvider udpProvider;
 
     protected Dialog dialog;
-
-    private static Logger logger = Logger.getLogger(Notifier.class) ;
 
     protected int notifyCount = 0;
 
@@ -61,11 +86,11 @@ public class Notifier implements SipListener {
                     ((SipURI)dialog.getLocalParty().getURI()).setParameter("id","not2");
 
                     ClientTransaction ct = udpProvider.getNewClientTransaction(request);
-                    logger.info("NOTIFY Branch ID " +
+                    LOG.info("NOTIFY Branch ID " +
                         ((ViaHeader)request.getHeader(ViaHeader.NAME)).getParameter("branch"));
                     this.notifier.dialog.sendRequest(ct);
-                    logger.info("Dialog " + dialog);
-                    logger.info("Dialog state after active NOTIFY: " + dialog.getState());
+                    LOG.info("Dialog " + dialog);
+                    LOG.info("Dialog state after active NOTIFY: " + dialog.getState());
                     synchronized (Notifier.this) {
                     notifyCount ++;
                     }
@@ -97,7 +122,7 @@ public class Notifier implements SipListener {
             + ">>>> is your class path set to the root?";
 
     private static void usage() {
-        logger.info(usageString);
+        LOG.info(usageString);
         System.exit(0);
 
     }
@@ -107,7 +132,7 @@ public class Notifier implements SipListener {
         ServerTransaction serverTransactionId = requestEvent
                 .getServerTransaction();
 
-        logger.info("\n\nRequest " + request.getMethod()
+        LOG.info("\n\nRequest " + request.getMethod()
                 + " received at " + sipStack.getStackName()
                 + " with server transaction id " + serverTransactionId
                 + " and dialog id " + requestEvent.getDialog() );
@@ -126,12 +151,12 @@ public class Notifier implements SipListener {
         SipProvider sipProvider = (SipProvider) requestEvent.getSource();
         Request request = requestEvent.getRequest();
         try {
-            logger.info("notifier: got an Subscribe sending OK");
-            logger.info("notifier:  " + request);
-            logger.info("notifier : dialog = " + requestEvent.getDialog());
+            LOG.info("notifier: got an Subscribe sending OK");
+            LOG.info("notifier:  " + request);
+            LOG.info("notifier : dialog = " + requestEvent.getDialog());
             EventHeader eventHeader = (EventHeader) request.getHeader(EventHeader.NAME);
             if ( eventHeader == null) {
-                logger.info("Cannot find event header.... dropping request.");
+                LOG.info("Cannot find event header.... dropping request.");
                 return;
             }
 
@@ -161,8 +186,8 @@ public class Notifier implements SipListener {
                 // subscribe dialogs do not terminate on bye.
                 this.dialog.terminateOnBye(false);
                 if (dialog != null) {
-                    logger.info("Dialog " + dialog);
-                    logger.info("Dialog state " + dialog.getState());
+                    LOG.info("Dialog " + dialog);
+                    LOG.info("Dialog state " + dialog.getState());
                 }
             } else {
                 response = messageFactory.createResponse(200, request);
@@ -224,10 +249,10 @@ public class Notifier implements SipListener {
             // Let the other side know that the tx is pending acceptance
             //
             dialog.sendRequest(ct);
-            logger.info("NOTIFY Branch ID " +
+            LOG.info("NOTIFY Branch ID " +
                 ((ViaHeader)request.getHeader(ViaHeader.NAME)).getParameter("branch"));
-            logger.info("Dialog " + dialog);
-            logger.info("Dialog state after pending NOTIFY: " + dialog.getState());
+            LOG.info("Dialog " + dialog);
+            LOG.info("Dialog state after pending NOTIFY: " + dialog.getState());
 
             if (isInitial) {
                 Thread myEventSource = new Thread(new MyEventSource(this,eventHeader));
@@ -258,11 +283,11 @@ public class Notifier implements SipListener {
         } else {
             transaction = timeoutEvent.getClientTransaction();
         }
-        logger.info("state = " + transaction.getState());
-        logger.info("dialog = " + transaction.getDialog());
-        logger.info("dialogState = "
+        LOG.info("state = " + transaction.getState());
+        LOG.info("dialog = " + transaction.getDialog());
+        LOG.info("dialogState = "
                 + transaction.getDialog().getState());
-        logger.info("Transaction Time out");
+        LOG.info("Transaction Time out");
     }
 
     private static void initFactories ( int port ) throws Exception {
@@ -284,7 +309,7 @@ public class Notifier implements SipListener {
         try {
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            logger.info("sipStack = " + sipStack);
+            LOG.info("sipStack = " + sipStack);
         } catch (PeerUnavailableException e) {
             // could not find
             // gov.nist.jain.protocol.ip.sip.SipStackImpl
@@ -314,10 +339,10 @@ public class Notifier implements SipListener {
                     this.port, "udp");
 
             this.udpProvider = sipStack.createSipProvider(lp);
-            logger.info("udp provider " + udpProvider);
+            LOG.info("udp provider " + udpProvider);
 
         } catch (Exception ex) {
-            logger.info(ex.getMessage());
+            LOG.info(ex.getMessage());
             ex.printStackTrace();
             usage();
         }
