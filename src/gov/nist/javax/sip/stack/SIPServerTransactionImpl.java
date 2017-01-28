@@ -270,7 +270,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             } else {
                 return null;
             }
-        }
+        }        
 
     }
 
@@ -322,7 +322,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             }
 
         }
-
+        
         @Override
         public Object getThreadHash() {
             Request request = getRequest();
@@ -331,7 +331,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             } else {
                 return null;
             }
-        }
+        }        
 
     }
 
@@ -370,7 +370,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             }
 
         }
-
+        
         @Override
         public Object getThreadHash() {
             Request request = getRequest();
@@ -379,7 +379,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             } else {
                 return null;
             }
-        }
+        }        
     }
 
     class TransactionTimer extends SIPStackTimerTask {
@@ -428,7 +428,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                 originalRequest.cleanUp();
             }
         }
-
+        
         @Override
         public Object getThreadHash() {
             Request request = getRequest();
@@ -437,7 +437,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             } else {
                 return null;
             }
-        }
+        }        
 
     }
 
@@ -465,11 +465,13 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             // sent using the existing connection
             // to the source of the original request
             // that created the transaction, if that connection is still open.
-            if (isReliable()) {
-
+            if (isReliable()&&!sipStack.isPatchReceivedRport()) {
+            	//https://github.com/RestComm/load-balancer/issues/59
+            	//we want possibility use Active-Active mode for LB, if one from LBs
+            	//will be shutdown than we can't use  
+            	//existing channel instead of we
+            	//should open new channel based on via header
                 getMessageChannel().sendMessage(transactionResponse);
-
-
             } else {
                 Via via = transactionResponse.getTopmostVia();
                 String transport = via.getTransport();
@@ -553,7 +555,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
     protected SIPServerTransactionImpl(SIPTransactionStack sipStack, MessageChannel newChannelToUse) {
 
         super(sipStack, newChannelToUse);
-
+        
         // Only one outstanding request for a given server tx.
 
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
@@ -1657,7 +1659,7 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
                                originalRequest.cleanUp();
                             }
                         }
-
+                        
                         @Override
                         public Object getThreadHash() {
                             Request request = getRequest();
