@@ -45,10 +45,7 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
 
 
 /**
@@ -80,14 +77,6 @@ public class Shootist implements SipListenerExt {
 
     private static Logger logger = Logger.getLogger(Shootist.class);
 
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
-    
     private HashSet<Dialog> forkedDialogs = new HashSet<Dialog>();
     
     private SipStack sipStack;

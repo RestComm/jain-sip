@@ -32,10 +32,8 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
@@ -75,8 +73,6 @@ public class Referrer implements SipListener {
     static {
         try {
             logger.setLevel(Level.INFO);
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "logs/refereroutputlog.txt"));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

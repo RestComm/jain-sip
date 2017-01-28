@@ -7,10 +7,8 @@ import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 public class StackLoggerImpl implements StackLogger {
     
@@ -35,13 +33,11 @@ public class StackLoggerImpl implements StackLogger {
         putMap(Level.WARN.toString(), new Integer(TRACE_WARN));
         putMap(Level.FATAL.toString(), new Integer(TRACE_FATAL));
         putMap(Level.OFF.toString(), new Integer(TRACE_NONE));
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
     }
     
     
     public StackLoggerImpl( ) {
         logger.setLevel(Level.DEBUG);
-        logger.addAppender(new ConsoleAppender());
     }
     
  

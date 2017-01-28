@@ -36,9 +36,7 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 
 
@@ -93,10 +91,6 @@ public class Shootme   implements SipListener {
     public static final String transport = "udp";
 
     private static Timer timer = new Timer();
-
-    static {
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-    }
 
     class MyTimerTask extends TimerTask {
         RequestEvent  requestEvent;

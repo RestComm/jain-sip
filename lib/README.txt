@@ -6,9 +6,7 @@ appropriate locations if you want to get the latest versions.
 
 jakarta-regexp - Used under the Apache software license (included).  This is ONLY RELEVANT for examples.
 
-log4j - used under the Apache Software license (included). The logging
-  	support will be changed to used log4j but currently just writes to a 
-	file.
+log4j2 - used under the Apache License Version 2.0 (included)
 
 junit - is used under the common public license.
 	 http://www.opensource.org/licenses/cpl.php

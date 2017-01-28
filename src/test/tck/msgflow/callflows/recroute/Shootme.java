@@ -5,9 +5,7 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;

@@ -6,11 +6,8 @@ import javax.sip.header.*;
 import javax.sip.message.*;
 
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import java.text.ParseException;
 
@@ -49,16 +46,6 @@ public class Forker implements SipListener {
     private static boolean nonRFC3261Proxy;
 
     private static Logger logger = Logger.getLogger(Forker.class);
-    static {
-        try {
-            logger.setLevel(Level.INFO);
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "forkeroutputlog.txt"));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
 
     private static final String usageString = "java "
             + "examples.subsnotify.Forker \n"

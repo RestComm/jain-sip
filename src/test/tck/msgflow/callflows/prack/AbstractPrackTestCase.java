@@ -3,10 +3,7 @@ package test.tck.msgflow.callflows.prack;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -27,12 +24,6 @@ public abstract class AbstractPrackTestCase extends ScenarioHarness implements
     protected Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-            logger.addAppender(console);
-        }
-    }
 
     public AbstractPrackTestCase() {
         super("prack", true);

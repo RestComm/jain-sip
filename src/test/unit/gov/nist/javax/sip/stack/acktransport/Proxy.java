@@ -37,9 +37,8 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
+
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
@@ -75,10 +74,6 @@ public class Proxy implements SipListener {
     private static HeaderFactory headerFactory;
 
     private SipStack sipStack;
-    
-    static {
-        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-    }
 
     
     

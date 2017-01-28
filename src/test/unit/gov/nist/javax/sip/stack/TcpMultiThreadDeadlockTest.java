@@ -40,7 +40,6 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
@@ -280,8 +279,6 @@ public class TcpMultiThreadDeadlockTest extends TestCase {
             properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "LOG4J");
             Logger root = Logger.getRootLogger();
             root.setLevel(Level.WARN);
-            root.addAppender(new ConsoleAppender(
-                new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
             properties.setProperty("gov.nist.javax.sip.DEBUG_LOG",
                     "shootmedebug.txt");
             properties.setProperty("gov.nist.javax.sip.SERVER_LOG",

@@ -9,11 +9,7 @@ import javax.sip.SipProvider;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
-import org.apache.log4j.SimpleLayout;
 
 /**
  * @author M. Ranganathan
@@ -25,8 +21,6 @@ public class InviteTest extends TestCase {
 
     private static Logger logger = Logger.getLogger("test.tck");
 
-    protected static final Appender console = new ConsoleAppender(new SimpleLayout());
-
     private static int forkCount = 2;
     
    
@@ -36,8 +30,6 @@ public class InviteTest extends TestCase {
   
 
     private Proxy proxy;
-
-    // private Appender appender;
 
     public InviteTest() {
 
