@@ -157,9 +157,9 @@ public class UDPMessageChannel extends MessageChannel implements
         }
         
         @Override
-        public String getThreadHash() {
+        public Object getThreadHash() {
             return null;
-        }         
+        }
 
         public void runTask() {
             pingBackRecord.remove(ipAddress + ":" + port);
@@ -289,12 +289,12 @@ public class UDPMessageChannel extends MessageChannel implements
                 }
 
                 // Send a heartbeat to the thread auditor
-                if (threadHandle != null) 
+                if (threadHandle != null)
                 	threadHandle.ping();
 
                 try {
                 	DatagramQueuedMessageDispatch work = null;
-                	// adding condition to avoid looping and taking too much CPU if the 
+                	// adding condition to avoid looping and taking too much CPU if the
                 	// auditing is not enabled
                 	if (threadHandle != null && sipStack.getThreadAuditor() !=null && sipStack.getThreadAuditor().isEnabled()) {
                 		work = udpMessageProcessor.messageQueue.poll(threadHandle
@@ -309,8 +309,8 @@ public class UDPMessageChannel extends MessageChannel implements
 	                	continue;
 	                } else {
 	                	packet = work.packet;
-		                this.incomingPacket = work.packet;						
-	                }	                	
+		                this.incomingPacket = work.packet;
+	                }
                 } catch (InterruptedException ex) {
 					if (!udpMessageProcessor.isRunning) {
 						return;
@@ -488,14 +488,14 @@ public class UDPMessageChannel extends MessageChannel implements
                 this.peerAddress = packet.getAddress();
                 // Check to see if the received parameter matches
                 // the peer address and tag it appropriately.
-                
+
                 boolean hasRPort = topMostVia.hasParameter(Via.RPORT);
            if(sipStack.isPatchRport())
                 if(!hasRPort && topMostVia.getPort() != peerPacketSourcePort) {
                 	// https://github.com/RestComm/jain-sip/issues/79
                 	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                         logger.logDebug(
-                                "setting rport since viaPort " + topMostVia.getPort() + " different than peerPacketSourcePort " 
+                                "setting rport since viaPort " + topMostVia.getPort() + " different than peerPacketSourcePort "
                                 + peerPacketSourcePort + " so that the response can be routed back");
                     }
                 	hasRPort = true;
@@ -689,7 +689,7 @@ public class UDPMessageChannel extends MessageChannel implements
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                 logger.logDebug("BAD MESSAGE! " + message);
             }
-            
+
             throw ex;
         } else {
             sipMessage.addUnparsed(header);
@@ -754,8 +754,8 @@ public class UDPMessageChannel extends MessageChannel implements
                                     }
                                 }
                             }
-                            
-                            public String getThreadHash() {
+
+                            public Object getThreadHash() {
                                 return sipMessage.getCallId().getCallId();
                             }
                         };
