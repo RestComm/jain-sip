@@ -41,7 +41,6 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 
 import junit.framework.TestCase;
@@ -69,9 +68,6 @@ public class CtxExpiredTest extends TestCase {
     private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
 
     private static Logger logger = Logger.getLogger(CtxExpiredTest.class);
-    static {
-        logger.addAppender(new ConsoleAppender());
-    }
 
     class Shootist implements SipListener {
 

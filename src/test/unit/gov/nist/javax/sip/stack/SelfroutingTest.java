@@ -44,11 +44,6 @@ public class SelfroutingTest extends ScenarioHarness {
 
     private static Logger logger = Logger.getLogger("test.tck");
 
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
     class Shootist  implements SipListener {
 
         private SipProvider provider;

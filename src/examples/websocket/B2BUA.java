@@ -5,10 +5,7 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PatternLayout;
 
 import examples.simplecallsetup.Shootist;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
@@ -216,15 +213,6 @@ public class B2BUA implements SipListener {
 	}
 
 	public void init() {
-
-		ConsoleAppender console = new ConsoleAppender(); //create appender
-		//configure the appender
-		String PATTERN = "%d [%p|%c|%C{1}] %m%n";
-		console.setLayout(new PatternLayout(PATTERN)); 
-		console.setThreshold(Level.DEBUG);
-		console.activateOptions();
-		//add appender to any Logger (here is root)
-		Logger.getRootLogger().addAppender(console);
 		SipFactory sipFactory = null;
 		sipStack = null;
 		sipFactory = SipFactory.getInstance();

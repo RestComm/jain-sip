@@ -22,10 +22,7 @@ package test.tck.msgflow.callflows.subsnotify;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -51,14 +48,6 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
     protected Forker forker;
 
     private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-
-            logger.addAppender(console);
-
-        }
-    }
 
     public AbstractSubsnotifyTestCase() {
         super("subsnotify", true);

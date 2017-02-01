@@ -53,10 +53,7 @@ import javax.sip.header.ViaHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
@@ -72,11 +69,6 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
     private Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
 
      class Shootme  implements SipListener {
 

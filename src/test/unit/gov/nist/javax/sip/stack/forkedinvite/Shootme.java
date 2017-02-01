@@ -38,12 +38,7 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
-import org.apache.log4j.helpers.NullEnumeration;
-
-
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -69,14 +64,6 @@ public class Shootme   implements SipListener {
 
     private static Logger logger = Logger.getLogger(Shootme.class);
 
-    static {
-        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
-
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-
-        }
-    }
-    
     private boolean inviteSeen;
 
 

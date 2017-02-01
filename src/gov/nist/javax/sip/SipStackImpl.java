@@ -57,6 +57,8 @@ import gov.nist.javax.sip.stack.SIPTransactionStack;
 import gov.nist.javax.sip.stack.SocketTimeoutAuditor;
 import gov.nist.javax.sip.stack.timers.DefaultSipTimer;
 import gov.nist.javax.sip.stack.timers.SipTimer;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -1870,7 +1872,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 	 * @deprecated TODO: remove this method May 11, 2010.
 	 */
 	@Deprecated
-	public void addLogAppender(org.apache.log4j.Appender appender) {
+	public void addLogAppender(Appender appender) {
 		if (this.logger instanceof gov.nist.core.LogWriter) {
 			((gov.nist.core.LogWriter) this.logger).addAppender(appender);
 		}
@@ -1884,7 +1886,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 	 * @deprecated TODO: This method will be removed May 11, 2010.
 	 */
 	@Deprecated
-	public org.apache.log4j.Logger getLogger() {
+	public Logger getLogger() {
 		if (this.logger instanceof gov.nist.core.LogWriter) {
 			return ((gov.nist.core.LogWriter) this.logger).getLogger();
 		}

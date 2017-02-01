@@ -58,11 +58,6 @@ public class CancelEventTest extends  ScenarioHarness {
 
     private static Logger logger = Logger.getLogger("test.tck");
 
-    static {
-        if (!logger.isAttached(console))
-            logger.addAppender(console);
-    }
-
     public CancelEventTest() {
         super("CanceEventTest",true);
     }

@@ -3,10 +3,7 @@ package test.tck.msgflow.callflows.redirect;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -23,16 +20,6 @@ public abstract class AbstractRedirectTestCase extends ScenarioHarness implement
     protected Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
-
-    static {
-        if (!logger.isAttached(console)) {
-
-            logger.addAppender(console);
-
-        }
-    }
-
-    // private Appender appender;
 
     public AbstractRedirectTestCase() {
 

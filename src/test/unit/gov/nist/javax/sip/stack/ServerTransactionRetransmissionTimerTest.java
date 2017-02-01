@@ -48,18 +48,13 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 public class ServerTransactionRetransmissionTimerTest extends TestCase {
     public static final boolean callerSendsBye = true;
 
     private static Logger logger = Logger.getLogger( ServerTransactionRetransmissionTimerTest.class);
-    static {
-        if ( ! logger.getAllAppenders().hasMoreElements())
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-    }
+
     class Shootist implements SipListener {
 
         private SipProvider sipProvider;
