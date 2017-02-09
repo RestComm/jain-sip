@@ -270,6 +270,12 @@ public abstract class SIPTransactionStack implements
      * for after delivery of first byte of message.
      */
     protected int readTimeout;
+    
+    /*
+     * Conn timeout for TCP outgoign sockets -- maximum time in millis the stack
+     * will wait to open a connection.
+     */
+    protected int connTimeout = 10000;    
 
     /*
      * The socket factory. Can be overriden by applications that want direct
@@ -424,6 +430,7 @@ public abstract class SIPTransactionStack implements
     public ScheduledExecutorService getSelfRoutingThreadpoolExecutor() {
         if(selfRoutingThreadpoolExecutor == null) {
             if(this.threadPoolSize<=0) {
+                
                 selfRoutingThreadpoolExecutor = new ThreadAffinityExecutor(16);
             } else {
                 selfRoutingThreadpoolExecutor = new ThreadAffinityExecutor(this.threadPoolSize);

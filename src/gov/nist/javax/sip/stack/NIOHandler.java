@@ -60,8 +60,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class NIOHandler {
 	
 	private static StackLogger logger = CommonLogger.getLogger(NIOHandler.class);
-        
-        private static final int BLOCKING_CONNECT_TIMEOUT = 10000;
 
     private SipStackImpl sipStack;
     
@@ -246,7 +244,8 @@ public class NIOHandler {
                                     // address (i.e. that of the stack). In version 1.2
                                     // the IP address is on a per listening point basis.
                                     try {
-                                            clientSock = messageProcessor.blockingConnect(new InetSocketAddress(receiverAddress, contactPort), senderAddress, BLOCKING_CONNECT_TIMEOUT);
+                                            clientSock = messageProcessor.blockingConnect(new InetSocketAddress(receiverAddress, contactPort), 
+                                                    senderAddress, this.messageProcessor.sipStack.connTimeout);
                                             //sipStack.getNetworkLayer().createSocket(
                                             //		receiverAddress, contactPort, senderAddress); TODO: sender address needed
                                     } catch (SocketException e) { // We must catch the socket timeout exceptions here, any SocketException not just ConnectException
@@ -309,7 +308,8 @@ public class NIOHandler {
                                                     "inaddr = " + receiverAddress +
                                                     " port = " + contactPort);
                             }
-                            clientSock = messageProcessor.blockingConnect(new InetSocketAddress(receiverAddress, contactPort), senderAddress, BLOCKING_CONNECT_TIMEOUT);
+                            clientSock = messageProcessor.blockingConnect(new InetSocketAddress(receiverAddress, contactPort), 
+                                    senderAddress, this.messageProcessor.sipStack.connTimeout);
                             putSocket(key, clientSock);
                     } 
 

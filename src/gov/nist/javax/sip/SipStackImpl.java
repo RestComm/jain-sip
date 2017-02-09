@@ -332,6 +332,11 @@ import javax.sip.message.Request;
  * is wide open to starvation attacks) and the client can be as slow as it wants
  * to be.</li>
  * 
+ * <li><b>gov.nist.javax.sip.CONNECTION_TIMEOUT = integer </b> <br/>
+ * This is relevant for outgoing TCP connections to prevent long Thread blocks.
+ * This defines the timeout in milliseconds the stack will wait to open
+ * a TCP connection before giving up.Default value is 10000</li>
+ *  * 
  * <li><b>gov.nist.javax.sip.NETWORK_LAYER = classpath </b> <br/>
  * This is an EXPERIMENTAL property (still under active devlopment). Defines a
  * network layer that allows a client to have control over socket allocations
@@ -1240,6 +1245,24 @@ public class SipStackImpl extends SIPTransactionStack implements
 					logger.logError("Bad read timeout " + readTimeout);
 			}
 		}
+                
+		String connTimeout = configurationProperties
+				.getProperty("gov.nist.javax.sip.CONNECTION_TIMEOUT");
+		if (connTimeout != null) {
+			try {
+
+				int rt = Integer.parseInt(connTimeout);
+				if (rt >= 100) {
+					super.connTimeout = rt;
+				} else {
+					System.err.println("Value too low " + readTimeout);
+				}
+			} catch (NumberFormatException nfe) {
+				// Ignore.
+				if (logger.isLoggingEnabled())
+					logger.logError("Bad conn timeout " + readTimeout);
+			}
+		}                
 
 		// Get the address of the stun server.
 
