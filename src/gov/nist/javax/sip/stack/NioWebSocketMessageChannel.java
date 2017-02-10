@@ -68,19 +68,6 @@ public class NioWebSocketMessageChannel extends NioTcpMessageChannel{
 	
 	private SIPTransactionStack stack;
 	
-	public static NioWebSocketMessageChannel create(SIPTransactionStack stack,
-			NioWebSocketMessageProcessor nioTcpMessageProcessor,
-			SocketChannel socketChannel) throws IOException {
-		NioWebSocketMessageChannel retval = (NioWebSocketMessageChannel) channelMap.get(socketChannel);
-		if (retval == null) {
-			retval = new NioWebSocketMessageChannel(stack,nioTcpMessageProcessor,
-					socketChannel);
-			
-			channelMap.put(socketChannel, retval);
-		}
-		return retval;
-	}
-	
 	protected NioWebSocketMessageChannel(SIPTransactionStack stack,NioTcpMessageProcessor nioTcpMessageProcessor,
 			SocketChannel socketChannel) throws IOException {
 		super(nioTcpMessageProcessor,socketChannel);

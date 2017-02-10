@@ -58,18 +58,6 @@ public class NioTlsWebSocketMessageChannel extends NioWebSocketMessageChannel im
 	private int appBufferMax;
 	private int netBufferMax;
 
-	public static NioTlsWebSocketMessageChannel create(SIPTransactionStack stack,
-			NioTlsWebSocketMessageProcessor nioTcpMessageProcessor,
-			SocketChannel socketChannel) throws IOException {
-		NioTlsWebSocketMessageChannel retval = (NioTlsWebSocketMessageChannel) channelMap.get(socketChannel);
-		if (retval == null) {
-			retval = new NioTlsWebSocketMessageChannel(stack, nioTcpMessageProcessor,
-					socketChannel);
-			channelMap.put(socketChannel, retval);
-		}
-		return retval;
-	}
-	
 	protected NioTlsWebSocketMessageChannel(SIPTransactionStack stack, NioTcpMessageProcessor nioTcpMessageProcessor,
 			SocketChannel socketChannel) throws IOException {
 		super(stack, nioTcpMessageProcessor, socketChannel);

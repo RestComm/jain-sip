@@ -50,11 +50,11 @@ import gov.nist.javax.sip.stack.DefaultMessageLogFactory;
 import gov.nist.javax.sip.stack.DefaultRouter;
 import gov.nist.javax.sip.stack.MessageProcessor;
 import gov.nist.javax.sip.stack.MessageProcessorFactory;
+import gov.nist.javax.sip.stack.NIOMode;
 import gov.nist.javax.sip.stack.OIOMessageProcessorFactory;
 import gov.nist.javax.sip.stack.SIPEventInterceptor;
 import gov.nist.javax.sip.stack.SIPMessageValve;
 import gov.nist.javax.sip.stack.SIPTransactionStack;
-import gov.nist.javax.sip.stack.SocketTimeoutAuditor;
 import gov.nist.javax.sip.stack.timers.DefaultSipTimer;
 import gov.nist.javax.sip.stack.timers.SipTimer;
 
@@ -379,6 +379,11 @@ import javax.sip.message.Request;
  * end the SIP call. A new socket will be established when needed for any existing calls
  * by the SIP RFC spec.
  * </li>
+ * 
+ * <li><b>gov.nist.javax.sip.NIO_BLOCKING_MODE = String </b> <br/>
+ * Defines the blocking mode for the NioMessageFactory. By default it will be set
+ * as "BLOCKING". Set to "NONBLOCKING" for nonBlocking connect behavior
+ * </li> * 
  * 
  * <li><b>gov.nist.javax.sip.stack.USE_DIRECT_BUFFERS = [true|false]</b> <br/>
  * Default is <it>true</it> If set to <it>false</it>, the NIO stack won't use direct buffers.
@@ -1507,6 +1512,17 @@ public class SipStackImpl extends SIPTransactionStack implements
 				.logError(
 						"Bad configuration value for gov.nist.javax.sip.NIO_MAX_SOCKET_IDLE_TIME=" + maxIdleTimeString, e);			
 		}
+                
+		String nioMode = configurationProperties.getProperty("gov.nist.javax.sip.NIO_BLOCKING_MODE", "BLOCKING");
+		try {
+			super.nioMode = NIOMode.valueOf(nioMode);
+		} catch (Exception e) {
+			logger
+				.logError(
+						"Bad configuration value for gov.nist.javax.sip.NIO_BLOCKING_MODE=" + nioMode, e);			
+		}                
+                
+                
 		
 		String defaultTimerName = configurationProperties.getProperty("gov.nist.javax.sip.TIMER_CLASS_NAME",DefaultSipTimer.class.getName());
 		try {
@@ -1651,11 +1667,6 @@ public class SipStackImpl extends SIPTransactionStack implements
 				this.listeningPoints.put(key, lip);
 				// start processing messages.
 				messageProcessor.start();
-				if(socketTimeoutAuditor == null && nioSocketMaxIdleTime > 0 && messageProcessor instanceof ConnectionOrientedMessageProcessor) {
-		        	// https://java.net/jira/browse/JSIP-471 use property from the stack instead of hard coded 20s
-					socketTimeoutAuditor = new SocketTimeoutAuditor(nioSocketMaxIdleTime);
-					getTimer().scheduleWithFixedDelay(socketTimeoutAuditor, nioSocketMaxIdleTime, nioSocketMaxIdleTime);
-				}
 				return (ListeningPoint) lip;
 			} catch (java.io.IOException ex) {
 				if (logger.isLoggingEnabled())

@@ -57,18 +57,6 @@ public class NioTlsMessageChannel extends NioTcpMessageChannel implements NioTls
 	private int appBufferMax;
 	private int netBufferMax;
 
-	public static NioTcpMessageChannel create(
-			NioTcpMessageProcessor nioTcpMessageProcessor,
-			SocketChannel socketChannel) throws IOException {
-		NioTcpMessageChannel retval = channelMap.get(socketChannel);
-		if (retval == null) {
-			retval = new NioTlsMessageChannel(nioTcpMessageProcessor,
-					socketChannel);
-			channelMap.put(socketChannel, retval);
-		}
-		return retval;
-	}
-	
 	protected NioTlsMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor,
 			SocketChannel socketChannel) throws IOException {
 		super(nioTcpMessageProcessor, socketChannel);

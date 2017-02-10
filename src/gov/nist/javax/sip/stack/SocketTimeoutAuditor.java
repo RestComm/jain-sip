@@ -39,9 +39,11 @@ import java.util.Map.Entry;
 public class SocketTimeoutAuditor extends SIPStackTimerTask {
 	private static StackLogger logger = CommonLogger.getLogger(SocketTimeoutAuditor.class);
 	long nioSocketMaxIdleTime;
+	private NIOHandler nioHandler;
 	
-	public SocketTimeoutAuditor(long nioSocketMaxIdleTime) {
+	public SocketTimeoutAuditor(long nioSocketMaxIdleTime, NIOHandler nioHandler) {
 		this.nioSocketMaxIdleTime = nioSocketMaxIdleTime;
+		this.nioHandler = nioHandler;
 	}
         
         @Override
@@ -53,9 +55,9 @@ public class SocketTimeoutAuditor extends SIPStackTimerTask {
 		try {
 			// Reworked the method for https://java.net/jira/browse/JSIP-471
 			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
-				logger.logDebug("keys to check for inactivity removal " + NioTcpMessageChannel.channelMap.keySet());
+				logger.logDebug("keys to check for inactivity removal " + nioHandler.channelMap.keySet());
 			}
-			Iterator<Entry<SocketChannel, NioTcpMessageChannel>> entriesIterator = NioTcpMessageChannel.channelMap.entrySet().iterator();
+			Iterator<Entry<SocketChannel, NioTcpMessageChannel>> entriesIterator = nioHandler.channelMap.entrySet().iterator();
 			while(entriesIterator.hasNext()) {
 				Entry<SocketChannel, NioTcpMessageChannel> entry = entriesIterator.next();
 				SocketChannel socketChannel = entry.getKey();
@@ -68,7 +70,7 @@ public class SocketTimeoutAuditor extends SIPStackTimerTask {
 								+ socketChannel);
 					}
 					messageChannel.close();
-					entriesIterator = NioTcpMessageChannel.channelMap.entrySet().iterator();
+					entriesIterator = nioHandler.channelMap.entrySet().iterator();
 				} else {
 					if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 						logger.logDebug("don't remove socket " + messageChannel.key + " as lastActivity="

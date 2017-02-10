@@ -1261,6 +1261,7 @@ public abstract class SIPTransactionImpl implements SIPTransaction {
     }
 
     /**
+     * This realizes basic requirement form RFC 17.2.4 and 8.1.3.1
      * @see gov.nist.javax.sip.stack.SIPTransaction#raiseIOExceptionEvent()
      */
     @Override

@@ -61,8 +61,14 @@ public class NioTlsWebSocketMessageProcessor extends NioWebSocketMessageProcesso
 		if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
     		logger.logDebug("NioTlsWebSocketMessageProcessor::createMessageChannel: " + nioTcpMessageProcessor + " client " + client);
     	}
-		return NioTlsWebSocketMessageChannel.create(sipStack, NioTlsWebSocketMessageProcessor.this, client);		
-    }
+		NioTlsWebSocketMessageChannel retval = (NioTlsWebSocketMessageChannel) nioHandler.getMessageChannel(client);
+		if (retval == null) {
+			retval = new NioTlsWebSocketMessageChannel(sipStack, nioTcpMessageProcessor,
+					client);
+			nioHandler.putMessageChannel(client, retval);
+		}
+		return retval;
+	}
 	
     @Override
     public MessageChannel createMessageChannel(HostPort targetHostPort) throws IOException {

@@ -200,6 +200,12 @@ public abstract class MessageChannel {
         else
             return -1;
     }
+    
+    
+    /**
+     * Use to be able to report IOException in nonBlocking mode.
+     */
+    static ThreadLocal<String> messageTxId = new ThreadLocal<String>();
 
     /**
      * Send a formatted message to the specified target.
@@ -247,6 +253,7 @@ public abstract class MessageChannel {
 
                 }
             }
+            messageTxId.set(sipMessage.getTransactionId());
             byte[] msg = sipMessage.encodeAsBytes(this.getTransport());
 
             this.sendMessage(msg, hopAddr, hop.getPort(), sipMessage instanceof SIPRequest);
@@ -266,7 +273,7 @@ public abstract class MessageChannel {
             // TODO: When moving to Java 6, use the IOExcpetion(message, exception) constructor
             throw new IOException("Error self routing message");
         } finally {
-
+        	messageTxId.remove();
             if (this.logger.isLoggingEnabled(ServerLogger.TRACE_MESSAGES))
                 logMessage(sipMessage, hopAddr, hop.getPort(), time);
         }
@@ -283,7 +290,12 @@ public abstract class MessageChannel {
             throws IOException {
         long time = System.currentTimeMillis();
         byte[] bytes = sipMessage.encodeAsBytes(this.getTransport());
-        sendMessage(bytes, receiverAddress, receiverPort, sipMessage instanceof SIPRequest);
+        messageTxId.set(sipMessage.getTransactionId());
+        try {
+        	sendMessage(bytes, receiverAddress, receiverPort, sipMessage instanceof SIPRequest);
+        } finally {
+            messageTxId.remove();
+        }
 
         // we successfully sent the message without an exception so let's
         // set port and address before we feed it to the logger.

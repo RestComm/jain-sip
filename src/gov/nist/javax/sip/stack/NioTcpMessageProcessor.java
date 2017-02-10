@@ -56,11 +56,17 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     protected ServerSocketChannel channel;
 
     // Cache the change request here, the selector thread will read it when it wakes up and execute the request
-    private final Queue<ChangeRequest> changeRequests = new ConcurrentLinkedQueue<ChangeRequest> ();
+    protected final Queue<ChangeRequest> changeRequests = new ConcurrentLinkedQueue<ChangeRequest> ();
 
-    // Data send over a socket is cached here before hand, the selector thread will take it later for physical send
-    private final Map<SocketChannel, Queue<ByteBuffer>> pendingData = Collections.synchronizedMap(new WeakHashMap<SocketChannel, Queue<ByteBuffer>>());
-
+    public static class PendingData {
+    	final String txId;
+    	final ByteBuffer buffer;
+		public PendingData(String txId, ByteBuffer buffer) {
+			super();
+			this.txId = txId;
+			this.buffer = buffer;
+		}
+    }
     
     public static class ChangeRequest {
     	public static final int REGISTER = 1;
@@ -87,7 +93,7 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
 //		this.messageChannels.put(key, channel);
 //	}
     
-    private SocketChannel initiateConnection(InetSocketAddress address, InetAddress myAddress, int timeout) throws IOException {
+    private SocketChannel blockingConnect(InetSocketAddress address, InetAddress myAddress, int timeout) throws IOException {
     	
     	// We use blocking outbound connect just because it's pure pain to deal with http://stackoverflow.com/questions/204186/java-nio-select-returns-without-selected-keys-why
         SocketChannel socketChannel = SocketChannel.open();
@@ -110,38 +116,49 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
         selector.wakeup();
         return socketChannel;
     }
+    
+    private SocketChannel nonBlockingConnect(InetSocketAddress address, InetAddress myAddress, int timeout) throws IOException {
+        SocketChannel socketChannel = SocketChannel.open();
+        socketChannel.configureBlocking(false);
+        if (myAddress != null) {
+        	// https://java.net/jira/browse/JSIP-501 bind to the right local address
+        	socketChannel.socket().bind(new InetSocketAddress(myAddress, 0));
+        }
+        socketChannel.connect(address);
+        changeRequests.add(new ChangeRequest(socketChannel, ChangeRequest.REGISTER, SelectionKey.OP_CONNECT));
+        //we don't wake the selector, wait for corresponding "send" operation to initiate the handshake
+        return socketChannel;
+    }
+    
 
-    public SocketChannel blockingConnect(InetSocketAddress address, InetAddress localAddress, int timeout) throws IOException {
-    	return initiateConnection(address, localAddress, timeout);
+    public SocketChannel connect(InetSocketAddress address, InetAddress localAddress, int timeout) throws IOException {
+        if (this.sipStack.nioMode.equals(NIOMode.BLOCKING)) {
+            return blockingConnect(address, localAddress, timeout);
+        } else {
+            return nonBlockingConnect(address, localAddress, timeout);
+        }
     }
         
-    public void send(SocketChannel socket, byte[] data)  {
+    public void send(SocketChannel socket, byte[] data) throws IOException  {
     	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
     		logger.logDebug("Sending data " + data.length + " bytes on socket " + socket);
     	
-        this.changeRequests.add(new ChangeRequest(socket, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
-
-
-        Queue<ByteBuffer> queue = this.pendingData.get(socket);
-        //this condition optimizes in case the socket has an already existing
-        //queue. Contention will be avoided
-        if (queue == null) {
-            //Use the socket itself as monitor object, the map itself is already
-            //concurrent coll
-            synchronized (socket) {
-                //this condition is necessary to ensure consistency
-                if (!pendingData.containsKey(socket)) {
-                    queue = new ConcurrentLinkedQueue<ByteBuffer>();
-                    this.pendingData.put(socket, queue);
-                } else {
-                    queue = this.pendingData.get(socket);
-                }
-            }
-        }
-        queue.add(ByteBuffer.wrap(data));
-    	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
-    		logger.logDebug("Waking up selector thread");
-    	this.selector.wakeup();
+    	NioTcpMessageChannel channel = nioHandler.getMessageChannel(socket);
+    	if (channel!= null) {
+	        Queue<PendingData> queue = channel.queue;
+	        PendingData pData = new PendingData(MessageChannel.messageTxId.get() ,ByteBuffer.wrap(data));
+	        queue.add(pData);
+	        
+	        if (socket.isConnected()) {
+	            this.changeRequests.add(new ChangeRequest(socket, ChangeRequest.CHANGEOPS, SelectionKey.OP_WRITE));
+	        }//if not the selector will change to WRITe mode after connect
+	        
+	    	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+	    		logger.logDebug("Waking up selector thread");
+	    	this.selector.wakeup();
+    	} else {
+    		throw new IOException("No channel when sending.");
+    	}
     }
     
     // This will be our selector thread, only one thread for all sockets. If you want to understand the overall design decisions read this first http://rox-xmlrpc.sourceforge.net/niotut/
@@ -153,15 +170,13 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
         public void read(SelectionKey selectionKey) {
         	 // read it.
             SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
-            final NioTcpMessageChannel nioTcpMessageChannel = NioTcpMessageChannel.getMessageChannel(socketChannel);
+            final NioTcpMessageChannel nioTcpMessageChannel = nioHandler.getMessageChannel(socketChannel);
             if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
             	logger.logDebug("Got something on nioTcpMessageChannel " + nioTcpMessageChannel + " socket " + socketChannel);
             if(nioTcpMessageChannel == null) {
             	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
             		logger.logDebug("Dead socketChannel" + socketChannel + " socket " + socketChannel.socket().getInetAddress() + ":"+socketChannel.socket().getPort());
             	selectionKey.cancel();
-            	// https://java.net/jira/browse/JSIP-475 remove the socket from the hashmap
-            	pendingData.remove(socketChannel);
             	return;
             }
             
@@ -172,19 +187,25 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
         public void write(SelectionKey selectionKey) {
           	SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
 
-          	final NioTcpMessageChannel nioTcpMessageChannel = NioTcpMessageChannel.getMessageChannel(socketChannel);
+          	final NioTcpMessageChannel nioTcpMessageChannel = nioHandler.getMessageChannel(socketChannel);
             if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
             	logger.logDebug("Need to write something on nioTcpMessageChannel " + nioTcpMessageChannel + " socket " + socketChannel);
             if(nioTcpMessageChannel == null) {
             	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
             		logger.logDebug("Dead socketChannel" + socketChannel + " socket " + socketChannel.socket().getInetAddress() + ":"+socketChannel.socket().getPort());
             	selectionKey.cancel();
-            	// https://java.net/jira/browse/JSIP-475 remove the socket from the hashmap
-            	pendingData.remove(socketChannel);
             	return;
             }
           	
-            Queue<ByteBuffer> queue = pendingData.get(socketChannel);
+            Queue<PendingData> queue = nioTcpMessageChannel.queue;
+            if (queue == null || queue.isEmpty())
+            {
+                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+                {
+                        logger.logDebug("The queue was empty on write.");
+                }
+                return;
+            }
             if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
             {
                     logger.logDebug("Queued items for writing " + queue.size());
@@ -193,7 +214,8 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
             while (queue.peek() != null &&  i < MAX_PENDING_DATA) {
                     //do not remove the buffer form the queue, until actual
                     //write operation is confirmed
-                    ByteBuffer buf = queue.peek();
+            		PendingData pData = queue.peek();
+                    ByteBuffer buf = pData.buffer;
 
                     try {
                                     socketChannel.write(buf);
@@ -203,8 +225,7 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
                                     nioTcpMessageChannel.close();
                                     // Shall we perform a retry mechanism in case the remote host connection was closed due to a TCP RST ?
                                     // https://java.net/jira/browse/JSIP-475 in the meanwhile remove the data from the hashmap
-                                    queue.remove(); 
-                                    pendingData.remove(socketChannel);
+                                    queue.remove();
                                     return;
                             }
 
@@ -234,25 +255,31 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
         }
         
         public void connect(SelectionKey selectionKey) throws IOException {
-        	// Ignoring the advice from http://rox-xmlrpc.sourceforge.net/niotut/ because it leads to spinning on my machine
-        	throw new IOException("We should use blocking connect, we must never reach here");
-        	/*SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
-        	  
+        	SocketChannel socketChannel = (SocketChannel) selectionKey.channel();
+            final NioTcpMessageChannel nioTcpMessageChannel = nioHandler.getMessageChannel(socketChannel);
+            if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            	logger.logDebug("Got something on nioTcpMessageChannel " + nioTcpMessageChannel + " socket " + socketChannel);
+            if(nioTcpMessageChannel == null) {
+            	if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
+            		logger.logDebug("Dead socketChannel" + socketChannel + " socket " + socketChannel.socket().getInetAddress() + ":"+socketChannel.socket().getPort());
+            	selectionKey.cancel();
+            	return;
+            }        	
         	try {
         		socketChannel.finishConnect();
-        	} catch (IOException e) {
-        		selectionKey.cancel();
-        		logger.logError("Cant connect", e);
-        		return;
+        	} catch (Exception e) {
+                        if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                                logger.logDebug("Cant connect ", e);        
+                        }
+                        selectionKey.cancel();
+        				nioTcpMessageChannel.triggerConnectFailure();                      
+                        //this may potentially block the selector thread!!!
+                        nioTcpMessageChannel.close();                        
+                        return;
         	}
-            synchronized (socketChannel) {
-            	logger.logDebug("Notifying to wake up the blocking connect");
-            	socketChannel.notify();
+            if (nioTcpMessageChannel.queue != null && !nioTcpMessageChannel.queue.isEmpty()) {
+                selectionKey.interestOps(SelectionKey.OP_WRITE);
             }
-
-            // Register an interest in writing on this channel
-            selectionKey.interestOps(SelectionKey.OP_WRITE);
-            */
         }
         
         public void accept(SelectionKey selectionKey) throws IOException{
@@ -398,8 +425,16 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     }
     
     public NioTcpMessageChannel createMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor, SocketChannel client) throws IOException {
-    	return NioTcpMessageChannel.create(NioTcpMessageProcessor.this, client);
-    }
+		NioTcpMessageChannel retval = nioHandler.getMessageChannel(client);
+		if (retval == null) {
+			retval = new NioTcpMessageChannel(nioTcpMessageProcessor,
+					client);
+			nioHandler.putMessageChannel(client, retval);
+		}
+		retval.messageProcessor = nioTcpMessageProcessor;
+		retval.myClientInputStream = client.socket().getInputStream();
+		return retval;
+	}    
     
     public NioTcpMessageProcessor(InetAddress ipAddress,  SIPTransactionStack sipStack, int port) {
     	super(ipAddress, port, "TCP", sipStack);
@@ -484,7 +519,7 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
     	if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug(Thread.currentThread() + " removing " + ((NioTcpMessageChannel)messageChannel).getSocketChannel() + " from processor " + getIpAddress()+ ":" + getPort() + "/" + getTransport());
         }
-    	pendingData.remove(((NioTcpMessageChannel)messageChannel).getSocketChannel());
+    	((NioTcpMessageChannel)messageChannel).resetQueue();
     	super.remove(messageChannel);
     }
     

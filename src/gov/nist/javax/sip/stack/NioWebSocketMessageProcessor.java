@@ -45,8 +45,15 @@ public class NioWebSocketMessageProcessor extends NioTcpMessageProcessor {
 	
 	@Override
 	public NioTcpMessageChannel createMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor, SocketChannel client) throws IOException {
-		return NioWebSocketMessageChannel.create(sipStack, this, client);
-    }
+		NioWebSocketMessageChannel retval = (NioWebSocketMessageChannel) nioHandler.getMessageChannel(client);
+		if (retval == null) {
+			retval = new NioWebSocketMessageChannel(sipStack,nioTcpMessageProcessor,
+					client);
+			
+			nioHandler.putMessageChannel(client, retval);
+		}
+		return retval;
+	}
         
     @Override        
     ConnectionOrientedMessageChannel constructMessageChannel(InetAddress targetHost, int port) throws IOException {

@@ -80,9 +80,15 @@ public class NioTlsMessageProcessor extends NioTcpMessageProcessor{
 	}
 	
 	@Override
-	public NioTcpMessageChannel createMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor, SocketChannel client) throws IOException {
-    	return NioTlsMessageChannel.create(NioTlsMessageProcessor.this, client);
-    }
+	public NioTcpMessageChannel createMessageChannel(NioTcpMessageProcessor nioTcpMessageProcessor, SocketChannel socketChannel) throws IOException {
+		NioTcpMessageChannel retval = nioHandler.getMessageChannel(socketChannel);
+		if (retval == null) {
+			retval = new NioTlsMessageChannel(nioTcpMessageProcessor,
+					socketChannel);
+			nioHandler.putMessageChannel(socketChannel, retval);
+		}
+		return retval;
+	}
         
     @Override        
     ConnectionOrientedMessageChannel constructMessageChannel(InetAddress targetHost, int port) throws IOException {

@@ -26,7 +26,6 @@
 package gov.nist.javax.sip.stack;
 
 import gov.nist.core.CommonLogger;
-import gov.nist.core.InternalErrorHandler;
 import gov.nist.core.LogWriter;
 import gov.nist.core.StackLogger;
 import gov.nist.javax.sip.header.CSeq;
@@ -38,7 +37,12 @@ import gov.nist.javax.sip.header.StatusLine;
 import gov.nist.javax.sip.header.To;
 import gov.nist.javax.sip.header.Via;
 import gov.nist.javax.sip.message.SIPMessage;
+import gov.nist.javax.sip.message.SIPRequest;
+import gov.nist.javax.sip.message.SIPResponse;
 import gov.nist.javax.sip.parser.NioPipelineParser;
+import gov.nist.javax.sip.stack.NioTcpMessageProcessor.PendingData;
+
+import static javax.sip.message.Response.SERVICE_UNAVAILABLE;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -46,44 +50,33 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.text.ParseException;
 import java.util.HashMap;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.net.ssl.SSLException;
+import javax.sip.TransactionState;
 
 public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 	private static StackLogger logger = CommonLogger
 			.getLogger(NioTcpMessageChannel.class);
-	protected static HashMap<SocketChannel, NioTcpMessageChannel> channelMap = new HashMap<SocketChannel, NioTcpMessageChannel>();
 
 	protected SocketChannel socketChannel;
 	protected long lastActivityTimeStamp;
 	NioPipelineParser nioParser = null;
-
-	public static NioTcpMessageChannel create(
-			NioTcpMessageProcessor nioTcpMessageProcessor,
-			SocketChannel socketChannel) throws IOException {
-		NioTcpMessageChannel retval = channelMap.get(socketChannel);
-		if (retval == null) {
-			retval = new NioTcpMessageChannel(nioTcpMessageProcessor,
-					socketChannel);
-			channelMap.put(socketChannel, retval);
-		}
-		retval.messageProcessor = nioTcpMessageProcessor;
-		retval.myClientInputStream = socketChannel.socket().getInputStream();
-		return retval;
-	}
-
-	public static NioTcpMessageChannel getMessageChannel(SocketChannel socketChannel) {
-		return channelMap.get(socketChannel);
-	}
-
-	public static void putMessageChannel(SocketChannel socketChannel,
-			NioTcpMessageChannel nioTcpMessageChannel) {
-		channelMap.put(socketChannel, nioTcpMessageChannel);
+	
+	Queue<PendingData> queue = new ConcurrentLinkedQueue<PendingData>();
+	
+	synchronized void resetQueue() {
+		queue = new ConcurrentLinkedQueue<PendingData>();
 	}
 	
-	public static void removeMessageChannel(SocketChannel socketChannel) {
-		channelMap.remove(socketChannel);
+	void addPendingData(PendingData d) {
+		queue.add(d);
+		
 	}
+	
+
+
         
         private static final int BUF_SIZE = 4096;        
         private final ByteBuffer byteBuffer  = ByteBuffer.allocateDirect(BUF_SIZE);
@@ -198,7 +191,8 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 			peerProtocol = getTransport();
 			nioParser = new NioPipelineParser(sipStack, this,
 					this.sipStack.getMaxMessageSize());
-			putMessageChannel(socketChannel, this);
+			NIOHandler nioHandler = nioTcpMessageProcessor.nioHandler;
+			nioHandler.putMessageChannel(socketChannel, this);
 			lastActivityTimeStamp = System.currentTimeMillis();
 			super.key = MessageChannel.getKey(peerAddress, peerPort, getTransport());
 
@@ -225,7 +219,8 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 				logger.logDebug("Closing NioTcpMessageChannel "
 						+ this + " socketChannel = " + socketChannel);
 			}
-			removeMessageChannel(socketChannel);
+			NIOHandler nioHandler = ((NioTcpMessageProcessor) messageProcessor).nioHandler;
+			nioHandler.removeMessageChannel(socketChannel);
 			if(socketChannel != null) {
 				socketChannel.close();
 			}
@@ -359,7 +354,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 				close(false, false); // we can call socketChannel.close() directly but we better use the inherited method
 				
 				socketChannel = sock;
-				putMessageChannel(socketChannel, this);
+				nioHandler.putMessageChannel(socketChannel, this);
 				
 				onNewSocket(message);
 			}
@@ -472,6 +467,39 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 	
 	public long getLastActivityTimestamp() {
 		return lastActivityTimeStamp;
+	}
+	
+	public void triggerConnectFailure() {
+        //alert of IOException to pending Data TXs
+		Queue<PendingData> failedMsgs = queue;
+		resetQueue();
+        while (failedMsgs != null && failedMsgs.peek() != null ) {
+            PendingData pData = failedMsgs.poll();
+            
+            SIPTransaction transaction = sipStack.findTransaction(pData.txId, false);
+            if (transaction != null) {
+                if (transaction instanceof SIPClientTransaction) {
+                	//8.1.3.1 Transaction Layer Errors
+                    if (transaction.getRequest() != null &&
+                            !transaction.getRequest().getMethod().equalsIgnoreCase("ACK"))
+                    {
+                        SIPRequest req = (SIPRequest) transaction.getRequest();
+                        SIPResponse unavRes = req.createResponse(SERVICE_UNAVAILABLE, "Transport error sending request.");
+                        try {
+                                this.processMessage(unavRes);
+                        } catch (Exception e) {
+                            if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                                logger.logDebug("failed to report transport error", e);
+                            }
+                        }
+                    }
+                } else {
+                	//17.2.4 Handling Transport Errors
+                    transaction.raiseIOExceptionEvent();
+                }
+            }
+        } 	
+        resetQueue();
 	}
 
 }
