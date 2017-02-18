@@ -231,6 +231,23 @@ public class Host extends GenericObject {
                 if( hostname.startsWith("[") && !hostname.endsWith("]"))
                     hostname += ']';
             }
+            if (addressType == IPV6ADDRESS){
+                try {
+                    String ipv6FullForm = getInetAddress().toString();
+                    int slashIndex = ipv6FullForm.indexOf("/");
+                    if (slashIndex != -1) {
+                        ipv6FullForm = ipv6FullForm.substring(++slashIndex, ipv6FullForm.length());
+                    }
+                    if (hostname.startsWith("[")) {
+                        hostname = '[' + ipv6FullForm + ']';
+                    } else {
+                        hostname = ipv6FullForm;
+                    }
+                } catch (UnknownHostException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
