@@ -173,7 +173,25 @@ public class Host extends GenericObject {
                 dbgPrint("Could not resolve hostname " + ex);
             }
         } else {
-            rawIpAddress = hostname;
+            if (addressType == IPV6ADDRESS){
+                try {
+                    String ipv6FullForm = getInetAddress().toString();
+                    int slashIndex = ipv6FullForm.indexOf("/");
+                    if (slashIndex != -1) {
+                        ipv6FullForm = ipv6FullForm.substring(++slashIndex, ipv6FullForm.length());
+                    }
+                    if (hostname.startsWith("[")) {
+                        rawIpAddress = '[' + ipv6FullForm + ']';
+                    } else {
+                        rawIpAddress = ipv6FullForm;
+                    }
+                } catch (UnknownHostException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+            } else {
+                rawIpAddress = hostname;
+            }
         }
         return rawIpAddress;
     }
@@ -230,23 +248,6 @@ public class Host extends GenericObject {
                 //restore the closing bracket
                 if( hostname.startsWith("[") && !hostname.endsWith("]"))
                     hostname += ']';
-            }
-            if (addressType == IPV6ADDRESS){
-                try {
-                    String ipv6FullForm = getInetAddress().toString();
-                    int slashIndex = ipv6FullForm.indexOf("/");
-                    if (slashIndex != -1) {
-                        ipv6FullForm = ipv6FullForm.substring(++slashIndex, ipv6FullForm.length());
-                    }
-                    if (hostname.startsWith("[")) {
-                        hostname = '[' + ipv6FullForm + ']';
-                    } else {
-                        hostname = ipv6FullForm;
-                    }
-                } catch (UnknownHostException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
             }
         }
     }
