@@ -3,12 +3,8 @@ package test.unit.gov.nist.javax.sip.stack.nonblocking;
 import gov.nist.javax.sip.ListeningPointImpl;
 import gov.nist.javax.sip.message.SIPRequest;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
-import gov.nist.javax.sip.stack.NioTcpMessageChannel;
-import gov.nist.javax.sip.stack.NonBlockingMessageProcessorFactory;
 import java.io.Closeable;
 import java.io.IOException;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -21,9 +17,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import javax.net.ssl.SSLServerSocket;
-import javax.net.ssl.SSLServerSocketFactory;
 import javax.sip.ClientTransaction;
 import javax.sip.DialogTerminatedEvent;
 import javax.sip.IOExceptionEvent;
@@ -76,7 +69,7 @@ public class NonBlockingTest extends ScenarioHarness {
 
     private static final String TEST_PROTOCOL = "tcp";
     
-    private static final int NUM_THREADS = 10;
+    private static final int NUM_THREADS = 30;
     
     private static final int THREAD_ASSERT_TIME = 3000;    
     
@@ -133,7 +126,7 @@ public class NonBlockingTest extends ScenarioHarness {
         pool.awaitTermination(THREAD_ASSERT_TIME, TimeUnit.MILLISECONDS);
         Thread.sleep(THREAD_ASSERT_TIME);        
         //expect 2 channels, one for client and one for server
-        Assert.assertEquals(2, NioTcpMessageChannel.getCurrentChannelSize());
+        //Assert.assertEquals(2, NioTcpMessageChannel.getCurrentChannelSize());
         Assert.assertEquals(NUM_THREADS, server.requestCounter.get());
         server.close();
         Thread.sleep(THREAD_ASSERT_TIME);
@@ -179,7 +172,7 @@ public class NonBlockingTest extends ScenarioHarness {
                 defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
                 defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS",
                         "false");
-                defaultProperties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NonBlockingMessageProcessorFactory.class.getName());
+                defaultProperties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
                 this.sipFactory = SipFactory.getInstance();
                 this.sipFactory.setPathName("gov.nist");
                 messageFactory = sipFactory.createMessageFactory();
@@ -246,7 +239,7 @@ public class NonBlockingTest extends ScenarioHarness {
                 defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
                 defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
                 defaultProperties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
-                defaultProperties.setProperty("gov.nist.javax.sip.NIO_BLOCKING_MODE", "NONBLOCKING");
+                defaultProperties.setProperty("gov.nist.javax.sip.NIO_BLOCKING_MODE", "BLOCKING");
 
                 this.sipFactory = SipFactory.getInstance();
                 this.sipFactory.setPathName("gov.nist");
