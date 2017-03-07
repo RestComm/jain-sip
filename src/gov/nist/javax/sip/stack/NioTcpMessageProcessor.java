@@ -204,6 +204,10 @@ public class NioTcpMessageProcessor extends ConnectionOrientedMessageProcessor {
                 {
                         logger.logDebug("The queue was empty on write.");
                 }
+                if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                    logger.logDebug("We wrote away all data. Setting READ interest. Queue is emtpy now size =" + queue.size());
+                }
+                selectionKey.interestOps(SelectionKey.OP_READ);                
                 return;
             }
             if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
