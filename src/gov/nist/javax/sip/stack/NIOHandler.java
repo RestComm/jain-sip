@@ -158,17 +158,24 @@ public class NIOHandler {
      * 
      * @param key 
      */
-    private void removeSocket(String key) {
+    private void removeSocket(String key, boolean removeLock) {
         boolean entered = false;
         try {
             keyedSemaphore.enterIOCriticalSection(key);
             entered = true;
             SocketChannel removed = socketTable.remove(key);
-            keyedSemaphore.remove(key);
             if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
                     boolean wasRemoved = removed != null;
-                    logger.logDebug("removed Socket and Semaphore for key " + key + ", removed:" +  wasRemoved);
+                    logger.logDebug("removed Socket for key " + key + ", removed:" +  wasRemoved);
+            }            
+            if (removeLock) {
+                keyedSemaphore.remove(key);
+                if (logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
+                        boolean wasRemoved = removed != null;
+                        logger.logDebug("removed Semaphore for key " + key + ", removed:" +  wasRemoved);
+                }                
             }
+
         } catch (IOException ioExp) {
             //this maybe a fair situation, so log under debug
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
@@ -176,6 +183,8 @@ public class NIOHandler {
             }             
         } finally {
             if (entered) {
+                //if the removal was successfull, this will have no effect, since
+                //no lock will be found for this key
                 keyedSemaphore.leaveIOCriticalSection(key);
             }
         } 
@@ -212,7 +221,7 @@ public class NIOHandler {
                         logger.logDebug("Removing cached socketChannel without key"
                                         + this + " socketChannel = " + channel + " key = " + key);
                 }
-                removeSocket(key);
+                removeSocket(key, true);
         }
     }
 
@@ -245,6 +254,7 @@ public class NIOHandler {
         SocketChannel clientSock = null;
         
         boolean entered = false;
+        boolean connected = false;
         try {
                 keyedSemaphore.enterIOCriticalSection(key);
                 entered = true;
@@ -285,8 +295,8 @@ public class NIOHandler {
                                                             receiverAddress + " " + contactPort + " " + senderAddress );
                                     	}
                                         // new connection is bad.
-                                        // remove from our table the socket and its semaphore
-                                        removeSocket(key);
+                                        // remove from our table the socket
+                                        removeSocket(key, false);
                                         throw new SocketException(e.getClass() + " " + e.getMessage() + " " + e.getCause() + " Problem connecting " +
                                                 receiverAddress + " " + contactPort + " " + senderAddress);
                                     }
@@ -306,7 +316,7 @@ public class NIOHandler {
                                     + " port = " + contactPort + " retry " + retry);
             }
 
-            removeSocket(key);
+            removeSocket(key, false);
             /*
              * For TCP responses, the transmission of responses is
              * controlled by RFC 3261, section 18.2.2 :
@@ -333,7 +343,7 @@ public class NIOHandler {
                     key = makeKey(receiverAddress, contactPort);
                     clientSock = this.getSocket(key);
                     if (clientSock == null || !clientSock.isConnected() || !clientSock.isOpen()) {
-                            removeSocket(key);
+                            removeSocket(key,false);
                             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
                                     logger.logDebug(
                                                     "inaddr = " + receiverAddress +
@@ -356,6 +366,14 @@ public class NIOHandler {
             }
         } finally {
             if (entered) {
+                if (connected) 
+                {
+                    // new connection is bad.
+                    // remove from our table the socket and its semaphore
+                    //remove before leaving IO critical section, so sem is 
+                    //actually released!!!
+                    removeSocket(key,true);                    
+                }                
                 keyedSemaphore.leaveIOCriticalSection(key);
             }
         }        

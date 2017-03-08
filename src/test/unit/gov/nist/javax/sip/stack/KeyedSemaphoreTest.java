@@ -10,8 +10,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import junit.framework.Assert;
 import junit.framework.TestCase;
-import org.junit.Assert;
 
 /**
  * This test is trying to mimic NioHandler usage to find concurrency issues.
