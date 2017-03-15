@@ -113,6 +113,10 @@ public abstract class SIPTransactionStack implements
     // A set of methods that result in dialog creations.
     protected static final Set<String> dialogCreatingMethods = new HashSet<String>();
 
+    
+    
+    private transient CopyOnWriteArrayList<SIPDialogInjectionListener> dialogInjectionListeners = 
+            new CopyOnWriteArrayList<SIPDialogInjectionListener>();
     // Global timer. Use this for all timer tasks.
 
     private SipTimer timer;
@@ -1009,8 +1013,17 @@ public abstract class SIPTransactionStack implements
      */
 
     public SIPDialog getDialog(String dialogId) {
-
-        SIPDialog sipDialog = (SIPDialog) dialogTable.get(dialogId);
+        SIPDialog sipDialog = null;
+        if(dialogTable.contains(dialogId)) {
+            sipDialog = (SIPDialog) dialogTable.get(dialogId);
+        } else {
+            // Find external SIP Dialog
+            sipDialog = findSIPDialogFromInjectionListeners(dialogId);
+            // Store for next use
+            if(sipDialog != null) {
+                putDialog(sipDialog);
+            }
+        }
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
             logger.logDebug("getDialog(" + dialogId + ") : returning "
                     + sipDialog);
@@ -1019,6 +1032,18 @@ public abstract class SIPTransactionStack implements
 
     }
 
+    private SIPDialog findSIPDialogFromInjectionListeners(String dialogId) {
+        SIPDialog dialog = null;
+        for(SIPDialogInjectionListener listener : dialogInjectionListeners) {
+            SIPDialog tempDialog = listener.getExternalSIPDialog(dialogId);
+            if(tempDialog != null && tempDialog.getDialogId().equals(dialogId)) {
+                dialog = tempDialog;
+                // Take first valid Dialog and ignore following listener
+                break;
+            }
+        }
+        return dialog;
+    }
     /**
      * Remove the dialog given its dialog id. This is used for dialog id
      * re-assignment only.
@@ -1031,6 +1056,26 @@ public abstract class SIPTransactionStack implements
             logger.logWarning("Silently removing dialog from table");
         }
         dialogTable.remove(dialogId);
+    }
+    
+    /**
+     * Adds a new dialog injection listener to this transaction.
+     * 
+     * @param newListener
+     *          Listener to add.
+     */
+    public void addDialogInjectionListener(SIPDialogInjectionListener newListener) {
+        dialogInjectionListeners.add(newListener);
+    }
+
+    /**
+     * Removed an dialog injection listener from this transaction.
+     * 
+     * @param oldListener
+     *          Listener to remove.
+     */
+    public void removeDialogInjectionListener(SIPDialogInjectionListener oldListener) {
+        dialogInjectionListeners.remove(oldListener);
     }
 
     /**
