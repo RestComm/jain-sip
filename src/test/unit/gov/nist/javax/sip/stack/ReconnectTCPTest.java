@@ -81,6 +81,11 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
     private static Logger logger = Logger.getLogger("test.tck");
 
+    static {
+        if (!logger.isAttached(console))
+            logger.addAppender(console);
+    }
+
      class Shootme  implements SipListener {
 
 

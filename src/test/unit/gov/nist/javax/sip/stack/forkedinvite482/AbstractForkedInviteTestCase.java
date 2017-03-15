@@ -19,7 +19,13 @@ import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.helpers.NullEnumeration;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
@@ -42,6 +48,15 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
     protected Shootme shootme;
 
     private Proxy proxy;
+
+
+
+    static {
+        if ( !logger.isAttached(console))
+            logger.addAppender(console);
+    }
+
+    // private Appender appender;
 
     public AbstractForkedInviteTestCase() {
 

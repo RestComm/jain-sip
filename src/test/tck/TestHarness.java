@@ -18,7 +18,12 @@ import javax.sip.message.MessageFactory;
 import junit.framework.TestCase;
 import junit.framework.TestResult;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 public class TestHarness extends TestCase {
 
@@ -79,6 +84,9 @@ public class TestHarness extends TestCase {
 
     private static String currentClassName;
 
+    protected static Appender console = new ConsoleAppender(new SimpleLayout());
+
+
     static {
         try {
             Properties tckProperties = new Properties();
@@ -101,6 +109,19 @@ public class TestHarness extends TestCase {
             if (lf != null)
                 logFileName = lf;
             abortOnFail = (flag != null && flag.equalsIgnoreCase("true"));
+
+            // JvB: init log4j
+            //PropertyConfigurator.configure("log4j.properties");
+
+            BasicConfigurator.configure();
+
+            // If already created a print writer then just use it.
+            if (lf != null)
+                logger.addAppender(new FileAppender(new SimpleLayout(),
+                        logFileName));
+            else
+                logger.addAppender(new FileAppender(new SimpleLayout(),
+                        "tckoutput.txt"));
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

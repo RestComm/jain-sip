@@ -30,7 +30,10 @@ import javax.sip.message.*;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.helpers.NullEnumeration;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 
@@ -55,6 +58,15 @@ public class Shootme  implements SipListener {
 
 
     private static Logger logger = Logger.getLogger(Shootme.class);
+
+    static{
+        if (logger.getAllAppenders().equals(NullEnumeration.getInstance())) {
+
+            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+
+
+        }
+    }
 
     private Dialog dialog;
 
@@ -305,6 +317,7 @@ public class Shootme  implements SipListener {
 
 
     public static void main(String args[]) throws Exception {
+        logger.addAppender( new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects protocolObjects = new ProtocolObjects("shootme", "gov.nist","udp",true,false, false);
 
         Shootme shootme = new Shootme(protocolObjects);

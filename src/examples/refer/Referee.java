@@ -349,6 +349,9 @@ public class Referee implements SipListener {
         sipFactory.setPathName("gov.nist");
         Properties properties = new Properties();
 
+        logger.addAppender(new FileAppender
+            ( new SimpleLayout(),"refereeoutputlog.txt" ));
+
         properties.setProperty("javax.sip.STACK_NAME", "referee" );
         // You need 16 for logging traces. 32 for debug + traces.
         // Your code will limp at 32 but it is best for debugging.
