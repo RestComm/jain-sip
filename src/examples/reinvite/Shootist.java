@@ -7,7 +7,10 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import java.util.*;
 
@@ -57,6 +60,15 @@ public class Shootist  implements SipListener {
             + ">>>> is your class path set to the root?";
 
     private static Logger logger = Logger.getLogger(Shootist.class);
+
+    static {
+        try {
+            logger.addAppender(new FileAppender(new SimpleLayout(),
+                    ProtocolObjects.logFileDirectory + "shootistconsolelog.txt"));
+        } catch (Exception ex) {
+            throw new RuntimeException("could not open shootistconsolelog.txt");
+        }
+    }
 
     private static void usage() {
         logger.info(usageString);
@@ -495,6 +507,7 @@ public class Shootist  implements SipListener {
     public static void main(String args[]) {
         try {
             ProtocolObjects.init("shootist", true);
+            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
             Shootist shootist = new Shootist(10);
             shootist.createSipProvider();
             shootist.provider.addSipListener(shootist);

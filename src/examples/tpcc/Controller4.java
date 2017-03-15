@@ -5,7 +5,10 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import java.util.*;
 import java.io.IOException;
@@ -350,6 +353,10 @@ public class Controller4 implements SipListener {
                 "controllerlog.txt");
         properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "DEBUG");
         properties.setProperty("gov.nist.javax.sip.LOG_MESSAGE_CONTENT", "true");
+
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+        logger.addAppender(new FileAppender(new SimpleLayout(),
+                "controllerconsolelog.txt"));
 
         try {
             sipStack = sipFactory.createSipStack(properties);

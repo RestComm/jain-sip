@@ -49,6 +49,11 @@ public class DialogTimeoutTest extends ScenarioHarness {
     private static final Logger logger = Logger.getLogger("test.tck");
     private static final int TIMEOUT = 60000;
 
+    static {
+        if (!logger.isAttached(console))
+            logger.addAppender(console);
+    }
+
     public DialogTimeoutTest() {
         super("DialogTerminationOn500Test", true);
 

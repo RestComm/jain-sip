@@ -69,7 +69,10 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import test.tck.msgflow.callflows.NonSipUriRouter;
 
@@ -87,7 +90,17 @@ public class ReInviteBusyTest extends TestCase {
 
     private ProtocolObjects shootmeProtocolObjs;
 
+    protected static final Appender console = new ConsoleAppender(new SimpleLayout());
+
     protected static Logger logger = Logger.getLogger(ReInviteBusyTest.class);
+    
+    
+
+    static {
+
+        if (!logger.isAttached(console))
+            logger.addAppender(console);
+    }
 
     private static String PEER_ADDRESS = Shootme.myAddress;
 

@@ -5,7 +5,10 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import java.util.*;
 
@@ -31,7 +34,18 @@ public class Shootme  implements SipListener {
 
     private ServerTransaction inviteTid;
 
+
     private static Logger logger = Logger.getLogger(Shootme.class);
+
+    static {
+        try {
+        logger.addAppender(new FileAppender(new SimpleLayout(),
+                    ProtocolObjects.logFileDirectory + "shootmeconsolelog.txt"));
+        } catch (Exception ex) {
+            throw new RuntimeException ("could not open log file");
+        }
+    }
+
 
     private Dialog dialog;
 
@@ -268,6 +282,7 @@ public class Shootme  implements SipListener {
 
 
     public static void main(String args[]) throws Exception {
+        logger.addAppender( new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects.init("shootme", true);
         Shootme shootme = new Shootme();
         shootme.createSipProvider().addSipListener(shootme);

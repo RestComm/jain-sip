@@ -271,6 +271,9 @@ public class Notifier implements SipListener {
         sipFactory.setPathName("gov.nist");
         Properties properties = new Properties();
 
+        logger.addAppender(new FileAppender
+            ( new SimpleLayout(),"notifieroutputlog_" + port + ".txt" ));
+
         properties.setProperty("javax.sip.STACK_NAME", "notifier" + port );
         // You need 16 for logging traces. 32 for debug + traces.
         // Your code will limp at 32 but it is best for debugging.
@@ -331,6 +334,7 @@ public class Notifier implements SipListener {
 
     public static void main(String args[]) throws Exception {
         int port = args.length > 0 ? Integer.parseInt(args[0]) : 5070;
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         initFactories( port );
         Notifier notifier = new Notifier( port );
         notifier.createProvider( );

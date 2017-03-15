@@ -27,7 +27,11 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.helpers.NullEnumeration;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
@@ -77,6 +81,15 @@ public class Shootist implements SipListener {
     int reInviteReceivedCount;
 
     private static Logger logger = Logger.getLogger(Shootist.class);
+
+    static {
+    	try {
+			logger.addAppender(new FileAppender(new SimpleLayout(), "logs/"+ Shootist.class.getName() + "debuglog.txt"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+    }
 
     private ProtocolObjects protocolObjects;
 

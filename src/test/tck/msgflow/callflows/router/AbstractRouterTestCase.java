@@ -22,7 +22,10 @@ package test.tck.msgflow.callflows.router;
 import javax.sip.SipListener;
 import javax.sip.SipProvider;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import test.tck.msgflow.callflows.NonSipUriRouter;
 import test.tck.msgflow.callflows.ScenarioHarness;
@@ -43,6 +46,12 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
     protected Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+
+    static {
+        if (!logger.isAttached(console)) {
+            logger.addAppender(console);
+        }
+    }
 
     public AbstractRouterTestCase() {
         super("routeteluri", true);
