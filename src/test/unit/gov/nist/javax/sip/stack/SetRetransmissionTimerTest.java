@@ -10,9 +10,7 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import java.text.ParseException;
 import java.util.*;
@@ -23,10 +21,7 @@ public class SetRetransmissionTimerTest extends TestCase {
     public static final boolean callerSendsBye = true;
 
     private static Logger logger = Logger.getLogger( ServerTransactionRetransmissionTimerTest.class);
-    static {
-        if ( ! logger.getAllAppenders().hasMoreElements())
-            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
-    }
+
     class Shootist implements SipListener {
 
         private SipProvider sipProvider;

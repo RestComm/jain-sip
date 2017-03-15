@@ -24,10 +24,7 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
@@ -66,17 +63,6 @@ public class Subscriber implements SipListener {
     private HashSet dialogs;
 
     private static Logger logger = Logger.getLogger(Subscriber.class);
-
-    static {
-        try {
-            logger.setLevel(Level.INFO);
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "logs/subscriberoutputlog.txt"));
-        } catch (Exception ex) {
-            logger.info(ex.getMessage(), ex);
-            TestHarness.fail("Failed to initialize Subscriber, because of " + ex.getMessage());
-        }
-    }
 
     private ClientTransaction subscribeTid;
 

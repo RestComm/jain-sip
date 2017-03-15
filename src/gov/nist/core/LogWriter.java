@@ -21,52 +21,45 @@
  * of the terms of this agreement.
  *
  */
-/***************************************************************************
+/*
+ ****************************************************************************
  * Product of NIST/ITL Advanced Networking Technologies Division (ANTD).    *
- ***************************************************************************/
+ ****************************************************************************
+ */
 
 package gov.nist.core;
 
-import java.io.*;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Properties;
-
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.AppenderRef;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
 /**
- * A wrapper around log4j that is used for logging debug and errors. You can
+ * A wrapper around log4j2 that is used for logging debug and errors. You can
  * replace this file if you want to change the way in which messages are logged.
- *
- * @version 1.2
  *
  * @author M. Ranganathan <br/>
  * @author M.Andrews
  * @author Jeroen van Bemmel
  * @author Jean Deruelle
- *
+ * @version 1.2
  */
 
 public class LogWriter implements StackLogger {
 
     /**
-     * The logger to which we will write our logging output.
+     * The LOG to which we will write our logging output.
      */
     private Logger logger;
-
-    /**
-     * The stack name.
-     */
-    private String stackName;
-
-    /**
-     * Name of the log file in which the trace is written out (default is
-     * /tmp/sipserverlog.txt)
-     */
-    private String logFileName = null;
 
     /**
      * Flag to indicate that logging is enabled.
@@ -84,13 +77,13 @@ public class LogWriter implements StackLogger {
     private String buildTimeStamp;
 
     private Properties configurationProperties;
+    private Level level;
 
     /**
      * log a stack trace. This helps to look at the stack frame.
      */
     public void logStackTrace() {
         this.logStackTrace(TRACE_DEBUG);
-
     }
 
     public void logStackTrace(int traceLevel) {
@@ -107,50 +100,43 @@ public class LogWriter implements StackLogger {
             pw.close();
             String stackTrace = sw.getBuffer().toString();
             Level level = this.getLevel(traceLevel);
-            Priority priority = this.getLogPriority();
-            if ( level.isGreaterOrEqual(priority)) {
-                logger.log(level,stackTrace);
-            }
-
+            logger.log(level, stackTrace);
         }
     }
 
     /**
      * Get the line count in the log stream.
      *
-     * @return
+     * @return the line count
      */
     public int getLineCount() {
         return lineCount;
     }
 
     /**
-     * Get the logger.
+     * Get the LOG.
      *
-     * @return
+     * @return the logger
      */
     public Logger getLogger() {
         return logger;
     }
-
 
     /**
      * This method allows you to add an external appender.
      * This is useful for the case when you want to log to
      * a different log stream than a file.
      *
-     * @param appender
+     * @param appender the appender to add
      */
-    public void addAppender(Appender appender) {
-
-        this.logger.addAppender(appender);
-
+    public void addAppender(final Appender appender) {
+        addAppender((LoggerContext) LogManager.getContext(false), appender, this.level);
     }
 
     /**
      * Log an exception.
      *
-     * @param ex
+     * @param ex the throwable to log
      */
     public void logException(Throwable ex) {
 
@@ -161,28 +147,25 @@ public class LogWriter implements StackLogger {
     }
 
 
-
-
     /**
      * Counts the line number so that the debug log can be correlated to the
      * message trace.
      *
-     * @param message --
-     *            message to count the lines for.
+     * @param message -- message to count the lines for.
      */
     private void countLines(String message) {
         char[] chars = message.toCharArray();
-        for (int i = 0; i < chars.length; i++) {
-            if (chars[i] == '\n')
+        for (char aChar : chars) {
+            if (aChar == '\n') {
                 lineCount++;
+            }
         }
-
     }
 
     /**
      * Prepend the line and file where this message originated from
      *
-     * @param message
+     * @param message the message to enhance
      * @return re-written message.
      */
     private String enhanceMessage(String message) {
@@ -193,39 +176,35 @@ public class LogWriter implements StackLogger {
         String methodName = elem.getMethodName();
         String fileName = elem.getFileName();
         int lineNumber = elem.getLineNumber();
-        String newMessage = className + "." + methodName + "(" + fileName + ":"
+        return className + "." + methodName + "(" + fileName + ":"
                 + lineNumber + ") [" + message + "]";
-        return newMessage;
-
     }
 
     /**
      * Log a message into the log file.
      *
-     * @param message
-     *            message to log into the log file.
+     * @param message message to log into the log file.
      */
     public void logDebug(String message) {
         if (needsLogging) {
             String newMessage = this.enhanceMessage(message);
-            if ( this.lineCount == 0) {
+            if (this.lineCount == 0) {
                 getLogger().debug("BUILD TIMESTAMP = " + this.buildTimeStamp);
                 getLogger().debug("Config Propeties = " + this.configurationProperties);
             }
             countLines(newMessage);
             getLogger().debug(newMessage);
         }
-
     }
-    
+
     /*
      * (non-Javadoc)
      * @see gov.nist.core.StackLogger#logDebug(java.lang.String, java.lang.Exception)
      */
     public void logDebug(String message, Exception ex) {
-    	if (needsLogging) {
+        if (needsLogging) {
             String newMessage = this.enhanceMessage(message);
-            if ( this.lineCount == 0) {
+            if (this.lineCount == 0) {
                 getLogger().debug("BUILD TIMESTAMP = " + this.buildTimeStamp);
                 getLogger().debug("Config Propeties = " + this.configurationProperties);
             }
@@ -233,24 +212,22 @@ public class LogWriter implements StackLogger {
             getLogger().debug(newMessage, ex);
         }
     }
-    
+
     /**
      * Log a message into the log file.
      *
-     * @param message
-     *            message to log into the log file.
+     * @param message message to log into the log file.
      */
     public void logTrace(String message) {
         if (needsLogging) {
             String newMessage = this.enhanceMessage(message);
-            if ( this.lineCount == 0) {
+            if (this.lineCount == 0) {
                 getLogger().debug("BUILD TIMESTAMP = " + this.buildTimeStamp);
                 getLogger().debug("Config Propeties = " + this.configurationProperties);
             }
             countLines(newMessage);
             getLogger().trace(newMessage);
         }
-
     }
 
     /**
@@ -270,133 +247,124 @@ public class LogWriter implements StackLogger {
     /**
      * Log an error message.
      *
-     * @param message --
-     *            error message to log.
+     * @param message -- error message to log.
      */
     public void logFatalError(String message) {
         Logger logger = this.getLogger();
         String newMsg = this.enhanceMessage(message);
         countLines(newMsg);
         logger.fatal(newMsg);
-
     }
 
     /**
      * Log an error message.
      *
-     * @param message --
-     *            error message to log.
-     *
+     * @param message -- error message to log.
      */
     public void logError(String message) {
         Logger logger = this.getLogger();
         String newMsg = this.enhanceMessage(message);
         countLines(newMsg);
         logger.error(newMsg);
-
     }
 
     public LogWriter() {
     }
-    
-	public void setStackProperties(Properties configurationProperties) {
+
+    public void setStackProperties(Properties configurationProperties) {
 
         this.configurationProperties = configurationProperties;
 
         String logLevel = configurationProperties
                 .getProperty("gov.nist.javax.sip.TRACE_LEVEL");
 
-        this.logFileName = configurationProperties
+        /*
+      Name of the log file in which the trace is written out (default is
+      /tmp/sipserverlog.txt)
+     */
+        String logFileName = configurationProperties
                 .getProperty("gov.nist.javax.sip.DEBUG_LOG");
 
-        this.stackName = configurationProperties
+        /*
+      The stack name.
+     */
+        String stackName = configurationProperties
                 .getProperty("javax.sip.STACK_NAME");
 
-        //check whether a Log4j logger name has been
+        //check whether a Log4j2 LOG name has been
         //specified. if not, use the stack name as the default
-        //logger name.
+        //LOG name.
         String category = configurationProperties
-                                .getProperty("gov.nist.javax.sip.LOG4J_LOGGER_NAME", this.stackName);
+                .getProperty("gov.nist.javax.sip.LOG4J_LOGGER_NAME", stackName);
 
-
-        logger = Logger.getLogger(category);
+        logger = LogManager.getLogger(category);
         if (logLevel != null) {
             if (logLevel.equals("LOG4J")) {
                 CommonLogger.useLegacyLogger = false;
-                
-            }
-            else {
+            } else {
                 try {
-                    int ll = 0;
-                    if (logLevel.equals("TRACE")) {
-                        ll = TRACE_DEBUG;
-                        Debug.debug = true;
-                        Debug.setStackLogger(this);
-                    } else if (logLevel.equals("DEBUG")) {
-                        ll = TRACE_DEBUG;
-                    } else if ( logLevel.equals("INFO")) {
-                        ll = TRACE_INFO;
-                    } else if (logLevel.equals("ERROR")) {
-                        ll = TRACE_ERROR;
-                    } else if (logLevel.equals("NONE") || logLevel.equals("OFF")) {
-                        ll = TRACE_NONE;
-                    } else {
-                        ll = Integer.parseInt(logLevel);
-                        if ( ll > 32 ) {
+                    int ll;
+                    switch (logLevel) {
+                        case "TRACE":
+                            ll = TRACE_DEBUG;
                             Debug.debug = true;
                             Debug.setStackLogger(this);
-                        }
+                            break;
+                        case "DEBUG":
+                            ll = TRACE_DEBUG;
+                            break;
+                        case "INFO":
+                            ll = TRACE_INFO;
+                            break;
+                        case "ERROR":
+                            ll = TRACE_ERROR;
+                            break;
+                        case "NONE":
+                        case "OFF":
+                            ll = TRACE_NONE;
+                            break;
+                        default:
+                            ll = Integer.parseInt(logLevel);
+                            if (ll > 32) {
+                                Debug.debug = true;
+                                Debug.setStackLogger(this);
+                            }
+                            break;
                     }
 
                     this.setTraceLevel(ll);
                     this.needsLogging = true;
-                    if (traceLevel == TRACE_DEBUG) {
-                        logger.setLevel(Level.DEBUG);
+
+                    if (traceLevel == TRACE_TRACE) {
+                        level = Level.TRACE;
+                    } else if (traceLevel == TRACE_DEBUG) {
+                        level = Level.DEBUG;
                     } else if (traceLevel == TRACE_INFO) {
-                        logger.setLevel(Level.INFO);
+                        level = Level.INFO;
+                    } else if (traceLevel == TRACE_WARN) {
+                        level = Level.WARN;
                     } else if (traceLevel == TRACE_ERROR) {
-                        logger.setLevel(Level.ERROR);
+                        level = Level.ERROR;
+                    } else if (traceLevel == TRACE_FATAL) {
+                        level = Level.FATAL;
                     } else if (traceLevel == TRACE_NONE) {
-                        logger.setLevel(Level.OFF);
+                        level = Level.OFF;
                         this.needsLogging = false;
+                    } else {
+                        level = Level.ALL;
                     }
 
                     /*
                      * If user specifies a logging file as part of the startup
                      * properties then we try to create the appender.
                      */
-                    if (this.needsLogging && this.logFileName != null) {
-
+                    if (this.needsLogging && logFileName != null) {
                         boolean overwrite = Boolean.valueOf(
                                 configurationProperties.getProperty(
-                                "gov.nist.javax.sip.DEBUG_LOG_OVERWRITE"));
+                                        "gov.nist.javax.sip.DEBUG_LOG_OVERWRITE"));
 
-                        FileAppender fa = null;
-                        try {
-                            fa = new FileAppender(new SimpleLayout(),
-                                    this.logFileName, !overwrite);
-                        } catch (FileNotFoundException fnf) {
-
-                            // Likely due to some directoy not existing. Create
-                            // them
-                            File logfile = new File(this.logFileName);
-                            logfile.getParentFile().mkdirs();
-                            logfile.delete();
-
-                            try {
-                                fa = new FileAppender(new SimpleLayout(),
-                                        this.logFileName);
-                            } catch (IOException ioe) {
-                                ioe.printStackTrace(); // give up
-                            }
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
-                        }
-
-                        if (fa != null)
-                            logger.addAppender(fa);
+                        addFileAppender(logFileName, level, !overwrite);
                     }
-
                 } catch (NumberFormatException ex) {
                     ex.printStackTrace();
                     System.err.println("LogWriter: Bad integer " + logLevel);
@@ -406,10 +374,7 @@ public class LogWriter implements StackLogger {
             }
         } else {
             this.needsLogging = false;
-
         }
-
-        
     }
 
     /**
@@ -423,9 +388,9 @@ public class LogWriter implements StackLogger {
     /**
      * Return true/false if loging is enabled at a given level.
      *
-     * @param logLevel
+     * @param logLevel the log level to check
      */
-    public boolean isLoggingEnabled(int logLevel) {
+    public boolean isLoggingEnabled(final int logLevel) {
         return this.needsLogging && logLevel <= traceLevel;
     }
 
@@ -433,29 +398,27 @@ public class LogWriter implements StackLogger {
     /**
      * Log an error message.
      *
-     * @param message
-     * @param ex
+     * @param message the log message
+     * @param ex the exception
      */
     public void logError(String message, Exception ex) {
         Logger logger = this.getLogger();
         logger.error(message, ex);
-
     }
 
     /**
-     * Log a warning mesasge.
+     * Log a warning message.
      *
-     * @param string
+     * @param string the log message
      */
     public void logWarning(String string) {
         getLogger().warn(string);
-
     }
 
     /**
      * Log an info message.
      *
-     * @param string
+     * @param string the log message
      */
     public void logInfo(String string) {
         getLogger().info(string);
@@ -463,7 +426,6 @@ public class LogWriter implements StackLogger {
 
     /**
      * Disable logging altogether.
-     *
      */
     public void disableLogging() {
         this.needsLogging = false;
@@ -474,49 +436,56 @@ public class LogWriter implements StackLogger {
      */
     public void enableLogging() {
         this.needsLogging = true;
-
     }
 
     public void setBuildTimeStamp(String buildTimeStamp) {
         this.buildTimeStamp = buildTimeStamp;
-
     }
 
-    public Priority getLogPriority() {
-         if ( this.traceLevel == TRACE_INFO ) {
-            return Priority.INFO;
-        } else if ( this.traceLevel == TRACE_ERROR ) {
-            return Priority.ERROR;
-        } else if ( this.traceLevel == TRACE_DEBUG) {
-            return Priority.DEBUG;
-        } else if ( this.traceLevel == TRACE_TRACE) {
-            return Priority.DEBUG;
+    private void addFileAppender(final String fileName, final Level level, final boolean append) {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        Configuration config = ctx.getConfiguration();
+        PatternLayout layout = PatternLayout.newBuilder().withConfiguration(config).withPattern(" - %m%n").build();
+        FileAppender appender = FileAppender.newBuilder().withName("FILE").withFileName(fileName).withAppend(append).withLayout(layout).build();
+        addAppender(ctx, appender, level);
+    }
+
+    private void addAppender(final LoggerContext ctx, final Appender appender, final Level level) {
+        Configuration config = ctx.getConfiguration();
+        config.addAppender(appender);
+        AppenderRef ref = AppenderRef.createAppenderRef(appender.getName(), level, null);
+        LoggerConfig loggerConfig = config.getLoggerConfig("gov.nist");
+
+        if (loggerConfig == null) {
+            AppenderRef[] refs = new AppenderRef[]{ref};
+            loggerConfig = LoggerConfig.createLogger(false, level, "gov.nist", "true", refs, null, config, null);
+        }
+
+        loggerConfig.getAppenderRefs().add(ref);
+        loggerConfig.addAppender(appender, null, null);
+        config.addLogger("org.apache.logging.log4j", loggerConfig);
+        ctx.updateLoggers();
+    }
+
+    private Level getLevel(int traceLevel) {
+        if (traceLevel == TRACE_INFO) {
+            return Level.INFO;
+        } else if (traceLevel == TRACE_ERROR) {
+            return Level.ERROR;
+        } else if (traceLevel == TRACE_DEBUG) {
+            return Level.DEBUG;
+        } else if (traceLevel == TRACE_TRACE) {
+            return Level.ALL;
         } else {
-            return Priority.FATAL;
+            return Level.OFF;
         }
     }
 
-    public Level getLevel(int traceLevel) {
-        if ( traceLevel == TRACE_INFO ) {
-           return Level.INFO;
-       } else if ( traceLevel == TRACE_ERROR ) {
-           return Level.ERROR;
-       } else if ( traceLevel == TRACE_DEBUG) {
-           return Level.DEBUG;
-       } else if (traceLevel == TRACE_TRACE) {
-           return Level.ALL;
-       } else {
-           return Level.OFF;
-       }
-   }
-	
-	public String getLoggerName() {
-	    if ( this.logger != null ) {
-	        return logger.getName();
-	    } else {
-	        return null;
-	    }
-	}
-
-  
+    public String getLoggerName() {
+        if (this.logger != null) {
+            return logger.getName();
+        } else {
+            return null;
+        }
+    }
 }

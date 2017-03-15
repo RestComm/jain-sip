@@ -24,11 +24,7 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 
@@ -72,14 +68,6 @@ public class Forker implements SipListener {
     private static boolean nonRFC3261Proxy;
 
     private static Logger logger = Logger.getLogger(Forker.class);
-    static {
-        try {
-            logger.addAppender(new FileAppender(new SimpleLayout(),
-                    "logs/forkeroutputlog.txt"));
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
 
     /**
      * Adds a suitable Record-Route header to the given request or response

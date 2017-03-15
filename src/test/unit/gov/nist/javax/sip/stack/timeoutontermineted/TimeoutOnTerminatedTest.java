@@ -7,10 +7,7 @@ import javax.sip.SipProvider;
 
 import junit.framework.TestCase;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
-import org.apache.log4j.SimpleLayout;
 
 /**
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
@@ -23,10 +20,6 @@ public class TimeoutOnTerminatedTest extends TestCase {
     protected Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
-
-    protected static final Appender console = new ConsoleAppender(new SimpleLayout());
-
-    // private Appender appender;
 
     public TimeoutOnTerminatedTest() {
 
