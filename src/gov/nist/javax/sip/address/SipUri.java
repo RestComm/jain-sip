@@ -955,6 +955,30 @@ public class SipUri extends GenericURI implements javax.sip.address.SipURI , Sip
         }
         uriParms.set(name,value);
     }
+    
+    /**
+     * Sets the value of the specified parameter. If the parameter already had
+     *
+     * a value it will be overwritten. A zero-length String indicates flag
+     *
+     * parameter.
+     *
+     *
+     *
+     * @param name - a String specifying the parameter name
+     *
+     * @param value - a String specifying the parameter value
+     *
+     * @throws ParseException which signals that an error has been reached
+     *
+     * unexpectedly while parsing the parameter name or value.
+     *
+     */
+    public void setQuotedParameter(String name, String value) throws ParseException {
+        NameValue nv = new NameValue(name, value);
+        nv.setQuotedValue();
+        uriParms.set(nv);
+    }
 
     /** Sets the scheme of this URI to sip or sips depending on whether the
      * argument is true or false. The default value is false.

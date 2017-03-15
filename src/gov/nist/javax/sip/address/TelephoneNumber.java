@@ -234,6 +234,12 @@ public class TelephoneNumber extends NetObject {
         NameValue nv = new NameValue(name, value);
         this.parameters.set(nv);
     }
+    
+    public void setQuotedParameter(String name, String value) {
+        NameValue nv = new NameValue(name, value);
+        nv.setQuotedValue();
+        this.parameters.set(nv);
+    }
 
     public Object clone() {
         TelephoneNumber retval = (TelephoneNumber) super.clone();
