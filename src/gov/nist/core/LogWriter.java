@@ -30,12 +30,16 @@ package gov.nist.core;
 import java.io.*;
 import java.util.Properties;
 
-import org.apache.log4j.Appender;
-import org.apache.log4j.FileAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
-import org.apache.log4j.SimpleLayout;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.core.Appender;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.FileAppender;
+import org.apache.logging.log4j.core.config.AppenderRef;
+import org.apache.logging.log4j.core.config.Configuration;
+import org.apache.logging.log4j.core.config.LoggerConfig;
+import org.apache.logging.log4j.core.layout.PatternLayout;
 
 /**
  * A wrapper around log4j that is used for logging debug and errors. You can
@@ -141,10 +145,8 @@ public class LogWriter implements StackLogger {
      *
      * @param appender
      */
-    public void addAppender(Appender appender) {
-
-        this.logger.addAppender(appender);
-
+    public void addAppender(final Appender appender) {
+        addAppender((LoggerContext) LogManager.getContext(true), appender, this.level);
     }
 
     /**
@@ -433,8 +435,8 @@ public class LogWriter implements StackLogger {
     /**
      * Log an error message.
      *
-     * @param message
-     * @param ex
+     * @param message the log message
+     * @param ex      the exception
      */
     public void logError(String message, Exception ex) {
         Logger logger = this.getLogger();
@@ -479,7 +481,27 @@ public class LogWriter implements StackLogger {
 
     public void setBuildTimeStamp(String buildTimeStamp) {
         this.buildTimeStamp = buildTimeStamp;
+    }
 
+    private void addFileAppender(final String fileName, final Level level, final boolean append) {
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(true);
+        Configuration config = ctx.getConfiguration();
+        PatternLayout layout = PatternLayout.newBuilder().withConfiguration(config).withPattern(" - %m%n").build();
+        FileAppender appender = FileAppender.createAppender(fileName, Boolean.toString(append), "false", "FILE", "true", "false", "true", "8192", layout, null, "false", null, config);
+        addAppender(ctx, appender, level);
+    }
+
+    private void addAppender(final LoggerContext ctx, final Appender appender, final Level level) {
+        Configuration config = ctx.getConfiguration();
+        config.addAppender(appender);
+        appender.start();
+        AppenderRef ref = AppenderRef.createAppenderRef(appender.getName(), level, null);
+        LoggerConfig loggerConfig = config.getLoggerConfig("gov.nist");
+
+        if (loggerConfig == null) {
+            AppenderRef[] refs = new AppenderRef[]{ref};
+            loggerConfig = LoggerConfig.createLogger("false", level, "gov.nist", "true", refs, null, config, null);
+        }
     }
 
     public Priority getLogPriority() {
