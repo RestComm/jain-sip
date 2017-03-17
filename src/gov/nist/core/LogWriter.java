@@ -32,6 +32,7 @@ package gov.nist.core;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Properties;
+
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -130,7 +131,7 @@ public class LogWriter implements StackLogger {
      * @param appender the appender to add
      */
     public void addAppender(final Appender appender) {
-        addAppender((LoggerContext) LogManager.getContext(false), appender, this.level);
+        addAppender((LoggerContext) LogManager.getContext(true), appender, this.level);
     }
 
     /**
@@ -399,7 +400,7 @@ public class LogWriter implements StackLogger {
      * Log an error message.
      *
      * @param message the log message
-     * @param ex the exception
+     * @param ex      the exception
      */
     public void logError(String message, Exception ex) {
         Logger logger = this.getLogger();
@@ -443,22 +444,23 @@ public class LogWriter implements StackLogger {
     }
 
     private void addFileAppender(final String fileName, final Level level, final boolean append) {
-        LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        LoggerContext ctx = (LoggerContext) LogManager.getContext(true);
         Configuration config = ctx.getConfiguration();
         PatternLayout layout = PatternLayout.newBuilder().withConfiguration(config).withPattern(" - %m%n").build();
-        FileAppender appender = FileAppender.newBuilder().withName("FILE").withFileName(fileName).withAppend(append).withLayout(layout).build();
+        FileAppender appender = FileAppender.createAppender(fileName, Boolean.toString(append), "false", "FILE", "true", "false", "true", "8192", layout, null, "false", null, config);
         addAppender(ctx, appender, level);
     }
 
     private void addAppender(final LoggerContext ctx, final Appender appender, final Level level) {
         Configuration config = ctx.getConfiguration();
         config.addAppender(appender);
+        appender.start();
         AppenderRef ref = AppenderRef.createAppenderRef(appender.getName(), level, null);
         LoggerConfig loggerConfig = config.getLoggerConfig("gov.nist");
 
         if (loggerConfig == null) {
             AppenderRef[] refs = new AppenderRef[]{ref};
-            loggerConfig = LoggerConfig.createLogger(false, level, "gov.nist", "true", refs, null, config, null);
+            loggerConfig = LoggerConfig.createLogger("false", level, "gov.nist", "true", refs, null, config, null);
         }
 
         loggerConfig.getAppenderRefs().add(ref);

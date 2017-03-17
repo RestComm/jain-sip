@@ -3,10 +3,14 @@
 	<property file="${root}/ant-build-config.properties" />
         <property name = "classes" value="${root}/classes" />
         <property name = "srcroot" value ="${root}/src" />
-        <property name = "log4j_jar" value="${root}/lib/log4j-1.2.8.jar" />
+        <property name = "log4j_12_api_jar" value="${root}/lib/log4j-1.2-api-2.3.jar" />
+        <property name = "log4j_api_jar" value="${root}/lib/log4j-api-2.3.jar" />
+        <property name = "log4j_core_jar" value="${root}/lib/log4j-core-2.3.jar" />
 	<path id="project.class.path" >
 		<pathelement location="${classes}"/>
-		<pathelement location="${log4j_jar}"/>
+		<pathelement location="${log4j_12_api_jar}"/>
+		<pathelement location="${log4j_api_jar}"/>
+		<pathelement location="${log4j_core_jar}"/>
 	</path>
         <target name="make" >
 		<javac debug="${javac.debug}" 
@@ -20,7 +24,9 @@
 			destdir= "${classes}">
 			<classpath>
 				<pathelement location="${classes}"/>
-				<pathelement location="${log4j_jar}"/>
+				<pathelement location="${log4j_12_api_jar}"/>
+				<pathelement location="${log4j_api_jar}"/>
+				<pathelement location="${log4j_core_jar}"/>
 			</classpath>
 		</javac>
      </target>
