@@ -831,7 +831,17 @@ public class SipProviderImpl implements javax.sip.SipProvider, gov.nist.javax.si
             MessageChannel messageChannel = sipStack.createRawMessageChannel(
                     this.getListeningPoint(hop.getTransport()).getIPAddress(),
                     listeningPoint.port, hop);
-            messageChannel.sendMessage(sipResponse);
+            // Fix for https://github.com/RestComm/jain-sip/issues/133
+            if (messageChannel != null) {
+            	messageChannel.sendMessage(sipResponse);
+            } else {
+                if ( logger.isLoggingEnabled(LogLevels.TRACE_DEBUG) ) {
+                    logger.logDebug("Could not create a message channel for " + hop.toString() + " listeningPoints = " + this.listeningPoints);
+                }
+                throw new SipException(
+                        "Could not create a message channel for "
+                                + hop.toString());
+            }
         } catch (IOException ex) {
             throw new SipException(ex.getMessage());
         }

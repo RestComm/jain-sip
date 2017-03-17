@@ -46,6 +46,12 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
     private static Logger logger = Logger.getLogger("test.tck");
 
+    static {
+        if (!logger.isAttached(console)) {
+            logger.addAppender(console);
+        }
+    }
+
     public UdpPrackTimeoutTest() {
         super("reliableResponseTimeout", true);
     }

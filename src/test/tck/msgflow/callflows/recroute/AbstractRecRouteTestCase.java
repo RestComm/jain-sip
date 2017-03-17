@@ -27,6 +27,13 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
 
     private Proxy proxy;
 
+    static {
+        if ( !logger.isAttached(console))
+            logger.addAppender(console);
+    }
+
+    // private Appender appender;
+
     public AbstractRecRouteTestCase() {
 
         super("TCPRecRouteTest", true);

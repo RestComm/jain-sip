@@ -48,7 +48,10 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
@@ -83,6 +86,17 @@ public class Notifier implements SipListener {
     private static Logger logger = Logger.getLogger(Notifier.class) ;
 
     private boolean gotSubscribeRequest;
+
+    static {
+        try {
+            logger.setLevel(Level.INFO);
+            logger.addAppender(new FileAppender(new SimpleLayout(),
+                    "logs/notifieroutputlog.txt"));
+        } catch (Exception ex) {
+            logger.info(ex.getMessage(), ex);
+            TestHarness.fail("Failed to initialize Subscriber, because of " + ex.getMessage());
+        }
+    }
 
     class MyEventSource implements Runnable {
         private Notifier notifier;

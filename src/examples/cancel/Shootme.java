@@ -5,7 +5,9 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
+import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 import java.util.*;
 
@@ -244,6 +246,7 @@ public class Shootme extends TestCase implements SipListener {
 
 
     public static void main(String args[])throws Exception  {
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects.init("shootme");
         Shootme shootme = new Shootme();
         shootme.createProvider();

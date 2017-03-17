@@ -25,6 +25,11 @@ public class ReInviteAllowInterleavingTest extends ScenarioHarness implements Si
 
     private static Logger logger = Logger.getLogger("test.tck");
 
+    static {
+        if (!logger.isAttached(console))
+            logger.addAppender(console);
+    }
+
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();
         SipListener listener = (SipListener) providerTable.get(source);

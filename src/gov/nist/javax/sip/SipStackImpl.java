@@ -57,8 +57,6 @@ import gov.nist.javax.sip.stack.SIPTransactionStack;
 import gov.nist.javax.sip.stack.SocketTimeoutAuditor;
 import gov.nist.javax.sip.stack.timers.DefaultSipTimer;
 import gov.nist.javax.sip.stack.timers.SipTimer;
-import org.apache.logging.log4j.Logger;
-import org.apache.logging.log4j.core.Appender;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -1391,6 +1389,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 		super.setPatchRport(Boolean.parseBoolean(configurationProperties.getProperty(
 				"gov.nist.javax.sip.ALWAYS_ADD_RPORT", "false")));
 		
+		super.setPatchReceivedRport(Boolean.parseBoolean(configurationProperties.getProperty(
+				"gov.nist.javax.sip.NEVER_ADD_RECEIVED_RPORT", "false")));
+		
 		super.cancelClientTransactionChecked = configurationProperties
 				.getProperty(
 						"gov.nist.javax.sip.CANCEL_CLIENT_TRANSACTION_CHECKED",
@@ -1872,7 +1873,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 	 * @deprecated TODO: remove this method May 11, 2010.
 	 */
 	@Deprecated
-	public void addLogAppender(Appender appender) {
+	public void addLogAppender(org.apache.log4j.Appender appender) {
 		if (this.logger instanceof gov.nist.core.LogWriter) {
 			((gov.nist.core.LogWriter) this.logger).addAppender(appender);
 		}
@@ -1886,7 +1887,7 @@ public class SipStackImpl extends SIPTransactionStack implements
 	 * @deprecated TODO: This method will be removed May 11, 2010.
 	 */
 	@Deprecated
-	public Logger getLogger() {
+	public org.apache.log4j.Logger getLogger() {
 		if (this.logger instanceof gov.nist.core.LogWriter) {
 			return ((gov.nist.core.LogWriter) this.logger).getLogger();
 		}

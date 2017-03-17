@@ -35,7 +35,10 @@ import javax.sip.message.Response;
 
 import junit.framework.TestCase;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
 
 /**
  * A very simple forking proxy server.
@@ -65,6 +68,15 @@ public class Proxy extends TestCase implements SipListener {
     private static String unexpectedException = "Unexpected exception";
 
     private static Logger logger = Logger.getLogger(Proxy.class);
+
+    static {
+        try {
+            logger.addAppender(new FileAppender(new SimpleLayout(),
+                    ProtocolObjects.logFileDirectory + "proxlog.txt"));
+        } catch (Exception ex) {
+            throw new RuntimeException("could not open shootistconsolelog.txt");
+        }
+    }
 
     public void processRequest(RequestEvent requestEvent) {
         try {
@@ -246,6 +258,7 @@ public class Proxy extends TestCase implements SipListener {
 
 
     public static void main(String[] args) throws Exception {
+        logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         ProtocolObjects.init("proxy",false);
         Proxy proxy = new Proxy();
         proxy.createSipProvider();

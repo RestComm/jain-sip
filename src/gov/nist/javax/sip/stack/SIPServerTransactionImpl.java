@@ -465,11 +465,13 @@ public class SIPServerTransactionImpl extends SIPTransactionImpl implements SIPS
             // sent using the existing connection
             // to the source of the original request
             // that created the transaction, if that connection is still open.
-            if (isReliable()) {
-
+            if (isReliable()&&!sipStack.isPatchReceivedRport()) {
+            	//https://github.com/RestComm/load-balancer/issues/59
+            	//we want possibility use Active-Active mode for LB, if one from LBs
+            	//will be shutdown than we can't use  
+            	//existing channel instead of we
+            	//should open new channel based on via header
                 getMessageChannel().sendMessage(transactionResponse);
-
-
             } else {
                 Via via = transactionResponse.getTopmostVia();
                 String transport = via.getTransport();

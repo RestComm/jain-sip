@@ -40,7 +40,10 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 import test.unit.gov.nist.javax.sip.stack.tls.TlsTest;
 import junit.framework.TestCase;
@@ -534,6 +537,13 @@ public class WebsocketSelfTest extends TestCase {
 		System.setProperty( "javax.net.ssl.trustStore", TlsTest.class.getResource("testkeys").getPath() );
 		System.setProperty( "javax.net.ssl.keyStorePassword", "passphrase" );
 		System.setProperty( "javax.net.ssl.keyStoreType", "jks" );
+    	ConsoleAppender console = new ConsoleAppender();
+    	console.setName("Console app");
+    	String PATTERN = "%d [%p|%c|%C{1}] %m%n";
+    	console.setLayout(new PatternLayout(PATTERN)); 
+    	console.setThreshold(Level.DEBUG);
+    	console.activateOptions();
+    	Logger.getRootLogger().addAppender(console);
     	this.websocketServer = new WebsocketServer();
     	this.websocketBrowser = new WebsocketBrowser();
     }

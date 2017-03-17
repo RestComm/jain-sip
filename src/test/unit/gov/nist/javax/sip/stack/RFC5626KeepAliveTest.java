@@ -67,6 +67,12 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
     private static Logger logger = Logger.getLogger("test.tck");
 
+    static {
+        if (!logger.isAttached(console)) {
+            logger.addAppender(console);
+        }
+    }
+
     class Shootme  implements SipListenerExt {
 
 

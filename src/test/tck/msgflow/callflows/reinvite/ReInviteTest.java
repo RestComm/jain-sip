@@ -38,7 +38,13 @@ import javax.sip.SipProvider;
 import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 
+import org.apache.log4j.Appender;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
+import org.apache.log4j.SimpleLayout;
+import org.apache.log4j.helpers.NullEnumeration;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
@@ -58,6 +64,11 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
     private Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+
+    static {
+        if (!logger.isAttached(console))
+            logger.addAppender(console);
+    }
 
     private SipListener getSipListener(EventObject sipEvent) {
         SipProvider source = (SipProvider) sipEvent.getSource();

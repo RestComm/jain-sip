@@ -40,7 +40,10 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 import junit.framework.TestCase;
 
@@ -485,7 +488,9 @@ public class StackQueueCongestionControlTest extends TestCase {
             // Your code will limp at 32 but it is best for debugging.
             properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", "LOG4J");
             Logger root = Logger.getRootLogger();
-
+            root.setLevel(Level.WARN);
+            root.addAppender(new ConsoleAppender(
+                new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
             if(threads!=null) {
             	
             	properties.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "true");

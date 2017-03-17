@@ -7,7 +7,12 @@ import javax.sip.address.*;
 import javax.sip.header.*;
 import javax.sip.message.*;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.FileAppender;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.log4j.SimpleLayout;
+
 
 import java.util.*;
 
@@ -46,6 +51,17 @@ public class Subscriber implements SipListener {
 
 
     private static Logger logger = Logger.getLogger(Subscriber.class);
+
+    static {
+        try {
+            logger.setLevel(Level.INFO);
+            logger.addAppender(new ConsoleAppender(new SimpleLayout()));
+            logger.addAppender(new FileAppender(new SimpleLayout(),
+                    "subscriberoutputlog.txt"));
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
 
     private ClientTransaction subscribeTid;
 
