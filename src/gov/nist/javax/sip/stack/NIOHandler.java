@@ -366,7 +366,7 @@ public class NIOHandler {
             }
         } finally {
             if (entered) {
-                if (connected) 
+                if (!connected) 
                 {
                     // new connection is bad.
                     // remove from our table the socket and its semaphore
