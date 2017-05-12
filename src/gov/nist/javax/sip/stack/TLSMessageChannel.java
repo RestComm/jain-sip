@@ -434,6 +434,7 @@ public class TLSMessageChannel extends ConnectionOrientedMessageChannel {
                         || hdrClass.equals(Via.class)
                         || hdrClass.equals(CallID.class)
                         || hdrClass.equals(ContentLength.class)
+                        || hdrClass.equals(MaxForwards.class)
                         || hdrClass.equals(RequestLine.class) || hdrClass
                         .equals(StatusLine.class))) {
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
