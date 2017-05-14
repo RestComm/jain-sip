@@ -255,6 +255,7 @@ public class NIOHandler {
         
         boolean entered = false;
         boolean connected = false;
+        boolean attempted = false;
         try {
                 keyedSemaphore.enterIOCriticalSection(key);
                 entered = true;
@@ -268,6 +269,7 @@ public class NIOHandler {
                     clientSock = null;
                 }                
                 if(clientSock == null) {
+                	attempted = true;
                     //ok, this thread won, let's try to recover conn
                     while (retry_count < max_retry) {
 
@@ -366,7 +368,7 @@ public class NIOHandler {
             }
         } finally {
             if (entered) {
-                if (!connected) 
+                if (attempted && !connected) 
                 {
                     // new connection is bad.
                     // remove from our table the socket and its semaphore
@@ -421,7 +423,8 @@ public class NIOHandler {
   
         boolean newSocket = false;
         SocketChannel clientSock = getSocket(key);
-        if(clientSock != null && (!clientSock.isConnectionPending())) {
+        if(clientSock != null && (!clientSock.isConnected() || !clientSock.isOpen()) && 
+            (!clientSock.isConnectionPending())) {
                 clientSock = null;
         }        
         if(clientSock == null) {
@@ -514,7 +517,8 @@ public class NIOHandler {
     	String key = NIOHandler.makeKey(inetAddress, port);
     	SocketChannel channel = null;
         channel = getSocket(key);
-        if(channel != null && (!channel.isConnected() || !channel.isOpen())) {
+        if(channel != null && (!channel.isConnected() || !channel.isOpen())
+                && !channel.isConnectionPending()) {
                 if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG))
                         logger.logDebug("Channel disconnected " + channel);
                 channel = null;

@@ -77,6 +77,20 @@ public class NonBlockingTest extends ScenarioHarness {
     public void setUp() throws Exception {
         testResources = new HashSet();
     }
+    
+    class PoolCloser implements Closeable {
+    	private ExecutorService pool;
+    	
+		public PoolCloser(ExecutorService pool) {
+			super();
+			this.pool = pool;
+		}
+
+		@Override
+		public void close() throws IOException {
+			pool.shutdownNow();
+		}
+    }
 
     public void tearDown() throws Exception {
         for (Closeable rAux : testResources) {
@@ -92,6 +106,7 @@ public class NonBlockingTest extends ScenarioHarness {
     public void testNoRemoteSocket() throws Exception {
         final Client client = new Client();
         ExecutorService pool = Executors.newFixedThreadPool(NUM_THREADS);
+        testResources.add(new PoolCloser(pool));
         for (int i = 0; i < NUM_THREADS; i++) {
             pool.submit(new Runnable() {
                 public void run() {
@@ -105,6 +120,7 @@ public class NonBlockingTest extends ScenarioHarness {
         }
         pool.awaitTermination(THREAD_ASSERT_TIME, TimeUnit.MILLISECONDS);
         Thread.sleep(THREAD_ASSERT_TIME);
+        Assert.assertTrue(!client.responses.isEmpty());
         Assert.assertEquals(503, client.responses.get(0).getResponse().getStatusCode());
     }
 
@@ -112,6 +128,7 @@ public class NonBlockingTest extends ScenarioHarness {
         final Client client = new Client();
         Server server = new Server();
         ExecutorService pool = Executors.newFixedThreadPool(NUM_THREADS);
+        testResources.add(new PoolCloser(pool));        
         for (int i = 0; i < NUM_THREADS; i++) {
             pool.submit(new Runnable() {
                 public void run() {
@@ -239,7 +256,7 @@ public class NonBlockingTest extends ScenarioHarness {
                 defaultProperties.setProperty("gov.nist.javax.sip.READ_TIMEOUT", "1000");
                 defaultProperties.setProperty("gov.nist.javax.sip.CACHE_SERVER_CONNECTIONS", "false");
                 defaultProperties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
-                defaultProperties.setProperty("gov.nist.javax.sip.NIO_BLOCKING_MODE", "BLOCKING");
+                defaultProperties.setProperty("gov.nist.javax.sip.NIO_BLOCKING_MODE", "NONBLOCKING");
 
                 this.sipFactory = SipFactory.getInstance();
                 this.sipFactory.setPathName("gov.nist");

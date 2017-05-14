@@ -498,8 +498,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
                     transaction.raiseIOExceptionEvent();
                 }
             }
-        } 	
-        resetQueue();
+        }
 	}
 
 }
