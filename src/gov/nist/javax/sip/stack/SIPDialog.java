@@ -1914,6 +1914,7 @@ public class SIPDialog implements javax.sip.Dialog, DialogExt {
                 && !firstTransactionId.equals(transaction.getBranchId())
                 && transaction.getMethod().equals(firstTransactionMethod)) {
             setReInviteFlag(true);
+            ackProcessed = false;
         }
 
         if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
