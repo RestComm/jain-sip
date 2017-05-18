@@ -34,8 +34,8 @@ package gov.nist.core;
  */
 public class Debug {
 
-    public static  boolean debug = true;
-    public static  boolean parserDebug = true;
+    public static  boolean debug = false;
+    public static  boolean parserDebug = false;
     
     static StackLogger stackLogger;
     
