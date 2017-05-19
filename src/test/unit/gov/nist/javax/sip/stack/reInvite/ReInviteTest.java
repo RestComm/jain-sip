@@ -108,6 +108,12 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
         this.shootist.sendInvite();
     }
 
+    public void testAckWithSameBranch() {
+        this.shootme.isAckWithSameBranch = true;
+        this.shootist.isAckWithSameBranch = true;
+        this.shootist.sendInvite();
+    }
+
     public void tearDown() {
         try {
             Thread.sleep(4000);
