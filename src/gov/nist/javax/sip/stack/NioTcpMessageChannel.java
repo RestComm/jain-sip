@@ -63,19 +63,6 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 	protected SocketChannel socketChannel;
 	protected long lastActivityTimeStamp;
 	NioPipelineParser nioParser = null;
-	
-	Queue<PendingData> queue = new ConcurrentLinkedQueue<PendingData>();
-	
-	synchronized void resetQueue() {
-		queue = new ConcurrentLinkedQueue<PendingData>();
-	}
-	
-	void addPendingData(PendingData d) {
-		queue.add(d);
-		
-	}
-	
-
 
         
         private static final int BUF_SIZE = 4096;        
@@ -469,10 +456,15 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
 		return lastActivityTimeStamp;
 	}
 	
-	public void triggerConnectFailure() {
+	public void triggerConnectSuccess() {
+        if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+            logger.logDebug("Connection Success. Nothing else to do.");
+        }		
+	
+	}
+	
+	public synchronized void triggerConnectFailure(Queue<PendingData> failedMsgs) {
         //alert of IOException to pending Data TXs
-		Queue<PendingData> failedMsgs = queue;
-		resetQueue();
         while (failedMsgs != null && failedMsgs.peek() != null ) {
             PendingData pData = failedMsgs.poll();
             
@@ -499,6 +491,7 @@ public class NioTcpMessageChannel extends ConnectionOrientedMessageChannel {
                 }
             }
         }
+        close();
 	}
 
 }
