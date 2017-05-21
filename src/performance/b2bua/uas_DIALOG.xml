@@ -54,7 +54,7 @@
 
 	<recv request="ACK" />
 
-	<recv request="BYE" timeout="80000" />
+	<recv request="BYE" timeout="1800000" />
 
 	<send>
    <![CDATA[
