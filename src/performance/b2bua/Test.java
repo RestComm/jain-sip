@@ -42,7 +42,7 @@ public class Test implements SipListener {
 		Properties props = new Properties();
 		// Load default values
 		try {
-			props.load(Test.class.getResourceAsStream("test.properties"));
+			props.load(new FileInputStream(new File("mss-sip-stack.properties")));
 		} catch (java.io.IOException ex) {
 			ex.printStackTrace();
 		}
