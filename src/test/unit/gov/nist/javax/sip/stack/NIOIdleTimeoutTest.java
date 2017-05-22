@@ -50,20 +50,20 @@ import test.unit.gov.nist.javax.sip.stack.tls.TlsTest;
  */
 public class NIOIdleTimeoutTest extends ScenarioHarness {
 
-	
+
     public NIOIdleTimeoutTest() {
     	super("NIOIdleTimeoutTest",true);
 	}
 
-    private static final int TEST_SOCKETS = 20; 
-    private static final int OPEN_DELAY = 1000; 
-    private static final int CLOSE_DELAY = 40000; 
+    private static final int TEST_SOCKETS = 20;
+    private static final int OPEN_DELAY = 1000;
+    private static final int CLOSE_DELAY = 40000;
 
 	public final int SERVER_PORT = 5600;
 	public final int SERVER_PORT2 = 5601;
 
     public final int CLIENT_PORT = 6500;
-    
+
     protected String testProtocol = "tls";
     protected String testProtocol2 = "tcp";
 
@@ -74,26 +74,26 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
 	public AddressFactory addressFactory;
 
 	public String host;
-    	
+
 	public void setUp() throws Exception {
 		System.setProperty( "javax.net.ssl.keyStore",  TlsTest.class.getResource("testkeys").getPath() );
         System.setProperty( "javax.net.ssl.trustStore", TlsTest.class.getResource("testkeys").getPath() );
         System.setProperty( "javax.net.ssl.keyStorePassword", "passphrase" );
         System.setProperty( "javax.net.ssl.keyStoreType", "jks" );
 	}
-	
+
 	public void testSocketTimeout() throws Exception {
 		Server server = new Server();
 		Client client = new Client();
-		
+
 		client.sendInvite();
 		Thread.sleep(1000);
-		
+
 		Request serverLastRequestReceived = server.getLastRequestReceived();
 		assertNotNull(serverLastRequestReceived);
 	}
-	
-	
+
+
 	public class Server extends SipAdapter {
         protected SipStack sipStack;
 
@@ -103,7 +103,7 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
         protected SipProvider provider2 = null;
 
         private Request lastRequestReceived;
-        
+
         public Server() {
             try {
                 final Properties defaultProperties = new Properties();
@@ -147,7 +147,7 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
 
 		public Request getLastRequestReceived() {
 			return lastRequestReceived;
-		}                
+		}
     }
 
     public class Client extends SipAdapter {
@@ -169,7 +169,7 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
                 defaultProperties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
                 defaultProperties.setProperty("gov.nist.javax.sip.TLS_CLIENT_AUTH_TYPE", "DisabledAll");
                 defaultProperties.setProperty("gov.nist.javax.sip.TLS_CLIENT_PROTOCOLS", "SSLv2Hello, TLSv1");
-                
+
                 this.sipFactory = SipFactory.getInstance();
                 this.sipFactory.setPathName("gov.nist");
                 this.sipStack = this.sipFactory.createSipStack(defaultProperties);
@@ -185,9 +185,9 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
                 Assert.fail("unexpected exception ");
             }
         }
-        
+
         public void sendInvite() throws Exception {
-            Socket[] test = new Socket[TEST_SOCKETS]; 
+            Socket[] test = new Socket[TEST_SOCKETS];
 			try {
 				for (int i = 0; i < TEST_SOCKETS; i++) {
 					if (i % 2 == 0) {
@@ -209,30 +209,30 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
 		            	System.out.println(test[i].getInputStream().read());
 		            } catch (SocketTimeoutException e) {
 						throw new Exception("Socket " + test[i] + " wasn't closed by SocketAuditor", e);
-					} catch (SSLHandshakeException e) {
+					} catch (Exception e) {
 						System.out.println("TLS Socket closed correctly ");
 					}
 				}
 			}
-            
-            
+
+
         	Address fromAddress = addressFactory.createAddress("here@somewhere:5070");
         	ContactHeader contactHeader1 = headerFactory.createContactHeader(addressFactory.createAddress("sip:here@somewhere:5070"));
     		ContactHeader contactHeader2 = headerFactory.createContactHeader(addressFactory.createAddress("sip:here@somewhereelse:5080"));
-    		
-			CallIdHeader callId = provider.getNewCallId();			
+
+			CallIdHeader callId = provider.getNewCallId();
 			CSeqHeader cSeq = headerFactory.createCSeqHeader(1l, Request.INVITE);
 			FromHeader from = headerFactory.createFromHeader(fromAddress, "1234");
 			ToHeader to = headerFactory.createToHeader(addressFactory.createAddress("server@"+host+":"+SERVER_PORT), null);
 			ViaHeader via = ((ListeningPointImpl)provider.getListeningPoint(testProtocol)).getViaHeader();
-			List<ViaHeader> vias = Arrays.asList(via);			
+			List<ViaHeader> vias = Arrays.asList(via);
 			MaxForwardsHeader maxForwards = headerFactory.createMaxForwardsHeader(10);
-    		
+
     		URI requestURI = addressFactory.createURI("sip:test@"+host+":"+SERVER_PORT);
     		Request request = messageFactory.createRequest(requestURI, Request.INVITE, callId, cSeq, from, to, vias, maxForwards);
     		System.out.println(request);
-    		assertTrue(request.toString().indexOf("rport=") == -1);    		
-    		
+    		assertTrue(request.toString().indexOf("rport=") == -1);
+
     		request.setRequestURI(requestURI);
     		request.addHeader(contactHeader1);
     		request.addHeader(contactHeader2);
@@ -253,7 +253,7 @@ public class NIOIdleTimeoutTest extends ScenarioHarness {
 		public void processResponse(ResponseEvent arg0) {}
 
 		public void processTimeout(TimeoutEvent arg0) {}
-		
+
 		public void processTransactionTerminated(TransactionTerminatedEvent arg0) {}
 	}
 }
