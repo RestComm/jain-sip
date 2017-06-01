@@ -265,7 +265,7 @@ public class NIOHandler {
                 //connection is pending.
                 if(clientSock != null && (!clientSock.isConnected() || !clientSock.isOpen()) 
                 		&& !clientSock.isConnectionPending()) {
-                	removeSocket(key);
+                	removeSocket(key, false);
                     clientSock = null;
                 }                
                 if(clientSock == null) {
