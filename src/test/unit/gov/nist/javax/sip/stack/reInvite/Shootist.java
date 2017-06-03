@@ -97,7 +97,7 @@ public class Shootist  implements SipListener {
 
 	public boolean isTargetRefresh;
 
-	public boolean isAckWithSameBranch;
+	public boolean isAckWithSameBranch = false;
 
 
 

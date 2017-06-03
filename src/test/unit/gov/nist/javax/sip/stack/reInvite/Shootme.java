@@ -70,7 +70,7 @@ public class Shootme  implements SipListener {
 
 	public boolean isTargetRefresh;
 
-	public boolean isAckWithSameBranch;
+	public boolean isAckWithSameBranch = false;
 
     class ApplicationData {
         protected int ackCount;
