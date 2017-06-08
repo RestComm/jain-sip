@@ -142,40 +142,44 @@ public class MultipartMimeContentImpl implements MultipartMimeContent {
   }
 
   private ContentImpl parseBodyPart(String bodyPart) throws ParseException {
-	    String headers[] = null;
-	    String bodyContent;
-	    
-	    // if a empty line starts the body it means no headers are present
-	    if (bodyPart.startsWith("\n") || bodyPart.startsWith("\r\n")) {
-	      bodyContent = bodyPart;
-	    } else {
-	      // limit the number of crlf (new lines) we split on, only split the header from
-	      // the body and don't split on any crlf in the body  
-	      String[] nextPartSplit = bodyPart.split("\r?\n\r?\n", 2);
+    String headers[] = null;
+    String bodyContent;
+    
+    // if a empty line starts the body it means no headers are present
+    if (bodyPart.startsWith("\n") || bodyPart.startsWith("\r\n")) {
+      bodyContent = bodyPart;
+    } else {
+      // limit the number of crlf (new lines) we split on, only split the header from
+      // the body and don't split on any crlf in the body  
+      String[] nextPartSplit = bodyPart.split("\r?\n\r?\n", 2);
 
-	      if (nextPartSplit.length == 2) {
-	        headers = nextPartSplit[0].split("\r?\n");
-	        bodyContent = nextPartSplit[1];
-	      } else {
-	        bodyContent = bodyPart;
-	      }
-	    }
-	    
-	    ContentImpl content = new ContentImpl(bodyContent);
-	    if (headers != null) {
-	      for (String partHeader : headers) {
-	        Header header = headerFactory.createHeader(partHeader);
-	        if (header instanceof ContentTypeHeader) {
-	          content.setContentTypeHeader((ContentTypeHeader) header);
-	        } else if (header instanceof ContentDispositionHeader) {
-	          content.setContentDispositionHeader((ContentDispositionHeader) header);
-	        } else {
-	          content.addExtensionHeader(header);
-	        }
-	      }
-	    }
-	    return content;
-	}
+      bodyContent = bodyPart;
+      
+      if (nextPartSplit.length == 2) {
+        // since we aren't completely sure the data is a header let's test the first one
+        String potentialHeaders[] = nextPartSplit[0].split("\r?\n");
+        if (potentialHeaders[0].indexOf(":") > 0) {
+          headers = potentialHeaders;
+          bodyContent = nextPartSplit[1];
+        }
+      }
+    }
+    
+    ContentImpl content = new ContentImpl(bodyContent);
+    if (headers != null) {
+      for (String partHeader : headers) {
+        Header header = headerFactory.createHeader(partHeader);
+        if (header instanceof ContentTypeHeader) {
+          content.setContentTypeHeader((ContentTypeHeader) header);
+        } else if (header instanceof ContentDispositionHeader) {
+          content.setContentDispositionHeader((ContentDispositionHeader) header);
+        } else {
+          content.addExtensionHeader(header);
+        }
+      }
+    }
+    return content;
+  }
 
   /*
    * (non-Javadoc)
