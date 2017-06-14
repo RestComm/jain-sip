@@ -97,6 +97,8 @@ public class Shootist  implements SipListener {
 
 	public boolean isTargetRefresh;
 
+	public boolean isAckWithSameBranch = false;
+
 
 
 
@@ -225,6 +227,9 @@ public class Shootist  implements SipListener {
                 Dialog dialog = tid.getDialog();
                 CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
                 Request ackRequest = dialog.createAck( cseq.getSeqNumber() );
+                if (isAckWithSameBranch) {
+                    ackRequest.setHeader(response.getHeader(ViaHeader.NAME));
+                }
                 logger.info("Ack request to send = " + ackRequest);
                 logger.info("Sending ACK");
                 dialog.sendAck(ackRequest);

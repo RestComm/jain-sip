@@ -70,6 +70,8 @@ public class Shootme  implements SipListener {
 
 	public boolean isTargetRefresh;
 
+	public boolean isAckWithSameBranch = false;
+
     class ApplicationData {
         protected int ackCount;
     }
@@ -260,6 +262,9 @@ public class Shootme  implements SipListener {
                 Dialog dialog = tid.getDialog();
                 CSeqHeader cseq = (CSeqHeader) response.getHeader(CSeqHeader.NAME);
                 Request request = dialog.createAck(cseq.getSeqNumber());
+                if (isAckWithSameBranch) {
+                    request.setHeader(response.getHeader(ViaHeader.NAME));
+                }
                 dialog.sendAck(request);
             }
             if ( tid != null ) {
