@@ -14,6 +14,8 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.SimpleLayout;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * @author M. Ranganathan
@@ -29,7 +31,7 @@ public class InviteTest extends TestCase {
 
     private static int forkCount = 2;
     
-   
+    private static final int TIMEOUT = 185000;   
 
     protected HashSet<Shootme> shootme = new HashSet<Shootme>();
 
@@ -68,28 +70,36 @@ public class InviteTest extends TestCase {
 
     public void testSendInviteDialogTimeoutEventSeen() throws Exception {
         try {
-            shootist = new Shootist(6050, 5070, "on", true);
+            int shootitsPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
+            int shootmeUa1Port = NetworkPortAssigner.retrieveNextPort();
+            int shootmeUa2Port = NetworkPortAssigner.retrieveNextPort();
+            int[] uaPorts = new int[2];
+            uaPorts[0] = shootmeUa1Port;
+            uaPorts[1] = shootmeUa2Port;
+            
+            shootist = new Shootist(shootitsPort, proxyPort, "on", true, uaPorts);
             SipProvider shootistProvider = shootist.createSipProvider();
             shootistProvider.addSipListener(shootist);
 
-            Shootme shootmeUa = new Shootme(5080, true, 4000, 4000);
+            Shootme shootmeUa = new Shootme(shootmeUa1Port, true, 4000, 4000);
             SipProvider shootmeProvider = shootmeUa.createProvider();
             shootmeProvider.addSipListener(shootmeUa);
             this.shootme.add(shootmeUa);
 
-            shootmeUa = new Shootme(5081, true, 5000, 4000);
+            shootmeUa = new Shootme(shootmeUa2Port, true, 5000, 4000);
             shootmeProvider = shootmeUa.createProvider();
             shootmeProvider.addSipListener(shootmeUa);
             this.shootme.add(shootmeUa);
 
-            this.proxy = new Proxy(5070, forkCount);
+            this.proxy = new Proxy(proxyPort, forkCount, uaPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
 
             this.shootist.sendInvite(forkCount);
 
-            Thread.sleep(69000);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
             this.shootist.checkStateForDialogTimeoutEvent();
             int ackCount = 0;
             for (Shootme shootme : this.shootme) {
@@ -113,29 +123,37 @@ public class InviteTest extends TestCase {
  
     public void testSendInviteEarlyDialogTimeoutEventSeen() throws Exception {
         try {
-            shootist = new Shootist(6050, 5070, "on", true);
+            int shootitsPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
+            int shootmeUa1Port = NetworkPortAssigner.retrieveNextPort();
+            int shootmeUa2Port = NetworkPortAssigner.retrieveNextPort();
+            int[] uaPorts = new int[2];
+            uaPorts[0] = shootmeUa1Port;
+            uaPorts[1] = shootmeUa2Port;
+            
+            shootist = new Shootist(shootitsPort, proxyPort, "on", true, uaPorts);
             SipProvider shootistProvider = shootist.createSipProvider();
             shootistProvider.addSipListener(shootist);
 
-            Shootme shootmeUa = new Shootme(5080, true, 4000, 4000);
+            Shootme shootmeUa = new Shootme(shootmeUa1Port, true, 4000, 4000);
             SipProvider shootmeProvider = shootmeUa.createProvider();
             shootmeProvider.addSipListener(shootmeUa);
             this.shootme.add(shootmeUa);
 
             // Never send an OK. Just send RINGING.
-            shootmeUa = new Shootme(5081, true, 5000, -1);
+            shootmeUa = new Shootme(shootmeUa2Port, true, 5000, -1);
             shootmeProvider = shootmeUa.createProvider();
             shootmeProvider.addSipListener(shootmeUa);
             this.shootme.add(shootmeUa);
 
-            this.proxy = new Proxy(5070, forkCount);
+            this.proxy = new Proxy(proxyPort, forkCount, uaPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
 
             this.shootist.sendInvite(forkCount);
 
-            Thread.sleep(185 * 1000);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
             this.shootist.checkStateForDialogTimeoutEvent();
             int ackCount = 0;
             for (Shootme shootme : this.shootme) {

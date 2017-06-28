@@ -48,6 +48,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
 
@@ -76,7 +77,7 @@ public class Referee implements SipListener {
 
     private static SipStack sipStack;
 
-    public static final int myPort = 5070;
+    public static final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     protected SipProvider mySipProvider;
 

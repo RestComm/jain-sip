@@ -57,9 +57,12 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.helpers.NullEnumeration;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  *
@@ -87,7 +90,7 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
             // To run on two machines change these to suit.
             public static final String myAddress = "127.0.0.1";
 
-            public static final int myPort = 5070;
+            public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
             private ServerTransaction inviteTid;
 
@@ -275,7 +278,14 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
             }
 
 
-
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return 4==dropAckCount;
+                    }
+                };
+        }
 
             public void checkState() {
                 AckReTransmissionTest.assertTrue("ACK was not successfully retransmitted 4 times", 4==dropAckCount);
@@ -327,16 +337,16 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
         private int counter;
 
-        private  String PEER_ADDRESS = Shootme.myAddress;
+        private  String PEER_ADDRESS;
 
-        private  int PEER_PORT = Shootme.myPort;
+        private  int PEER_PORT;
 
-        private  String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+        private  String peerHostPort;
 
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5060;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ClientTransaction inviteTid;
 
@@ -351,10 +361,12 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
 
 
 
-        public Shootist(ProtocolObjects protocolObjects) {
+        public Shootist(ProtocolObjects protocolObjects, Shootme shootme) {
             super();
             this.protocolObjects = protocolObjects;
-
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;  
         }
 
 
@@ -647,13 +659,15 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
             this.transport = "udp";
 
             super.setUp();
-            shootist = new Shootist(getRiProtocolObjects());
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
 
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getRiProtocolObjects(),shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
 
@@ -666,14 +680,14 @@ public class AckReTransmissionTest extends ScenarioHarness implements SipListene
         }
     }
 
-    public void testAckReTransmission() {
+    public void testAckReTransmission() throws InterruptedException {
         this.shootist.sendInvite();
+        AssertUntil.assertUntil(shootme.getAssertion(), 8000);
+        this.shootme.checkState();        
     }
 
     public void tearDown() {
         try {
-            Thread.sleep(4000);
-            this.shootme.checkState();
             getTiProtocolObjects().destroy();
             if (getTiProtocolObjects() != getRiProtocolObjects())
                 getRiProtocolObjects().destroy();

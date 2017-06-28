@@ -74,6 +74,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.NonSipUriRouter;
 
 /**
@@ -89,6 +90,8 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
     private ProtocolObjects shootistProtocolObjs;
 
     private ProtocolObjects shootmeProtocolObjs;
+    
+    private static int ROUTER_PORT = NetworkPortAssigner.retrieveNextPort();
 
     protected static final Appender console = new ConsoleAppender(new SimpleLayout());
 
@@ -104,9 +107,9 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
     private static String PEER_ADDRESS = Shootme.myAddress;
 
-    private static int PEER_PORT = Shootme.myPort;
+    private static int PEER_PORT;
 
-    private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+    private static String peerHostPort;
     
     
    
@@ -125,7 +128,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
         public int logLevel = 32;
 
-        String logFileDirectory = "logs/";
+        String logFileDirectory = "./target/logs/";
 
         public final String transport;
 
@@ -188,7 +191,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
                 NonSipUriRouter router = (NonSipUriRouter) sipStack.getRouter();
 
-                router.setMyPort(5080);
+                router.setMyPort(ROUTER_PORT);
 
                 System.out.println("createSipStack " + sipStack);
             } catch (Exception e) {
@@ -256,22 +259,22 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        public static final int myPort = 5071;
+        public int myPort = NetworkPortAssigner.retrieveNextPort();
 
-        private ServerTransaction inviteTid;
+        private ServerTransaction inviteTid = null;
 
-        private Dialog dialog;
+        private Dialog dialog = null;
 
-        private boolean okRecieved;
+        private boolean okRecieved = false;
 
-        private int reInviteCount;
+        private int reInviteCount = 0;
         
         public boolean ack2Received = false;
 
         private boolean isToTagInTryingReInvitePresent = true;
 
         class ApplicationData {
-            protected int ackCount;
+            protected int ackCount = 0;
         }
 
         public Shootme(ProtocolObjects protocolObjects) {
@@ -304,16 +307,16 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 logger.info("shootme: got an ACK " + requestEvent.getRequest());
 
                 CSeqHeader cseq = (CSeqHeader) requestEvent.getRequest().getHeader(CSeqHeader.NAME);
-                if(cseq.getSeqNumber() == 2) this.ack2Received = true;
+                if(cseq.getSeqNumber() == 2) {
+                    this.ack2Received = true;
+                    dialog = inviteTid.getDialog();
+                    Thread.sleep(1000);
+                    logger.info("shootme is sending RE INVITE now");
+                    System.out.println("Got an ACK " );
+                    this.reInviteCount++;
+                    this.sendReInvite(sipProvider);
+                }
                /* int ackCount = ((ApplicationData) dialog.getApplicationData()).ackCount;*/
-
-                dialog = inviteTid.getDialog();
-                Thread.sleep(1000);
-                logger.info("shootme is sending RE INVITE now");
-                System.out.println("Got an ACK " );
-                this.reInviteCount++;
-                this.sendReInvite(sipProvider);
-
             } catch (Exception ex) {
                 String s = "Unexpected error";
                 logger.error(s, ex);
@@ -329,7 +332,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             Request request = requestEvent.getRequest();
              try {
                 ServerTransaction st = requestEvent.getServerTransaction();
-                int finalResponse;
+                int finalResponse = 0;
                 logger.info("Got an INVITE  " + request + " serverTx = " + st);
                 Thread.sleep(300);
                 
@@ -561,30 +564,30 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
     class Shootist implements SipListener {
 
-        private SipProvider provider;
+        private SipProvider provider = null;
 
-        private int reInviteCount;
+        private int reInviteCount = 0;
 
-        private ContactHeader contactHeader;
+        private ContactHeader contactHeader = null;
 
-        private ListeningPoint listeningPoint;
+        private ListeningPoint listeningPoint = null;
 
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5072;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ClientTransaction inviteTid;
 
-        private boolean okReceived;
+        private boolean okReceived = false;
 
-        int reInviteReceivedCount;
+        int reInviteReceivedCount = 0;
 
-        private ProtocolObjects protocolObjects;
+        private ProtocolObjects protocolObjects = null;
 
-        private Dialog dialog;
+        private Dialog dialog = null;
 
-        private boolean busyHereReceived;
+        private boolean busyHereReceived = false;
 
         public Shootist(ProtocolObjects protocolObjects) {
             super();
@@ -701,7 +704,8 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
                 		ClientTransaction ct = provider.getNewClientTransaction(inviteRequest);
                 		dialog.sendRequest(ct);
                 		reInviteCount++;
-                		logger.info("RE-INVITE sent");}
+                		logger.info("RE-INVITE sent");
+                	}
 
                 } else if (response.getStatusCode() == Response.BUSY_HERE) {
                 	this.busyHereReceived = true;
@@ -868,7 +872,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
 
                 // send the request out.
                 this.inviteTid.sendRequest();
-
+                
             } catch (Exception ex) {
                 logger.error("Unexpected exception", ex);
                 ReInviteInfoAckOverlapTest.fail("unexpected exception");
@@ -924,22 +928,24 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
         try {
 
             super.setUp();
+            
+            this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", true,true);
+            shootme = new Shootme(shootmeProtocolObjs);
+            SipProvider shootmeProvider = shootme.createSipProvider();
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+            
             // String stackname, String pathname, String transport,
             // boolean autoDialog
             this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", true,true);
             shootist = new Shootist(shootistProtocolObjs);
             SipProvider shootistProvider = shootist.createSipProvider();
-
-            this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", true,true);
-            shootme = new Shootme(shootmeProtocolObjs);
-            SipProvider shootmeProvider = shootme.createSipProvider();
             
             shootistProvider.addSipListener(shootist);
             shootmeProvider.addSipListener(shootme);
 
             shootistProtocolObjs.start();
             shootmeProtocolObjs.start();
-            
         } catch (Exception ex) {
             ex.printStackTrace();
             fail("unexpected exception ");
@@ -959,8 +965,9 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
      * 
      */
     public void testReInviteInfoOverlap() {
-        this.shootist.sendInvite();
+        
         try {
+            this.shootist.sendInvite();
 			Thread.sleep(10000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -977,6 +984,7 @@ public class ReInviteInfoAckOverlapTest extends TestCase {
             shootmeProtocolObjs.destroy();
             shootistProtocolObjs.destroy();
             Thread.sleep(1000);
+            super.tearDown();
         } catch (Exception ex) {
             ex.printStackTrace();
         }

@@ -136,7 +136,7 @@ public class Controller4 implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -233,7 +233,7 @@ public class Controller4 implements SipListener {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -374,7 +374,7 @@ public class Controller4 implements SipListener {
         } catch (PeerUnavailableException e) {
             e.printStackTrace();
             System.err.println(e.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         } catch (Exception e) {
             logger.info("Creating Listener Points");
             logger.info(e.getMessage());

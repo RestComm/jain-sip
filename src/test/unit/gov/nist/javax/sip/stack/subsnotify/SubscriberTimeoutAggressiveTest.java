@@ -10,6 +10,8 @@ public class SubscriberTimeoutAggressiveTest  extends TestCase {
 	public void setUp() throws Exception {
 		subscriber = Subscriber.createSubcriber();
 		notifier = Notifier.createNotifier();
+                subscriber.setNotifierPort(notifier.getPort());
+                notifier.setSubscriberPort(subscriber.getPort());
 	}
 	
 	

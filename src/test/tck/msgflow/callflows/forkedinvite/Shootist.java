@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -121,7 +122,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -199,7 +200,7 @@ public class Shootist implements SipListener {
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
-            // System.exit(0);
+            // junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -220,6 +221,16 @@ public class Shootist implements SipListener {
             return null;
         }
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return (forkedDialogs.size() == 2) && forkedDialogs.contains(originalDialog);
+            }
+        };
     }
 
     public void checkState() {

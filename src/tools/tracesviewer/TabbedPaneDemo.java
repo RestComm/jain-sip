@@ -45,7 +45,7 @@ public class TabbedPaneDemo extends JPanel {
         JFrame frame = new JFrame("TabbedPaneDemo");
         frame.addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         });
 

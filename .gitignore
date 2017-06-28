@@ -16,6 +16,7 @@ classes
 *.iws
 .idea
 # ignore NetBeans files
+nbproject
 nbactions.xml
 nb-configuration.xml
 catalog.xml

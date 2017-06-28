@@ -31,6 +31,7 @@ import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 import java.util.*;
 
@@ -373,6 +374,16 @@ public class Subscriber implements SipListener {
     public void processTimeout(javax.sip.TimeoutEvent timeoutEvent) {
 
         logger.info("Transaction Time out");
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return true;
+            }
+        };
     }
 
     public void checkState() {

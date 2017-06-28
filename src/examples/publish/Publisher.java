@@ -46,7 +46,7 @@ public class Publisher implements SipListener {
                 this.notifier.dialog.sendRequest(ct);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
     }

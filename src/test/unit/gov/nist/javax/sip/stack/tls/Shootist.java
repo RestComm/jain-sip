@@ -4,6 +4,7 @@ import gov.nist.javax.sip.TlsSecurityPolicy;
 import gov.nist.javax.sip.header.HeaderExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
 import gov.nist.javax.sip.stack.SIPTransactionStack;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import java.security.cert.Certificate;
 import java.util.ArrayList;
@@ -66,6 +67,7 @@ public class Shootist implements SipListener, TlsSecurityPolicy {
     private ListeningPoint tlsListeningPoint;
     private int counter;
     private String domain;
+    public int myPort = NetworkPortAssigner.retrieveNextPort();
 
     protected ClientTransaction inviteTid;
 	private boolean byeSeen;
@@ -193,8 +195,8 @@ public class Shootist implements SipListener, TlsSecurityPolicy {
         sipFactory.setPathName("gov.nist");
        
         String transport = "tls";
-        int port = 5061;
-        String peerHostPort = "127.0.0.1:5071";
+        int port = myPort;
+        String peerHostPort = "127.0.0.1:" + Shootme.myPort;
         Properties properties = new Properties(); 
         if(props == null) {                   
             properties.setProperty(

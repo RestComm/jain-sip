@@ -60,7 +60,7 @@ public class Shootme implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -97,7 +97,7 @@ public class Shootme implements SipListener {
                     + requestEvent.getRequest());
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -132,7 +132,7 @@ public class Shootme implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -154,7 +154,7 @@ public class Shootme implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -172,7 +172,7 @@ public class Shootme implements SipListener {
                             .getMethod().equals(Request.INVITE)) {
                 if (tid != this.inviteTid) {
                     new Exception().printStackTrace();
-                    System.exit(0);
+                    junit.framework.TestCase.fail("Exit JVM");
                 }
                 Dialog dialog = tid.getDialog();
                 // Save the tags for the dialog here.
@@ -183,7 +183,7 @@ public class Shootme implements SipListener {
             System.out.println("Dalog State = " + dialog.getState());
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -241,7 +241,7 @@ public class Shootme implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

@@ -48,9 +48,13 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import org.apache.log4j.Logger;
+import static test.tck.TestHarness.assertTrue;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * Test for RFC 5626 Section 4.4.1 tests the various conditions outlined in the flow available at  
@@ -64,6 +68,8 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
     protected Shootist shootist;
     
     protected Shootme shootme;
+    
+    private static final int TIMEOUT = 50000;    
 
     private static Logger logger = Logger.getLogger("test.tck");
 
@@ -82,7 +88,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        public static final int myPort = 5070;
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         private ServerTransaction inviteTid;
 
@@ -94,7 +100,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         private int dropAckCount = 0;
 
 
-		private boolean keepAliveTimeoutFired;
+        private boolean keepAliveTimeoutFired;
 
         public Shootme(ProtocolObjects protocolObjects) {
             this.protocolObjects = protocolObjects;
@@ -114,9 +120,9 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 Map<String, ConnectionOrientedMessageChannel> tcpMessageChannels = (Map<String, ConnectionOrientedMessageChannel>) field.get(processor);
                 Iterator<ConnectionOrientedMessageChannel> itr = tcpMessageChannels.values().iterator();
                 while (itr.hasNext()) {
-                	ConnectionOrientedMessageChannel tcpMessageChannel = itr.next();
-					logger.info("tcpMessageChannel port " + tcpMessageChannel.getPort() + " peerPort " + tcpMessageChannel.getPeerPort());					
-				}
+                    ConnectionOrientedMessageChannel tcpMessageChannel = itr.next();
+                    logger.info("tcpMessageChannel port " + tcpMessageChannel.getPort() + " peerPort " + tcpMessageChannel.getPeerPort());                  
+                }
                 return tcpMessageChannels.values().iterator().next();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -295,13 +301,15 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         }
 
 
-		public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
-			// TODO Auto-generated method stub
-			
-		}		
+        public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
+            // TODO Auto-generated method stub
+            
+        }       
     }
     
     class Shootist implements SipListenerExt {
+        
+        private final Shootme shootme;
 
         private SipProvider provider;
 
@@ -312,7 +320,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        public static final int myPort = 5055;
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ClientTransaction inviteTid;
 
@@ -323,38 +331,39 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         Timer timer = new Timer();
 
         class MyTimerTask extends TimerTask {            
-        	private int keepAliveSent = 0;
-        	
-			@Override
+            private int keepAliveSent = 0;
+            
+            @Override
             public void run() {                
 
 //                assertTrue(shootist.getTestMessageProcessor().setKeepAliveTimeout(
 //                        Shootme.myAddress, Shootme.myPort, 1000));
-				logger.info("keepAliveSent =" + keepAliveSent + " / KeepAliveToSend ="+keepAliveToSend);
-				
-            	if(((SipStackImpl)shootist.protocolObjects.sipStack).isAlive() && (keepAliveToSend < 0 || keepAliveSent <= keepAliveToSend)) {
-	                try {
-	                    ((ListeningPointExt)shootist.listeningPoint).sendHeartbeat( Shootme.myAddress, Shootme.myPort);
-	                    keepAliveSent++;
-	                } catch (Exception e) {
-	                	logger.info("keepAliveSender received Exception =" + e + " ,cancelling keepalivesender timer");
-	                    e.printStackTrace();
-	                    this.cancel();
-//	                    fail();
-	                }
-	                if(keepAliveSent > keepAliveToSend) {
-	                	((SIPTransactionStack)protocolObjects.sipStack).setKeepAliveTimeout(myAddress, myPort, transport, Shootme.myAddress, Shootme.myPort, -1);	
-	                }
-            	} else {
-            		this.cancel();
-            	}
+                logger.info("keepAliveSent =" + keepAliveSent + " / KeepAliveToSend ="+keepAliveToSend);
+                
+                if(((SipStackImpl)shootist.protocolObjects.sipStack).isAlive() && (keepAliveToSend < 0 || keepAliveSent <= keepAliveToSend)) {
+                    try {
+                        ((ListeningPointExt)shootist.listeningPoint).sendHeartbeat( shootme.myAddress, shootme.myPort);
+                        keepAliveSent++;
+                    } catch (Exception e) {
+                        logger.info("keepAliveSender received Exception =" + e + " ,cancelling keepalivesender timer");
+                        e.printStackTrace();
+                        this.cancel();
+//                      fail();
+                    }
+                    if(keepAliveSent > keepAliveToSend) {
+                        ((SIPTransactionStack)protocolObjects.sipStack).setKeepAliveTimeout(myAddress, myPort, transport, shootme.myAddress, shootme.myPort, -1);   
+                    }
+                } else {
+                    this.cancel();
+                }
             }
         };
         
-        public Shootist(ProtocolObjects protocolObjects) {
+        public Shootist(ProtocolObjects protocolObjects,Shootme shootme) {
             super();
             this.protocolObjects = protocolObjects;
             ((SIPTransactionStack)protocolObjects.sipStack).setReliableConnectionKeepAliveTimeout(4000);
+            this.shootme = shootme;
         }
 
 
@@ -363,7 +372,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
-        	logger.info("Got a response");
+            logger.info("Got a response");
 
             Response response = (Response) responseReceivedEvent.getResponse();
             Transaction tid = responseReceivedEvent.getClientTransaction();
@@ -371,10 +380,10 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
             logger.info("Response received with client transaction id " + tid
                     + ":\n" + response.getStatusCode());
             if (tid != null) {
-				logger.info("Dialog = " + responseReceivedEvent.getDialog());
-				logger.info("Dialog State is "
-						+ responseReceivedEvent.getDialog().getState());
-			}
+                logger.info("Dialog = " + responseReceivedEvent.getDialog());
+                logger.info("Dialog State is "
+                        + responseReceivedEvent.getDialog().getState());
+            }
             SipProvider provider = (SipProvider) responseReceivedEvent.getSource();
 
             try {
@@ -394,12 +403,12 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
                 ex.printStackTrace();
                 RFC5626KeepAliveTest.fail("unexpected exception");
             }
-        	timer.schedule(new MyTimerTask(), 1000, 3000);
+            timer.schedule(new MyTimerTask(), 1000, 3000);
         }
 
         public volatile boolean keepAliveTimeoutFired;
 
-		public int keepAliveToSend = -1;
+        public int keepAliveToSend = -1;
 
         public void processTimeout(TimeoutEvent timeoutEvent) {
 
@@ -460,7 +469,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
                 // create Request URI addressed to me
                 SipURI requestURI = protocolObjects.addressFactory.createSipURI(
-                        toUser, Shootme.myAddress + ":" + Shootme.myPort);
+                        toUser, shootme.myAddress + ":" + shootme.myPort);
 
                 // Create ViaHeaders
 
@@ -622,10 +631,10 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
 
         }
 
-		public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
-			// TODO Auto-generated method stub
-			
-		}		
+        public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
+            // TODO Auto-generated method stub
+            
+        }       
     }
 
     public RFC5626KeepAliveTest() {
@@ -635,18 +644,21 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
     public void setUp() throws NoSuchFieldException {
     }
 
-    public void testKeepaliveTCP() {
+    public void testKeepaliveTCP() throws InterruptedException {
         try {
             this.transport = "tcp";
 
             super.setUp();
-            shootist = new Shootist(getRiProtocolObjects());
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
+
 
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getRiProtocolObjects(), shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);            
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
         } catch (Exception ex) {
@@ -656,26 +668,36 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         shootist.sendInvite();
         
         try {
-            Thread.sleep(20000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        assertFalse(this.shootist.keepAliveTimeoutFired);
-        assertFalse(this.shootme.keepAliveTimeoutFired);
+        
+        assertTrue(
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return !shootist.keepAliveTimeoutFired &&
+                            !shootme.keepAliveTimeoutFired;
+                };
+            }, TIMEOUT)
+        );        
     }
     
-    public void testKeepaliveTCPShootmeTimeout() {
+    public void testKeepaliveTCPShootmeTimeout() throws InterruptedException {
         try {
             this.transport = "tcp";
 
             super.setUp();
-            shootist = new Shootist(getRiProtocolObjects());
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
 
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+
+            shootist = new Shootist(getRiProtocolObjects(), shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);            
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
         } catch (Exception ex) {
@@ -686,25 +708,35 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         shootist.sendInvite();
         
         try {
-            Thread.sleep(20000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        assertFalse(this.shootist.keepAliveTimeoutFired);
-        assertTrue(this.shootme.keepAliveTimeoutFired);
+        
+        assertTrue( 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return !shootist.keepAliveTimeoutFired &&
+                            shootme.keepAliveTimeoutFired;
+                };
+            }, TIMEOUT)
+        ); 
     }
     
     public void testKeepaliveTCPShootistTimeout() throws Exception {       
         this.transport = "tcp";
 
         super.setUp();
-        shootist = new Shootist(getRiProtocolObjects());
-        SipProvider shootistProvider = shootist.createSipProvider();
-        providerTable.put(shootistProvider, shootist);
 
         shootme = new Shootme(getTiProtocolObjects());
         SipProvider shootmeProvider = shootme.createSipProvider();
         providerTable.put(shootmeProvider, shootme);
+        
+        shootist = new Shootist(getRiProtocolObjects(), shootme);
+        SipProvider shootistProvider = shootist.createSipProvider();
+        providerTable.put(shootistProvider, shootist);        
+        
         shootistProvider.addSipListener(this);
         shootmeProvider.addSipListener(this);
                     
@@ -716,47 +748,67 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        assertFalse(this.shootist.keepAliveTimeoutFired);
-        assertFalse(this.shootme.keepAliveTimeoutFired);
+        
+        assertTrue( 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return !shootist.keepAliveTimeoutFired &&
+                            !shootme.keepAliveTimeoutFired;
+                };
+            }, TIMEOUT)
+        ); 
+        
         System.out.println("Destroying Shootme to provoke timeout on Shootist");
-        getTiProtocolObjects().destroy();
+        
         try {
-            Thread.sleep(10000);
+            Thread.sleep(3000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        
-        assertTrue(this.shootist.keepAliveTimeoutFired);
-        assertFalse(this.shootme.keepAliveTimeoutFired);
+        getTiProtocolObjects().destroy();
+
+        assertTrue( 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return shootist.keepAliveTimeoutFired &&
+                           !shootme.keepAliveTimeoutFired;
+                };
+            }, TIMEOUT)
+        );          
     }
 
     public void testKeepaliveTCPModifyKeepAliveTimeout() throws Exception {
-    	this.transport = "tcp";
+        this.transport = "tcp";
 
         super.setUp();
-        shootist = new Shootist(getRiProtocolObjects());
-        SipProvider shootistProvider = shootist.createSipProvider();
-        providerTable.put(shootistProvider, shootist);
 
         shootme = new Shootme(getTiProtocolObjects());
         SipProvider shootmeProvider = shootme.createSipProvider();
         providerTable.put(shootmeProvider, shootme);
+
+        shootist = new Shootist(getRiProtocolObjects(),shootme);
+        SipProvider shootistProvider = shootist.createSipProvider();
+        providerTable.put(shootistProvider, shootist);        
+        
         shootistProvider.addSipListener(this);
         shootmeProvider.addSipListener(this);
         shootist.keepAliveToSend  = 100;
         shootist.sendInvite();        
 
         try {
-            Thread.sleep(15000);
+            Thread.sleep(10000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
         assertFalse(this.shootist.keepAliveTimeoutFired);
-        assertFalse(this.shootme.keepAliveTimeoutFired);        
+        assertFalse(this.shootme.keepAliveTimeoutFired);     
+      
         shootist.keepAliveToSend = 0;
         
         // cannot be found due to ephemeral port
-//        assertTrue(shootme.getTestMessageProcessor().setKeepAliveTimeout(Shootist.myAddress, Shootist.myPort, 400));
+//        assertTrue(shootme.getTestMessageProcessor().setKeepAliveTimeout(shootist.myAddress, shootist.myPort, 400));
         
         shootme.getTestChannel().setKeepAliveTimeout(400);
 
@@ -770,7 +822,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
     }
 
     public void tearDown() {
-        try {        	
+        try {           
             Thread.sleep(1000);            
             if (getTiProtocolObjects() != getRiProtocolObjects()) {
                 getRiProtocolObjects().destroy();
@@ -799,7 +851,7 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
     }
 
     public void processIOException(IOExceptionEvent exceptionEvent) {
-    	 getSipListener(exceptionEvent).processIOException(exceptionEvent);
+         getSipListener(exceptionEvent).processIOException(exceptionEvent);
     }
 
     public void processTransactionTerminated(
@@ -823,8 +875,8 @@ public class RFC5626KeepAliveTest extends ScenarioHarness implements SipListener
         return listener;
     }
 
-	public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
-		getSipListener(timeoutEvent).processDialogTimeout(timeoutEvent);
-		
-	}	
+    public void processDialogTimeout(DialogTimeoutEvent timeoutEvent) {
+        getSipListener(timeoutEvent).processDialogTimeout(timeoutEvent);
+        
+    }   
 }

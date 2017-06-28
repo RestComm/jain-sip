@@ -74,7 +74,11 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+
 import test.tck.msgflow.callflows.NonSipUriRouter;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * @author M. Ranganathan
@@ -101,15 +105,9 @@ public class ReInviteBusyTest extends TestCase {
         if (!logger.isAttached(console))
             logger.addAppender(console);
     }
-
-    private static String PEER_ADDRESS = Shootme.myAddress;
-
-    private static int PEER_PORT = Shootme.myPort;
-
-    private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
     
-    
-   
+    private static final int TIMEOUT = 10000;
+
     /**
      * @author M. Ranganathan
      *
@@ -125,7 +123,7 @@ public class ReInviteBusyTest extends TestCase {
 
         public int logLevel = 32;
 
-        String logFileDirectory = "logs/";
+        String logFileDirectory = "./target/logs/";
 
         public final String transport;
 
@@ -256,7 +254,7 @@ public class ReInviteBusyTest extends TestCase {
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        public static final int myPort = 5071;
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         private ServerTransaction inviteTid;
 
@@ -489,6 +487,16 @@ public class ReInviteBusyTest extends TestCase {
             SipProvider sipProvider = protocolObjects.sipStack.createSipProvider(lp);
             return sipProvider;
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                
+                @Override
+                public boolean assertCondition() {
+                    return reInviteCount >=2 && isToTagInTryingReInvitePresent;
+                }
+            };
+        }
 
         public void checkState() {
             assertTrue("should see a re-INVITE", this.reInviteCount >=2 );
@@ -543,7 +551,7 @@ public class ReInviteBusyTest extends TestCase {
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5072;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ClientTransaction inviteTid;
 
@@ -556,11 +564,19 @@ public class ReInviteBusyTest extends TestCase {
         private Dialog dialog;
 
         private boolean busyHereReceived;
+        
+        private  String PEER_ADDRESS;
 
-        public Shootist(ProtocolObjects protocolObjects) {
+        private  int PEER_PORT;
+
+        private  String peerHostPort;        
+
+        public Shootist(ProtocolObjects protocolObjects,Shootme shootme) {
             super();
             this.protocolObjects = protocolObjects;
-
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT; 
         }
 
        
@@ -836,6 +852,16 @@ public class ReInviteBusyTest extends TestCase {
                 ReInviteBusyTest.fail("unexpected exception");
             }
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                
+                @Override
+                public boolean assertCondition() {
+                    return reInviteCount == 1;
+                }
+            };
+        }
 
         public void checkState() {
             ReInviteBusyTest.assertTrue("Expect to send a re-invite", reInviteCount == 1);
@@ -888,13 +914,14 @@ public class ReInviteBusyTest extends TestCase {
             super.setUp();
             // String stackname, String pathname, String transport,
             // boolean autoDialog
-            this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", true,true);
-            shootist = new Shootist(shootistProtocolObjs);
-            SipProvider shootistProvider = shootist.createSipProvider();
 
             this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", true,true);
             shootme = new Shootme(shootmeProtocolObjs);
             SipProvider shootmeProvider = shootme.createSipProvider();
+            
+            this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", true,true);
+            shootist = new Shootist(shootistProtocolObjs,shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();            
             
             shootistProvider.addSipListener(shootist);
             shootmeProvider.addSipListener(shootme);
@@ -914,9 +941,13 @@ public class ReInviteBusyTest extends TestCase {
 
     public void tearDown() {
         try {
-            Thread.sleep(10000);
-            this.shootist.checkState();
-            this.shootme.checkState();
+            assertTrue(
+                    "Expect to send a re-invite",
+                    AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "should see a re-INVITE"
+                    + "and To tag in trying for re-INVITE shoulnd't be null",
+                    AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT));
             shootmeProtocolObjs.destroy();
             shootistProtocolObjs.destroy();
             Thread.sleep(1000);

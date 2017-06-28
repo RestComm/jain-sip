@@ -121,7 +121,7 @@ public class ShootmeNotImplementingListener implements SipListener {
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    public static final int myPort = 5070;
+    public final int myPort = 5070;
 
     private static Logger logger = Logger.getLogger(ShootmeNotImplementingListener.class);
 
@@ -273,7 +273,7 @@ public class ShootmeNotImplementingListener implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }

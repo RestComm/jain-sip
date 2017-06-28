@@ -14,6 +14,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.SimpleLayout;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * @author M. Ranganathan
@@ -63,20 +64,25 @@ public class InviteTest extends TestCase {
 
     public void testSendInvite() throws Exception {
         try {
+            int shootmePort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            
            
-            Shootme shootmeUa = new Shootme(5080, true, 4000, 4000);
+            Shootme shootmeUa = new Shootme(shootmePort, true, 4000, 4000);
             SipProvider shootmeProvider = shootmeUa.createProvider();
             shootmeProvider.addSipListener(shootmeUa);
 
         
-            this.proxy = new Proxy(5070);
+            this.proxy = new Proxy(proxyPort);
+            proxy.setTargetPort(shootmePort);
             SipProvider provider = proxy.createSipProvider("tcp");
             provider.addSipListener(proxy);
             provider = proxy.createSipProvider("udp");
             provider.addSipListener(proxy);
             
             
-            Shootist shootist = new Shootist(6050, 5070);
+            Shootist shootist = new Shootist(shootistPort, proxyPort);
             SipProvider shootistProvider = shootist.createSipProvider();
             shootistProvider.addSipListener(shootist);
           //  shootistProvider = shootist.createSipProvider("udp");

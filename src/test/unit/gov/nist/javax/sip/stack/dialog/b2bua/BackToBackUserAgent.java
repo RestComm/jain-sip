@@ -87,7 +87,7 @@ public class BackToBackUserAgent implements SipListenerExt {
              newRequest = peerDialog.createRequest(request.getMethod());
         } else {
              newRequest = (Request) request.clone();
-             ((SipURI)newRequest.getRequestURI()).setPort(5090);
+             ((SipURI)newRequest.getRequestURI()).setPort(getTargetPort());
              newRequest.removeHeader(RouteHeader.NAME);
              FromHeader fromHeader = (FromHeader) newRequest.getHeader(FromHeader.NAME);
              fromHeader.setTag(Long.toString(Math.abs(new Random().nextLong())));
@@ -227,6 +227,16 @@ public class BackToBackUserAgent implements SipListenerExt {
             
         }
 
+    }
+    
+    private int targetPort;
+
+    public int getTargetPort() {
+        return targetPort;
+    }
+
+    public void setTargetPort(int targetPort) {
+        this.targetPort = targetPort;
     }
 
 }

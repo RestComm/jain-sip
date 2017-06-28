@@ -1,6 +1,7 @@
     package test.unit.gov.nist.javax.sip.stack.tls;
 import gov.nist.javax.sip.TransactionExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import javax.sip.*;
 import javax.sip.address.*;
@@ -25,7 +26,7 @@ public class Shootme implements SipListener {
     private static HeaderFactory headerFactory;
     private static SipStack sipStack;
     private static final String myAddress = "foo-bar.com";
-    private static final int myPort    = 5071;
+    public static final int myPort    = NetworkPortAssigner.retrieveNextPort();
 
     protected ServerTransaction inviteTid;
 
@@ -44,7 +45,7 @@ public class Shootme implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -93,7 +94,7 @@ public class Shootme implements SipListener {
             } else ((ApplicationData) dialog.getApplicationData()).ackCount ++;
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -285,7 +286,7 @@ public class Shootme implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

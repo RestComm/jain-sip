@@ -18,6 +18,7 @@ import java.text.ParseException;
 import java.util.*;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class SetRetransmissionTimerTest extends TestCase {
     public static final boolean callerSendsBye = true;
@@ -50,6 +51,20 @@ public class SetRetransmissionTimerTest extends TestCase {
         private long startTime = System.currentTimeMillis();
 
         private boolean byeTaskRunning;
+        
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();        
+
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;
+
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;             
+        }        
 
         class ByeTask extends TimerTask {
             Dialog dialog;
@@ -67,7 +82,7 @@ public class SetRetransmissionTimerTest extends TestCase {
                     dialog.sendRequest(ct);
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    System.exit(0);
+                    junit.framework.TestCase.fail("Exit JVM");
                 }
 
             }
@@ -119,7 +134,7 @@ public class SetRetransmissionTimerTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -228,8 +243,7 @@ public class SetRetransmissionTimerTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
-            properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort
+             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort
                     + "/" + transport);
             // If you want to use UDP then uncomment this.
             properties.setProperty("javax.sip.STACK_NAME", "shootist");
@@ -267,7 +281,7 @@ public class SetRetransmissionTimerTest extends TestCase {
                 // in the classpath
                 e.printStackTrace();
                 System.err.println(e.getMessage());
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -275,7 +289,7 @@ public class SetRetransmissionTimerTest extends TestCase {
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
                 udpListeningPoint = sipStack.createListeningPoint("127.0.0.1",
-                        5060, "udp");
+                        myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -449,7 +463,7 @@ public class SetRetransmissionTimerTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ServerTransaction inviteTid;
 
@@ -632,7 +646,7 @@ public class SetRetransmissionTimerTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -735,7 +749,7 @@ public class SetRetransmissionTimerTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
 
     }

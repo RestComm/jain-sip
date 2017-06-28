@@ -38,6 +38,7 @@ import javax.sip.message.Request;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 import junit.framework.Assert;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class MultipleContactsTest extends ScenarioHarness {
 
@@ -47,9 +48,9 @@ public class MultipleContactsTest extends ScenarioHarness {
 	}
 
 
-	public final int SERVER_PORT = 5600;
+	public final int SERVER_PORT = NetworkPortAssigner.retrieveNextPort();
 
-    public final int CLIENT_PORT = 6500;
+    public final int CLIENT_PORT = NetworkPortAssigner.retrieveNextPort();
     
     protected String testProtocol = "udp";
 

@@ -7,6 +7,8 @@ import javax.sip.SipProvider;
 
 import org.apache.log4j.Logger;
 
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -26,6 +28,8 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
     protected Shootme shootme;
 
     private Proxy proxy;
+    
+    private static final int TIMEOUT = 5000;
 
     static {
         if ( !logger.isAttached(console))
@@ -50,18 +54,21 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
     public void setUp() {
 
         try {
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int shootmePort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
             super.setUp(false);
-            shootist = new Shootist(5060, 5070, getTiProtocolObjects());
+            shootist = new Shootist(shootistPort, proxyPort, getTiProtocolObjects());
             SipProvider shootistProvider = shootist.createSipProvider();
             providerTable.put(shootistProvider, shootist);
             shootistProvider.addSipListener(this);
 
-            this.shootme = new Shootme(5080, getTiProtocolObjects());
+            this.shootme = new Shootme(shootmePort, getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createProvider();
             providerTable.put(shootmeProvider, shootme);
             shootmeProvider.addSipListener(this);
 
-            this.proxy = new Proxy(5070, getRiProtocolObjects());
+            this.proxy = new Proxy(proxyPort, shootmePort, getRiProtocolObjects());
             SipProvider provider = proxy.createSipProvider();
             //provider.setAutomaticDialogSupportEnabled(false);
             providerTable.put(provider, proxy);
@@ -79,12 +86,18 @@ public class AbstractRecRouteTestCase extends ScenarioHarness implements
 
     public void tearDown() {
         try {
-            Thread.sleep(5000);
-            this.shootist.checkState();
-            this.shootme.checkState();
-            this.proxy.checkState();
+            assertTrue(
+                    "Should see an INFO",
+                    AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+            assertTrue(AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "INVITE should be seen by proxy"
+                    + "and Should see two INFO messages"
+                    + "and BYE should be seen by proxy"
+                    + "and ACK should be seen by proxy",
+                    AssertUntil.assertUntil(proxy.getAssertion(), TIMEOUT));
             super.tearDown();
-            Thread.sleep(4000);
+            Thread.sleep(2000);
             this.providerTable.clear();
 
             super.logTestCompleted();

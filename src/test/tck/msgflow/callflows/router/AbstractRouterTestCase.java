@@ -27,7 +27,9 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
+import test.tck.msgflow.callflows.AssertUntil;
 import test.tck.msgflow.callflows.NonSipUriRouter;
+import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -46,6 +48,8 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
     protected Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 2000;
 
     static {
         if (!logger.isAttached(console)) {
@@ -61,14 +65,15 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
         try {
             super.setUp();
 
-            logger.info("RouterTest: setup()");
-            shootist = new Shootist(getTiProtocolObjects());
-            SipProvider shootistProvider = shootist.createProvider();
-            providerTable.put(shootistProvider, shootist);
-
             shootme = new Shootme(getRiProtocolObjects());
             SipProvider shootmeProvider = shootme.createProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            logger.info("RouterTest: setup()");
+            ProtocolObjects protocolObjects = new ProtocolObjects("shootist","gov.nist","udp", shootme.myPort, true,false, false); 
+            shootist = new Shootist(protocolObjects);
+            SipProvider shootistProvider = shootist.createProvider();
+            providerTable.put(shootistProvider, shootist);
 
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
@@ -84,9 +89,8 @@ public abstract class AbstractRouterTestCase extends ScenarioHarness implements
 
     public void tearDown() throws Exception {
         try {
-            Thread.sleep(2000);
-            this.shootist.checkState();
-            this.shootme.checkState();
+            assertTrue(AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+            assertTrue(AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT));
             assertTrue("Router was not consulted", NonSipUriRouter.routerWasConsulted);
             NonSipUriRouter.routerWasConsulted = false;
             super.tearDown();

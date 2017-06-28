@@ -14,6 +14,7 @@ import test.tck.msgflow.callflows.ProtocolObjects;
 
 import java.text.ParseException;
 import java.util.*;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -83,7 +84,7 @@ public class Shootme implements SipListener {
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    public static final int myPort = 5070;
+    public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     private static Logger logger = Logger.getLogger(Shootme.class);
 

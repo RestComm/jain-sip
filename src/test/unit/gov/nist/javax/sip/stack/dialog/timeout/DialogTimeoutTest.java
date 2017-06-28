@@ -20,9 +20,11 @@ import gov.nist.javax.sip.SipStackImpl;
 import javax.sip.SipProvider;
 
 import org.apache.log4j.Logger;
+import test.tck.msgflow.callflows.AssertUntil;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * Testing if Dialog Timeout Event is correctly passed to the application layer on both sides if the 
@@ -74,17 +76,18 @@ public class DialogTimeoutTest extends ScenarioHarness {
     }
 
     // check that the apps gets called for timeout event when no ack is received nor sent
-    public void testDialogTimeoutSipListenerExt() {
+    public void testDialogTimeoutSipListenerExt() throws InterruptedException {
         
             try {
-            	this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,false, true);
-                shootist = new Shootist(shootistProtocolObjs);
-                SipProvider shootistProvider = shootist.createSipProvider();
 
                 this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", false,false, true);
                 ((SipStackImpl)shootmeProtocolObjs.sipStack).setAggressiveCleanup(true);
                 shootme = new Shootme(shootmeProtocolObjs);
                 SipProvider shootmeProvider = shootme.createSipProvider();
+                
+            	this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,false, true);
+                shootist = new Shootist(shootistProtocolObjs,shootme);
+                SipProvider shootistProvider = shootist.createSipProvider();                
                
                 shootist.init();
                 providerTable.put(shootistProvider, shootist);
@@ -101,15 +104,17 @@ public class DialogTimeoutTest extends ScenarioHarness {
                 this.shootist.sendInviteRequest();
                 Thread.currentThread().sleep(TIMEOUT);
             } catch (Exception e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-                fail("unexpected exception ");
+                fail("unexpected exception ",e);
             }
 
-            if (!this.shootme.checkState() || !this.shootist.checkState()) {
-                fail("Test Failed - Didnt receive Dialog Timeout Event");
-                return;
-            }
+            assertTrue("Test Failed - Didnt receive Dialog Timeout Event", 
+                AssertUntil.assertUntil(new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return shootme.checkState() && shootist.checkState();
+                    };
+                }, TIMEOUT)
+            );
 
             doTearDown(false);
             doSetUp();
@@ -117,19 +122,21 @@ public class DialogTimeoutTest extends ScenarioHarness {
     
     // check that the apps gets called for timeout event when no ack is received nor sent
     // and for terminated event after the BYE is sent
-    public void testDialogTimeoutAndTerminatedSipListenerExt() {
+    public void testDialogTimeoutAndTerminatedSipListenerExt() throws InterruptedException {
         
         try {
-        	this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,false, true);
-            shootist = new Shootist(shootistProtocolObjs);
-            shootist.setSendByeOnDialogTimeout(true);
-            SipProvider shootistProvider = shootist.createSipProvider();
+
 
             this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", false,false, true);
             ((SipStackImpl)shootmeProtocolObjs.sipStack).setAggressiveCleanup(true);
             shootme = new Shootme(shootmeProtocolObjs);
             shootme.setReceiveBye(true);
             SipProvider shootmeProvider = shootme.createSipProvider();
+            
+            this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,false, true);
+            shootist = new Shootist(shootistProtocolObjs,shootme);
+            shootist.setSendByeOnDialogTimeout(true);
+            SipProvider shootistProvider = shootist.createSipProvider();            
            
             shootist.init();
             providerTable.put(shootistProvider, shootist);
@@ -146,32 +153,35 @@ public class DialogTimeoutTest extends ScenarioHarness {
             this.shootist.sendInviteRequest();
             Thread.currentThread().sleep(TIMEOUT);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            fail("unexpected exception ");
+            fail("unexpected exception ", e);
         }
 
-        if (!this.shootme.checkState() || !this.shootist.checkState()) {
-            fail("Test Failed - Didnt receive Dialog Timeout Event");
-            return;
-        }
+        
+        assertTrue("Test Failed - Didnt receive Dialog Timeout Event", 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return shootme.checkState() && shootist.checkState();
+                };
+            }, TIMEOUT)
+        );        
 
         doTearDown(false);
         doSetUp();
     }
     
     // check that the caller application doesn't get called on timeout but called on dialog terminated event when it is not implementing the new listener
-    public void testDialogTimeoutDialogDeletedNotImplementedSipListenerExt() {
+    public void testDialogTimeoutDialogDeletedNotImplementedSipListenerExt() throws InterruptedException {
         
         try {
-        	this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,false, true);
-            shootistNotImplementingSipListenerExt = new ShootistNotImplementingSipListenerExt(shootistProtocolObjs);
-            SipProvider shootistProvider = shootistNotImplementingSipListenerExt.createSipProvider();
-
             this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", false,false, true);
             ((SipStackImpl)shootmeProtocolObjs.sipStack).setAggressiveCleanup(true);
             shootme = new Shootme(shootmeProtocolObjs);
             SipProvider shootmeProvider = shootme.createSipProvider();
+            
+            this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,false, true);
+            shootistNotImplementingSipListenerExt = new ShootistNotImplementingSipListenerExt(shootistProtocolObjs, shootme);
+            SipProvider shootistProvider = shootistNotImplementingSipListenerExt.createSipProvider();            
            
             shootistNotImplementingSipListenerExt.init();
             providerTable.put(shootistProvider, shootistNotImplementingSipListenerExt);
@@ -188,32 +198,36 @@ public class DialogTimeoutTest extends ScenarioHarness {
             this.shootistNotImplementingSipListenerExt.sendInviteRequest();
             Thread.currentThread().sleep(TIMEOUT);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            fail("unexpected exception ");
+            fail("unexpected exception ",e);
         }
 
-        if (!this.shootme.checkState() || !this.shootistNotImplementingSipListenerExt.checkState()) {
-            fail("Test Failed - Didnt receive Dialog Timeout Event");
-            return;
-        }
+        
+        assertTrue("Test Failed - Didnt receive Dialog Timeout Event", 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return shootme.checkState() && shootistNotImplementingSipListenerExt.checkState();
+                };
+            }, TIMEOUT)
+        );
 
         doTearDown(false);
         doSetUp();
     }
     
     // check that the apps don't get called on tiemout event if autodialog is true but get called on dialog terminated event
-    public void testDialogTimeoutAutoDialog() {
+    public void testDialogTimeoutAutoDialog() throws InterruptedException {
         
         try {
-        	this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", true,false, true);
-            shootist = new Shootist(shootistProtocolObjs);
-            SipProvider shootistProvider = shootist.createSipProvider();
 
             this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", true,false, true);
             ((SipStackImpl)shootmeProtocolObjs.sipStack).setAggressiveCleanup(true);
             shootme = new Shootme(shootmeProtocolObjs);
             SipProvider shootmeProvider = shootme.createSipProvider();
+            
+            this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", true,false, true);
+            shootist = new Shootist(shootistProtocolObjs, shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();            
            
             shootist.init();
             providerTable.put(shootistProvider, shootist);
@@ -230,34 +244,37 @@ public class DialogTimeoutTest extends ScenarioHarness {
             this.shootist.sendInviteRequest();
             Thread.currentThread().sleep(TIMEOUT);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            fail("unexpected exception ");
+            fail("unexpected exception ", e);
         }
 
-        if (!this.shootme.checkState() || !this.shootist.checkState()) {
-            fail("Test Failed - received Dialog Timeout Event");
-            return;
-        }
+        assertTrue("Test Failed - Didnt receive Dialog Timeout Event", 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return shootme.checkState() && shootist.checkState();
+                };
+            }, TIMEOUT)
+        );        
 
         doTearDown(false);
         doSetUp();
     }
     
     // test checking that when the B2BUA flag is set to true, the app doesn't get called on dialog timeout but get called for dialog terminated 
-    public void testDialogTimeoutB2BUABothCalled() {
+    public void testDialogTimeoutB2BUABothCalled() throws InterruptedException {
         
         try {
-        	this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,true, true);
-            shootist = new Shootist(shootistProtocolObjs);
-            SipProvider shootistProvider = shootist.createSipProvider();
 
             this.shootmeProtocolObjs = new ProtocolObjects("shootme", "gov.nist", "udp", false,false, true);
             ((SipStackImpl)shootmeProtocolObjs.sipStack).setAggressiveCleanup(true);
             shootmeNotImplementingListener = new ShootmeNotImplementingListener(shootmeProtocolObjs);
             shootmeNotImplementingListener.setStateIsOk(true);
             SipProvider shootmeProvider = shootmeNotImplementingListener.createSipProvider();
-           
+
+            this.shootistProtocolObjs = new ProtocolObjects("shootist", "gov.nist", "udp", false,true, true);
+            shootist = new Shootist(shootistProtocolObjs, shootmeNotImplementingListener);
+            SipProvider shootistProvider = shootist.createSipProvider();            
+            
             shootist.init();
             providerTable.put(shootistProvider, shootist);
 
@@ -273,19 +290,26 @@ public class DialogTimeoutTest extends ScenarioHarness {
             this.shootist.sendInviteRequest();
             Thread.currentThread().sleep(TIMEOUT);
         } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            fail("unexpected exception ");
+            fail("unexpected exception ", e);
         }
+        
+        assertTrue("Test Failed - Didnt receive Dialog Timeout Event", 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return shootmeNotImplementingListener.checkState();
+                };
+            }, TIMEOUT)
+        );
 
-        if (!this.shootmeNotImplementingListener.checkState()) {
-        	fail("Test Failed - received Dialog Timeout Event");
-        }
-        		
-        if(!this.shootist.checkState()) {
-            fail("Test Failed - didn't received Dialog Terminated Event");
-            return;
-        }
+        assertTrue("Test Failed - didn't received Dialog Terminated Event", 
+            AssertUntil.assertUntil(new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return shootist.checkState();
+                };
+            }, TIMEOUT)
+        );        
 
         doTearDown(false);
         doSetUp();

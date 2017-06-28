@@ -8,6 +8,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
+import test.tck.msgflow.callflows.AssertUntil;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -21,6 +22,8 @@ public abstract class AbstractRedirectTestCase extends ScenarioHarness implement
     protected Shootist shootist;
 
     protected Shootme shootme;
+    
+    private static final int TIMEOUT = 4000;
 
     private static Logger logger = Logger.getLogger("test.tck");
 
@@ -67,9 +70,9 @@ public abstract class AbstractRedirectTestCase extends ScenarioHarness implement
 
     public void tearDown() {
         try {
-            Thread.sleep(4000);
-            this.shootist.checkState();
-            this.shootme.checkState();
+            
+            assertTrue(AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+            assertTrue(AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT));
             super.tearDown();
             Thread.sleep(1000);
             this.providerTable.clear();

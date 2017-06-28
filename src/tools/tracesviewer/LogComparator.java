@@ -29,12 +29,12 @@ class LogComparator implements Comparator {
             else if (ts1 > ts2)
                 return 1;
             else {
-                // Bug fix contributed by Pierre Sandström
+                // Bug fix contributed by Pierre Sandstrï¿½m
                 return  m1 != m2 ? 1: 0;
             }
         } catch (NumberFormatException ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
             return 0;
         }
     }

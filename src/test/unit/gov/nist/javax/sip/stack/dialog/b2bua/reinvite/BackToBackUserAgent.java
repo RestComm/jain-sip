@@ -41,6 +41,7 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 
 public class BackToBackUserAgent implements SipListenerExt {
@@ -89,7 +90,7 @@ public class BackToBackUserAgent implements SipListenerExt {
              newRequest = peerDialog.createRequest(request.getMethod());
         } else {
              newRequest = (Request) request.clone();
-             ((SipURI)newRequest.getRequestURI()).setPort(5090);
+             ((SipURI)newRequest.getRequestURI()).setPort(getTargetPort());
              newRequest.removeHeader(RouteHeader.NAME);
              FromHeader fromHeader = (FromHeader) newRequest.getHeader(FromHeader.NAME);
              fromHeader.setTag(Long.toString(Math.abs(new Random().nextLong())));
@@ -257,9 +258,32 @@ public class BackToBackUserAgent implements SipListenerExt {
 
     }
     
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                // TODO Auto-generated method stub
+                return inviteOkSeen && !dialogTimedOut;
+            }
+        };
+    }
+    
     public void checkState() {
         BackToBackUserAgentTest.assertTrue("INVITE OK not seen", this.inviteOkSeen);
         BackToBackUserAgentTest.assertFalse("Dialog timed out ", this.dialogTimedOut);
     }
+    
+    private int targetPort;
+
+    public int getTargetPort() {
+        return targetPort;
+    }
+
+    public void setTargetPort(int targetPort) {
+        this.targetPort = targetPort;
+    }
+    
+    
 
 }

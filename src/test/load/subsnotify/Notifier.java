@@ -47,7 +47,7 @@ public class Notifier implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -153,7 +153,7 @@ public class Notifier implements SipListener {
             return serverTransactionId;
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
         return null;
@@ -206,7 +206,7 @@ public class Notifier implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

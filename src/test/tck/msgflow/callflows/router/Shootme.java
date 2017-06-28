@@ -27,7 +27,9 @@ import javax.sip.message.*;
 import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 import java.util.*;
 
@@ -61,7 +63,7 @@ public class Shootme implements SipListener {
 
     private boolean inviteReceived;
 
-    public static final int myPort = 5080;
+    public static final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     private static Logger logger = Logger.getLogger("test.tck");
 
@@ -180,7 +182,7 @@ public class Shootme implements SipListener {
 
         } catch (Exception ex) {
             TestHarness.fail(ex.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -226,6 +228,16 @@ public class Shootme implements SipListener {
             DialogTerminatedEvent dialogTerminatedEvent) {
         logger.info("Dialog terminated event recieved");
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return inviteReceived;
+            }
+        };
     }
 
     public void checkState() {

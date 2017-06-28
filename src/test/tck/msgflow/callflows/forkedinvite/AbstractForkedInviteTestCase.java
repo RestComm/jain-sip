@@ -32,6 +32,8 @@ import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * @author M. Ranganathan
@@ -50,7 +52,7 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
     private Shootme shootme2;
 
-
+    private static final int TIMEOUT = 8000;
 
 
     // private Appender appender;
@@ -72,11 +74,17 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
         try {
             super.setUp(false,1,3);
-            shootist = new Shootist(5060, 5070, super.getTiProtocolObjects(0));
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
+            int shootmePort = NetworkPortAssigner.retrieveNextPort();
+            int shootme2Port = NetworkPortAssigner.retrieveNextPort();
+            int[] targets = {shootmePort, shootme2Port};
+            
+            shootist = new Shootist(shootistPort, proxyPort, super.getTiProtocolObjects(0));
             SipProvider shootistProvider = shootist.createSipProvider();
             providerTable.put(shootistProvider, shootist);
 
-            this.shootme = new Shootme(5080, getTiProtocolObjects(1));
+            this.shootme = new Shootme(shootmePort, getTiProtocolObjects(1));
             SipProvider shootmeProvider = shootme.createProvider();
             providerTable.put(shootmeProvider, shootme);
             shootistProvider.addSipListener(this);
@@ -84,13 +92,13 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
 
 
-            this.shootme2 = new Shootme(5090, getTiProtocolObjects(2));
+            this.shootme2 = new Shootme(shootme2Port, getTiProtocolObjects(2));
             shootmeProvider = shootme2.createProvider();
             providerTable.put(shootmeProvider, shootme2);
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
 
-            Proxy proxy = new Proxy(5070, getRiProtocolObjects(0));
+            Proxy proxy = new Proxy(proxyPort, getRiProtocolObjects(0), targets);
             SipProvider provider = proxy.createSipProvider();
             provider.setAutomaticDialogSupportEnabled(false);
             providerTable.put(provider, proxy);
@@ -108,10 +116,15 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
     public void tearDown() {
         try {
-            Thread.sleep(8000);
-            this.shootist.checkState();
-            this.shootme.checkState();
-            this.shootme2.checkState();
+            assertTrue(
+                    "Should see two distinct dialogs and Should see the original (default) dialog in the forked set",
+                    AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "Should see invite and Should see either an ACK or a BYE, or both",
+                    AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "Should see invite and Should see either an ACK or a BYE, or both",
+                    AssertUntil.assertUntil(shootme2.getAssertion(), TIMEOUT));
             super.tearDown();
             Thread.sleep(2000);
             this.providerTable.clear();

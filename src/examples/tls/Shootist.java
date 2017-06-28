@@ -47,7 +47,7 @@ public class Shootist implements SipListener, TlsSecurityPolicy {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
     private void shutDown() {
@@ -130,7 +130,7 @@ public class Shootist implements SipListener, TlsSecurityPolicy {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -182,7 +182,7 @@ public class Shootist implements SipListener, TlsSecurityPolicy {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -244,7 +244,7 @@ public class Shootist implements SipListener, TlsSecurityPolicy {
             // in the classpath
             e.printStackTrace();
             System.err.println(e.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

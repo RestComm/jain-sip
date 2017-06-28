@@ -49,6 +49,7 @@ import javax.sip.message.Response;
 import test.tck.TckInternalError;
 import test.tck.TestHarness;
 import test.tck.TiUnexpectedError;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * <p>
@@ -100,6 +101,9 @@ public class MessageFlowHarness extends TestHarness {
     protected SipStack riSipStack;
 
     protected SipStack tiSipStack;
+    
+    private final int RI_PORT = NetworkPortAssigner.retrieveNextPort();
+    private final int TI_PORT = NetworkPortAssigner.retrieveNextPort();
 
     public MessageFlowHarness(String name) {
         this(name,true);
@@ -113,12 +117,12 @@ public class MessageFlowHarness extends TestHarness {
             if ( riFactory != null)
                 riFactory.resetFactory();
 
-            riSipStack = riFactory.createSipStack(getRiProperties(autoDialog));
+            riSipStack = riFactory.createSipStack(getRiProperties(autoDialog, TI_PORT));
             assertTrue( "RI must be gov.nist", riSipStack instanceof SIPTransactionStack );
 
             tiFactory.resetFactory();
             tiFactory.setPathName( getImplementationPath() );
-            tiSipStack = tiFactory.createSipStack(getTiProperties());
+            tiSipStack = tiFactory.createSipStack(getTiProperties(RI_PORT));
             if (riSipStack == tiSipStack) {
                 throw new TckInternalError("riSipStack should not the same as tiSipStack");
             }

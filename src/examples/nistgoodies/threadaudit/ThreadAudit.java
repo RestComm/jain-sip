@@ -59,14 +59,14 @@ public class ThreadAudit {
         } catch (ObjectInUseException e) {
             System.err.println("Failed to delete UDP listening point");
             e.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         // Sleep again to see if we're able to detect the listening point thread going away
         sleep(4 * auditIntervalInMillis);
 
         System.out.println("Done!");
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
     }
 
     /// Creates and initializes the SIP Stack
@@ -81,7 +81,7 @@ public class ThreadAudit {
             System.err.println("could not find \"gov.nist.jain.protocol.ip.sip.SipStackImpl\" in the classpath");
             e.printStackTrace();
             System.err.println(e.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         // Create a UDP listening point
@@ -90,7 +90,7 @@ public class ThreadAudit {
         } catch (Exception e) {
             System.err.println("Failed to create UDP listening point");
             e.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -101,7 +101,7 @@ public class ThreadAudit {
         } catch (InterruptedException e) {
             System.err.println("Can't sleep");
             e.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 

@@ -24,6 +24,7 @@ import javax.sip.message.MessageFactory;
 import javax.sip.message.Request;
 
 import junit.framework.Assert;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ScenarioHarness;
 import test.unit.gov.nist.javax.sip.stack.tls.TlsTest;
 /**
@@ -40,9 +41,9 @@ public class NIOParsingTest extends ScenarioHarness {
     private static final int OPEN_DELAY = 5000;
     private static final int CLOSE_DELAY = 40000; 
 
-	public final int SERVER_PORT = 5601;
+	public final int SERVER_PORT = NetworkPortAssigner.retrieveNextPort();
 
-    public final int CLIENT_PORT = 6500;
+    public final int CLIENT_PORT = NetworkPortAssigner.retrieveNextPort();
     
     protected String testProtocol = "tcp";
 

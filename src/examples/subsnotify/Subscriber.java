@@ -73,7 +73,7 @@ public class Subscriber implements SipListener {
 
     private static void usage() {
         logger.info(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -149,7 +149,7 @@ public class Subscriber implements SipListener {
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.error("Unexpected exception",ex);
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }

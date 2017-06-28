@@ -57,6 +57,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.helpers.NullEnumeration;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 
@@ -99,16 +100,16 @@ public class Shootist implements SipListenerExt {
 
     private MessageFactory messageFactory;
 
-    private static String PEER_ADDRESS = Shootme.myAddress;
+    private String PEER_ADDRESS;
 
-    private static int PEER_PORT = Shootme.myPort;
+    private int PEER_PORT;
 
-    private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+    private String peerHostPort;
 
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    private static final int myPort = 5060;
+    private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     private boolean stateIsOk = false;
     
@@ -139,16 +140,19 @@ public class Shootist implements SipListenerExt {
                dialog.sendRequest(ct);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
         }
     }
     
-    public Shootist(ProtocolObjects protocolObjects) {
+    public Shootist(ProtocolObjects protocolObjects, Shootme shootme) {
         super();
         this.protocolObjects = protocolObjects;
         stateIsOk = protocolObjects.autoDialog;
+        PEER_ADDRESS = shootme.myAddress;
+        PEER_PORT = shootme.myPort;
+        peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;        
     }
 
     public boolean checkState() {
@@ -178,8 +182,6 @@ public class Shootist implements SipListenerExt {
         sipFactory.setPathName("gov.nist");
         Properties properties = new Properties();
 
-        /* remote peer host */
-        String peerHostPort = Shootist.peerHostPort;
         String localHost = myAddress;
 
         try {

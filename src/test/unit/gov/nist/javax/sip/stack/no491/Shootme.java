@@ -30,8 +30,10 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.helpers.NullEnumeration;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * This class is a UAC template.
@@ -48,7 +50,7 @@ public class Shootme  implements SipListener {
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    public static final int myPort = 5070;
+    public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     private ServerTransaction inviteTid;
 
@@ -289,6 +291,15 @@ public class Shootme  implements SipListener {
         shootme.createSipProvider().addSipListener(shootme);
 
     }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return reInviteSeen;
+            };
+        }; 
+    }    
 
     public void checkState() {
       ReInviteTest.assertTrue("ReINVITE should be seen ", this.reInviteSeen);

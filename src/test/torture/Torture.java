@@ -155,7 +155,7 @@ public class Torture extends DefaultHandler implements ParseExceptionListener,
                 ex.printStackTrace();
                 System.err.println(ex.getMessage());
                 testLogWriter.close();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
     }
@@ -286,7 +286,7 @@ public class Torture extends DefaultHandler implements ParseExceptionListener,
                     } catch (IOException ex) {
                         System.err.println("Cannot open " + testlog
                                 + " for write");
-                        System.exit(0);
+                        junit.framework.TestCase.fail("Exit JVM");
                     }
                 } else {
                     testLogWriter = System.out;
@@ -380,12 +380,12 @@ public class Torture extends DefaultHandler implements ParseExceptionListener,
                 } catch (ParseException ex1) {
                     ex1.printStackTrace();
                     System.out.println("Unexpected excception!");
-                    System.exit(0);
+                    junit.framework.TestCase.fail("Exit JVM");
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
                 System.out.println("Unexpected excception!");
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
             Enumeration e = exceptionTable.elements();
@@ -431,7 +431,7 @@ public class Torture extends DefaultHandler implements ParseExceptionListener,
                 if (testLogWriter != null)
                     testLogWriter.close();
                 System.out.println("Failed -- bailing out!");
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
         } else if (name.compareTo(DESCRIPTION) == 0) {

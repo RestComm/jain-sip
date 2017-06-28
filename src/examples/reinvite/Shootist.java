@@ -72,7 +72,7 @@ public class Shootist  implements SipListener {
 
     private static void usage() {
         logger.info(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -117,7 +117,7 @@ public class Shootist  implements SipListener {
 
         } catch (Exception ex) {
             logger.error(ex);
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -158,7 +158,7 @@ public class Shootist  implements SipListener {
             TestCase.assertEquals("Re-Inivte Dialog must match ", this.dialog,st.getDialog() );
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -188,7 +188,7 @@ public class Shootist  implements SipListener {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -213,7 +213,7 @@ public class Shootist  implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -275,7 +275,7 @@ public class Shootist  implements SipListener {
             }
         } catch (Exception ex) {
             logger.error(ex);
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -296,7 +296,7 @@ public class Shootist  implements SipListener {
             return provider;
         } catch (Exception ex) {
             logger.error(ex);
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
             return null;
         }
     }

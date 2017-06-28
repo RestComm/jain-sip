@@ -165,7 +165,7 @@ public class Shootme  extends TestCase implements SipListener {
             new Timer().schedule(new MyTimerTask(requestEvent,st,toTag), 100);
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -218,7 +218,7 @@ public class Shootme  extends TestCase implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -247,7 +247,7 @@ public class Shootme  extends TestCase implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }

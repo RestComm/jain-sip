@@ -61,7 +61,7 @@ public class SniffFileParser {
         if (args[0] == null) {
             System.out.println("Please specify sniffer file");
             System.out.println("Bailing Out!");
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
         SniffFileParser sfp = new SniffFileParser(args[0]);
         SniffSessionList sniffSessions = sfp.getSniffSessionList();

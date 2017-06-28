@@ -46,6 +46,9 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * Testing for deadlock under massive load on the same call.
@@ -77,7 +80,7 @@ public class StackQueueCongestionControlTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
 
 
@@ -223,7 +226,7 @@ public class StackQueueCongestionControlTest extends TestCase {
 
             	} catch (Exception ex) {
             		ex.printStackTrace();
-            		//System.exit(0);
+            		//junit.framework.TestCase.fail("Exit JVM");
             	}
             	if(q%100==0) System.out.println("Send " + q);
             }
@@ -247,7 +250,7 @@ public class StackQueueCongestionControlTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                //System.exit(0);
+                //junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -302,7 +305,7 @@ public class StackQueueCongestionControlTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                //System.exit(0);
+                //junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -385,7 +388,20 @@ public class StackQueueCongestionControlTest extends TestCase {
         public boolean inUse = false;
         public int sleep;
 
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();        
 
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;
+
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;             
+        }
+        
 
 
         public void processRequest(RequestEvent requestReceivedEvent) {
@@ -464,7 +480,6 @@ public class StackQueueCongestionControlTest extends TestCase {
             sipFactory.setPathName("gov.nist");
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
-            String peerHostPort = "127.0.0.1:5070";
            // properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort + "/"
            //         + transport);
             // If you want to use UDP then uncomment this.
@@ -520,7 +535,7 @@ public class StackQueueCongestionControlTest extends TestCase {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060, transport);
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, transport);
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -684,7 +699,7 @@ public class StackQueueCongestionControlTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
 
     }
@@ -727,27 +742,35 @@ public class StackQueueCongestionControlTest extends TestCase {
        
     }
     
-    public void testUDPIdle() {
+    private static final int TIMEOUT = 10000;
+    
+    public void testUDPIdle() throws InterruptedException {
         this.shootme.init("udp",1);
         this.shootist.init("10", "10", 6000, "udp");
-        try {
-            Thread.sleep(10000);
-        } catch (Exception ex) {
-
-        }
+        
+        AssertUntil.assertUntil(new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return shootme.acks > 5;
+            }
+        } , TIMEOUT);
+        
         if(this.shootme.acks < 5) {
             fail("We expect at least 5 ACKs because retransmissions are not filtered in loose dialog validation." + this.shootme.acks);
         }
     }
     
-    public void testUDPNoThreadpool() {
+    public void testUDPNoThreadpool() throws InterruptedException {
         this.shootme.init("udp",100);
         this.shootist.init(null, "1", 1, "udp");
-        try {
-            Thread.sleep(4000);
-        } catch (Exception ex) {
-
-        }
+        
+        AssertUntil.assertUntil(new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return shootist.receivedResponses > 1 && shootme.acks == 5;
+            }
+        } , TIMEOUT);
+        
         if(this.shootist.receivedResponses<=1) {
             fail("We excpeted more than 0" + this.shootist.receivedResponses);
         }
@@ -756,14 +779,17 @@ public class StackQueueCongestionControlTest extends TestCase {
         }
     }
     
-    public void testTCPNoThreadpool() {
+    public void testTCPNoThreadpool() throws InterruptedException {
         this.shootme.init("tcp",100);
         this.shootist.init(null, "1", 1, "tcp");
-        try {
-            Thread.sleep(4000);
-        } catch (Exception ex) {
-
-        }
+        
+        AssertUntil.assertUntil(new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return shootist.receivedResponses > 1 && shootme.acks == 5;
+            }
+        } , TIMEOUT);
+        
         if(this.shootist.receivedResponses<=1) {
             fail("We excpeted more than 0" + this.shootist.receivedResponses);
         }
@@ -772,28 +798,35 @@ public class StackQueueCongestionControlTest extends TestCase {
         }
     }
     
-    public void testTCPCongestionControlOff() {
+    public void testTCPCongestionControlOff() throws InterruptedException {
         this.shootme.init("tcp",1000);
         this.shootist.init("10","0",1,"tcp");
-        try {
-            Thread.sleep(10000);
-        } catch (Exception ex) {
-
-        }
+        
+        AssertUntil.assertUntil(new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return shootist.receivedResponses > 1 && 
+                        shootist.receivedResponses == shootme.sentResponses ;
+            }
+        } , TIMEOUT);
+        
         if(this.shootist.receivedResponses<=1) {
             fail("We excpeted more than 0" + this.shootist.receivedResponses);
         }
         assertEquals(shootist.receivedResponses, shootme.sentResponses);
 
     }
-    public void testTCPHugeLoss() {
+    public void testTCPHugeLoss() throws InterruptedException {
         this.shootme.init("tcp",1000);
         this.shootist.init("10", "10", 20, "tcp");
-        try {
-            Thread.sleep(10000);
-        } catch (Exception ex) {
-
-        }
+        AssertUntil.assertUntil(new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return shootist.receivedResponses > 1 && 
+                        shootist.receivedResponses > shootme.sentResponses/2 ;
+            }
+        } , TIMEOUT);
+        
         if(this.shootist.receivedResponses<=1) {
             fail("We excpeted more than 0" + this.shootist.receivedResponses);
         }

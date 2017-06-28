@@ -89,14 +89,15 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
 
             super.setUp();
             
-            shootist = new Shootist(getRiProtocolObjects());
-            
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
-
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+
+            shootist = new Shootist(getRiProtocolObjects(), shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);
+
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
             

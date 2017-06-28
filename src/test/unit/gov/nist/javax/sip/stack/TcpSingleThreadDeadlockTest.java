@@ -1,7 +1,6 @@
 package test.unit.gov.nist.javax.sip.stack;
 
 import gov.nist.javax.sip.DialogExt;
-import gov.nist.javax.sip.SipProviderExt;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
 
 import java.util.ArrayList;
@@ -41,6 +40,10 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import static test.tck.TestHarness.assertTrue;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * Testing for deadlock under massive load on the same call.
@@ -72,7 +75,7 @@ public class TcpSingleThreadDeadlockTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
 
 
@@ -142,6 +145,15 @@ public class TcpSingleThreadDeadlockTest extends TestCase {
                 fail("We received some error. It should not happen with loose dialog validation. We should not receive error on cseq out of order");
             }
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return acks == 5;
+                };
+            }; 
+        }         
 
         int acks = 0;
         /**
@@ -214,7 +226,7 @@ public class TcpSingleThreadDeadlockTest extends TestCase {
 
             	} catch (Exception ex) {
             		ex.printStackTrace();
-            		//System.exit(0);
+            		//junit.framework.TestCase.fail("Exit JVM");
             	}
             	if(q%100==0) System.out.println("Send " + q);
             }
@@ -238,7 +250,7 @@ public class TcpSingleThreadDeadlockTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                //System.exit(0);
+                //junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -292,7 +304,7 @@ public class TcpSingleThreadDeadlockTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                //System.exit(0);
+                //junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -369,7 +381,29 @@ public class TcpSingleThreadDeadlockTest extends TestCase {
         private boolean timeoutRecieved;
 
         boolean messageSeen = false;
+        
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();        
 
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;
+
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;             
+        }
+
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return messageSeen;
+                };
+            }; 
+        }         
 
 
 
@@ -440,7 +474,7 @@ boolean inUse = false;
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "tcp";
-            String peerHostPort = "127.0.0.1:5070";
+
             //properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort + "/"
             //        + transport);
             // If you want to use UDP then uncomment this.
@@ -486,7 +520,7 @@ boolean inUse = false;
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060, "tcp");
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, "tcp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -648,7 +682,7 @@ boolean inUse = false;
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
 
     }
@@ -657,14 +691,17 @@ boolean inUse = false;
         shootme.terminate();
     }
 
-    public void testStressMessageSerialization() {
+    public void testStressMessageSerialization() throws InterruptedException {
         this.shootme.init();
         this.shootist.init();
-        try {
-            Thread.sleep(12000);
-        } catch (Exception ex) {
-
-        }
+        assertTrue(
+            AssertUntil.assertUntil(shootist.getAssertion()
+            , 15000)
+        );
+        assertTrue(
+            AssertUntil.assertUntil(shootme.getAssertion()
+            , 15000)
+        );
         if(!this.shootist.messageSeen) {
             fail("Something went wrong. We expected the MESSAGE requests. Why are they not sent?");
         }

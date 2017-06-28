@@ -148,7 +148,7 @@ public class B2BUA implements SipListener {
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			System.exit(0);
+			junit.framework.TestCase.fail("Exit JVM");
 		}
 	}
 
@@ -177,7 +177,7 @@ public class B2BUA implements SipListener {
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
-			System.exit(0);
+			junit.framework.TestCase.fail("Exit JVM");
 
 		}
 	}
@@ -252,7 +252,7 @@ public class B2BUA implements SipListener {
 			System.err.println(e.getMessage());
 			if (e.getCause() != null)
 				e.getCause().printStackTrace();
-			System.exit(0);
+			junit.framework.TestCase.fail("Exit JVM");
 		}
 
 		try {

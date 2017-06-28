@@ -29,6 +29,7 @@ import javax.sip.message.Response;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -162,7 +163,7 @@ public class Shootme implements SipListener {
             timer.schedule(new MyTimerTask(requestEvent, st, toTag), this.delay);
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -252,6 +253,15 @@ public class Shootme implements SipListener {
         headerFactory = sipObjects.headerFactory;
         this.sipStack = sipObjects.sipStack;
     }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return inviteSeen && seen_txTerm && seen_txTimeout && seen_dte;
+            };
+        }; 
+    }    
 
     public void checkState() {
         TestCase.assertTrue("INVTE must be observed",inviteSeen);

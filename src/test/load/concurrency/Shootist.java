@@ -95,7 +95,7 @@ public class Shootist extends TestCase implements SipListener {
 
                 System.out.println("ackCount " + appData.ackCount);
                 ((gov.nist.javax.sip.stack.SIPDialog) dialog).printDebugInfo();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             } else {
                 this.dialog = null;
             }
@@ -137,7 +137,7 @@ public class Shootist extends TestCase implements SipListener {
             assertTrue("Missed BYE " + shootist.byeCount,
                     shootist.byeCount >= NDIALOGS);
             ProtocolObjects.destroy();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -148,7 +148,7 @@ public class Shootist extends TestCase implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -195,7 +195,7 @@ public class Shootist extends TestCase implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -232,7 +232,7 @@ public class Shootist extends TestCase implements SipListener {
             Dialog dialog = tid.getDialog();
             System.out.println("Dialog state is " + dialog.getState());
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }

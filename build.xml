@@ -84,6 +84,7 @@ c:/jakarta-ant/bin/ant all
     <property name="retrowoven" value="${root}/retrowoven" />
     <property name="docdir" value="${root}/javadoc" />
     <property name="srcroot" value="${root}/src" />
+    <property name="srcmvn" value="${root}/m2/" />
     <property name="dist" value="dist" />
     <property name="jain-sip-api-jar" value="${root}/jain-sip-api-1.2.jar" />
     <property name="jain-sip-api-src-jar" value="${root}/jain-sip-api-1.2-src.jar" />
@@ -389,7 +390,12 @@ c:/jakarta-ant/bin/ant all
                     <copy file="tck.properties" toDir="./classes" />
                 </target>
 
-
+                <!-- This is uses for running parallel testsuite -->
+                 <target name="runtestmvn">
+                    <exec dir="${srcmvn}" executable="sh">
+                        <arg line="-c 'mvn clean verify'" />
+                    </exec>
+                </target>
 
                 <!-- this uses the junit task of ant to run the tck in self test mode -->
 
@@ -581,7 +587,7 @@ c:/jakarta-ant/bin/ant all
                     </delete>
                     <mkdir dir="logs" />
 
-                    <junit fork="yes" showoutput="yes" failureproperty="testing.failed">
+                    <junit fork="yes" showoutput="yes" failureproperty="testing.failed" forkmode="perTest">
                     	<sysproperty key="enableNIO" value="${enableNIO}"/>
                         <classpath>
                             <pathelement location="${jain-sip-api-jar}" />
@@ -602,12 +608,16 @@ c:/jakarta-ant/bin/ant all
 
                         <batchtest fork="yes" todir="test-reports" haltonfailure="no">
                             <fileset dir="${srcroot}">
-                                <include name="test/unit/gov/nist/javax/**/*Test.java" />
                                 <exclude name="test/unit/gov/nist/javax/sip/stack/NonRfc3261ForkedInviteTest.java" />
                                 <exclude name="test/unit/gov/nist/javax/sip/stack/SimpleDialogRecoveryTest.java" />
                                 <exclude name="test/unit/gov/nist/javax/sip/stack/tls/*Test.java" />
                             </fileset>
                         </batchtest>
+                        <batchtest fork="yes" todir="test-reports" haltonfailure="no">
+                            <fileset dir="${srcroot}">
+                                <include name="test/unit/gov/nist/javax/**/*Test.java" />
+                            </fileset>
+                        </batchtest>						
                     </junit>
 
                     <echo>The test report can be found at ./test-reports/html/index.html</echo>
@@ -744,7 +754,7 @@ c:/jakarta-ant/bin/ant all
 
                 <!-- This is the build verification test run by cruise control. -->
 
-                <target name="cc-buildloop" depends="generate-version,dist,runtck,runtckcallflows,parsertest,unittest" />
+                <target name="cc-buildloop" depends="generate-version,dist,runtestmvn" />
 
 
                 <!-- compile to traces viewer jar -->

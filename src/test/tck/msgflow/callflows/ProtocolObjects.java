@@ -33,7 +33,7 @@ public class ProtocolObjects {
 
     public int logLevel = 32;
 
-    String logFileDirectory = "logs/";
+    String logFileDirectory = "./target/logs/";
 
     public final String transport;
 
@@ -96,7 +96,83 @@ public class ProtocolObjects {
 
             NonSipUriRouter router = (NonSipUriRouter) sipStack.getRouter();
 
-            router.setMyPort(5080);
+            router.setMyPort(5090);
+
+            System.out.println("createSipStack " + sipStack);
+        } catch (Exception e) {
+            // could not find
+            // gov.nist.jain.protocol.ip.sip.SipStackImpl
+            // in the classpath
+            e.printStackTrace();
+            System.err.println(e.getMessage());
+            throw new RuntimeException("Stack failed to initialize");
+        }
+
+        try {
+            headerFactory = sipFactory.createHeaderFactory();
+            addressFactory = sipFactory.createAddressFactory();
+            messageFactory = sipFactory.createMessageFactory();
+        } catch (SipException ex) {
+            ex.printStackTrace();
+            throw new RuntimeException(ex);
+        }
+    }
+    
+    public ProtocolObjects(String stackname, String pathname, String transport, int peerPort,
+            boolean autoDialog, boolean isBackToBackUserAgent, boolean isReentrant) {
+
+        this.autoDialog = autoDialog;
+        this.transport = transport;
+        SipFactory sipFactory = SipFactory.getInstance();
+        sipFactory.resetFactory();
+        sipFactory.setPathName(pathname);
+        Properties properties = new Properties();
+        properties.setProperty("javax.sip.STACK_NAME", stackname);
+
+        // The following properties are specific to nist-sip
+        // and are not necessarily part of any other jain-sip
+        // implementation.
+        properties.setProperty("gov.nist.javax.sip.DEBUG_LOG", logFileDirectory
+                + stackname + "debuglog.txt");
+        properties.setProperty("gov.nist.javax.sip.SERVER_LOG",
+                logFileDirectory + stackname + "log.txt");
+
+        properties.setProperty("javax.sip.AUTOMATIC_DIALOG_SUPPORT",
+                (autoDialog ? "on" : "off"));
+
+        // For the forked subscribe notify test
+        properties.setProperty("javax.sip.FORKABLE_EVENTS", "foo");
+
+        //For the TelUrlRouter test.
+        properties.setProperty("javax.sip.ROUTER_PATH", NonSipUriRouter.class.getName());
+
+        // Dont use the router for all requests.
+        properties.setProperty("javax.sip.USE_ROUTER_FOR_ALL_URIS", "false");
+
+
+        properties.setProperty("gov.nist.javax.sip.THREAD_POOL_SIZE", "1");
+        
+        properties.setProperty("gov.nist.javax.sip.IS_BACK_TO_BACK_USER_AGENT", Boolean.toString(isBackToBackUserAgent));
+        
+        properties.setProperty("gov.nist.javax.sip.DELIVER_RETRANSMITTED_ACK_TO_LISTENER", "true");
+        properties.setProperty("gov.nist.javax.sip.REENTRANT_LISTENER", "" + isReentrant);
+        if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
+            logger.info("\nNIO Enabled\n");
+            properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
+        }
+        // Set to 0 in your production code for max speed.
+        // You need 16 for logging traces. 32 for debug + traces.
+        // Your code will limp at 32 but it is best for debugging.
+        properties.setProperty("gov.nist.javax.sip.TRACE_LEVEL", new Integer(
+                logLevel).toString());
+
+        try {
+            // Create SipStack object
+            sipStack = sipFactory.createSipStack(properties);
+
+            NonSipUriRouter router = (NonSipUriRouter) sipStack.getRouter();
+
+            router.setMyPort(peerPort);
 
             System.out.println("createSipStack " + sipStack);
         } catch (Exception e) {

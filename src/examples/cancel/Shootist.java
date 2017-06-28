@@ -12,6 +12,8 @@ import org.apache.log4j.SimpleLayout;
 import java.util.*;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and shootme is
@@ -32,11 +34,11 @@ public class Shootist extends TestCase implements SipListener {
 
     private static String host = "127.0.0.1";
 
-    private static int port = 5060;
+    private static int port = NetworkPortAssigner.retrieveNextPort();
 
     private static String peerHost = "127.0.0.1";
 
-    private static int peerPort = 5070;
+    private static int peerPort = NetworkPortAssigner.retrieveNextPort();
 
     private ClientTransaction inviteTid;
 
@@ -168,6 +170,16 @@ public class Shootist extends TestCase implements SipListener {
 
         }
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return (byeSent && byeOkReceived) && (cancelSent && cancelOKReceived && requestTerminated);
+            }
+        };
     }
 
     public void checkState() {

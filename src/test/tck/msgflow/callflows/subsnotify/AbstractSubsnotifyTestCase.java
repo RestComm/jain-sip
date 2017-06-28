@@ -27,6 +27,8 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 /**
@@ -51,6 +53,10 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
     protected Forker forker;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 5000;
+    
+    protected int forkerPort;
 
     static {
         if (!logger.isAttached(console)) {
@@ -69,21 +75,25 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
             super.setUp(1,3);
 
             logger.info("SubsNotifyTest: setup()");
-
+            int notifier1Port = NetworkPortAssigner.retrieveNextPort();
+            int notifier2Port = NetworkPortAssigner.retrieveNextPort();
+            forkerPort = NetworkPortAssigner.retrieveNextPort();
+            int subcriberPort = NetworkPortAssigner.retrieveNextPort();
+            
             notifier1 = new Notifier(getTiProtocolObjects(0));
-            SipProvider notifier1Provider = notifier1.createProvider(5070);
+            SipProvider notifier1Provider = notifier1.createProvider(notifier1Port);
             providerTable.put(notifier1Provider, notifier1);
 
             notifier2 = new Notifier(getTiProtocolObjects(1));
-            SipProvider notifier2Provider = notifier2.createProvider(5071);
+            SipProvider notifier2Provider = notifier2.createProvider(notifier2Port);
             providerTable.put(notifier2Provider, notifier2);
 
             forker = new Forker(getRiProtocolObjects(0));
-            SipProvider forkerProvider = forker.createProvider(5065);
+            SipProvider forkerProvider = forker.createProvider(forkerPort, notifier1Port, notifier2Port);
             providerTable.put(forkerProvider, forker);
 
             subscriber = new Subscriber(getTiProtocolObjects(2));
-            SipProvider subscriberProvider = subscriber.createProvider(5080);
+            SipProvider subscriberProvider = subscriber.createProvider(subcriberPort);
             providerTable.put(subscriberProvider, subscriber);
 
             notifier1Provider.addSipListener(this);
@@ -100,13 +110,16 @@ public abstract class AbstractSubsnotifyTestCase extends ScenarioHarness impleme
 
     public void tearDown() throws Exception {
         try {
-            Thread.sleep(5000);
+            assertTrue(AssertUntil.assertUntil(subscriber.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "Did not see subscribe",
+                    AssertUntil.assertUntil(notifier1.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "Did not see subscribe",
+                    AssertUntil.assertUntil(notifier2.getAssertion(), TIMEOUT));
+            Thread.sleep(2000);
             super.tearDown();
             this.providerTable.clear();
-            Thread.sleep(100);
-            subscriber.checkState();
-            notifier1.checkState();
-            notifier2.checkState();
             logTestCompleted();
         } catch (Exception ex) {
             logger.error("unexpected exception", ex);

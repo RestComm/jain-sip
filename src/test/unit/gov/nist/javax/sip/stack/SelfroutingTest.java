@@ -34,6 +34,7 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import org.apache.log4j.Logger;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
@@ -61,7 +62,7 @@ public class SelfroutingTest extends ScenarioHarness {
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5060;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ClientTransaction inviteTid;
 

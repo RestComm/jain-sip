@@ -91,7 +91,7 @@ static final String message2 = "SIP/2.0 200 OK\r\n"+
 
         } catch (Exception ex) {
            ex.printStackTrace();
-           System.exit(0);
+           junit.framework.TestCase.fail("Exit JVM");
         }
 
         StatusLine statusLine = new StatusLine();
@@ -107,7 +107,7 @@ static final String message2 = "SIP/2.0 200 OK\r\n"+
 
         } catch (Exception ex) {
            ex.printStackTrace();
-           System.exit(0);
+           junit.framework.TestCase.fail("Exit JVM");
         }
 
 

@@ -66,7 +66,7 @@ public class Forker implements SipListener {
 
     private static void usage() {
         logger.info(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -317,7 +317,7 @@ public class Forker implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

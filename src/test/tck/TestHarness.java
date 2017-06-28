@@ -24,6 +24,8 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class TestHarness extends TestCase {
 
@@ -36,10 +38,6 @@ public class TestHarness extends TestCase {
     protected static final String LOG_FILE_NAME = "javax.sip.tck.LOG_FILE";
 
     protected static final String LOCAL_ADDRESS = "127.0.0.1";
-
-    protected static final int TI_PORT = 5060;
-
-    protected static final int RI_PORT = 6050;
 
     // Keep these static but initialize from the constructor to allow
     // changing from the GUI
@@ -228,7 +226,7 @@ public class TestHarness extends TestCase {
         testPassed = false;
         if (abortOnFail) {
             new Exception().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -410,14 +408,14 @@ public class TestHarness extends TestCase {
             ex.printStackTrace();
             System.out
                     .println("Cannot get TI factories -- cannot proceed! Bailing");
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
         // Cannot sensibly proceed so bail out.
         if (tiAddressFactory == null || tiMessageFactory == null
                 || tiHeaderFactory == null) {
             System.out
                     .println("Cannot get TI factories --  cannot proceed! Bailing!!");
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -442,8 +440,16 @@ public class TestHarness extends TestCase {
             throw new TckInternalError("Could not get factories");
         }
     }
-
-    public void logTestCompleted() {
+    
+    private static final int TIMEOUT = 20000;
+    
+    public void logTestCompleted() throws InterruptedException {
+        AssertUntil.assertUntil(new TestAssertion() {
+                        @Override
+                        public boolean assertCondition() {
+                            return testPassed;
+                        };
+                    }, TIMEOUT);        
     	TestCase.assertTrue( testPassed );
         logger.info(this.getName() + " Completed");
     }
@@ -458,7 +464,7 @@ public class TestHarness extends TestCase {
      * Returns a properties object containing all RI settings. The result from
      * this method is passed to the SipFactory when creating the RI Stack
      */
-    public static Properties getRiProperties(boolean autoDialog) {
+    public static Properties getRiProperties(boolean autoDialog, int peerPort) {
         // TODO collect all system properties
         // prefixed javax.sip.tck.ri and add them to the local
         // properties object
@@ -487,7 +493,7 @@ public class TestHarness extends TestCase {
                 "true");
         // For testing sending of stateless null keepalive messages.
         //@see test.tck.msgflow.SipProviderTest.testSendNullRequest
-        properties.setProperty("javax.sip.OUTBOUND_PROXY", LOCAL_ADDRESS + ":" + TI_PORT + "/udp");
+        properties.setProperty("javax.sip.OUTBOUND_PROXY", LOCAL_ADDRESS + ":" + peerPort + "/udp");
         if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
         	logger.info("\nNIO Enabled\n");
         	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
@@ -502,7 +508,7 @@ public class TestHarness extends TestCase {
      *
      *
      */
-    public static Properties getTiProperties() {
+    public static Properties getTiProperties(int peerPort) {
         // TODO collect all system properties
         // prefixed javax.sip.tck.ti and add them to the local
         // properties object
@@ -520,7 +526,7 @@ public class TestHarness extends TestCase {
                 "logs/tiMessageLog.txt");
         // For testing sending of stateless null keepalive messages.
         //@see test.tck.msgflow.SipProviderTest.testSendNullRequest
-        properties.setProperty("javax.sip.OUTBOUND_PROXY", LOCAL_ADDRESS + ":" + RI_PORT + "/udp");
+        properties.setProperty("javax.sip.OUTBOUND_PROXY", LOCAL_ADDRESS + ":" + peerPort + "/udp");
         if(System.getProperty("enableNIO") != null && System.getProperty("enableNIO").equalsIgnoreCase("true")) {
         	logger.info("\nNIO Enabled\n");
         	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());

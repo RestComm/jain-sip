@@ -31,6 +31,8 @@ import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * @author M. Ranganathan
@@ -49,7 +51,7 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
     private Proxy proxy;
 
-
+    private static final int TIMEOUT = 4000;
 
     static {
         if ( !logger.isAttached(console))
@@ -75,18 +77,25 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
         try {
             super.setUp(false);
-            shootist = new Shootist(5060, 5070, getTiProtocolObjects());
+            
+            int shootitsPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
+            int shootmePort = NetworkPortAssigner.retrieveNextPort();
+          
+            
+            shootist = new Shootist(shootitsPort, proxyPort, getTiProtocolObjects());
             SipProvider shootistProvider = shootist.createSipProvider();
             providerTable.put(shootistProvider, shootist);
 
-            this.shootme = new Shootme(5080, getTiProtocolObjects());
+            this.shootme = new Shootme(shootmePort, getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createProvider();
             providerTable.put(shootmeProvider, shootme);
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
 
 
-            this.proxy = new Proxy(5070, getRiProtocolObjects());
+            this.proxy = new Proxy(proxyPort, getRiProtocolObjects());
+            proxy.setTargetPort(shootmePort);
             SipProvider provider = proxy.createSipProvider();
             provider.setAutomaticDialogSupportEnabled(false);
             providerTable.put(provider, proxy);
@@ -103,10 +112,15 @@ public class AbstractForkedInviteTestCase extends ScenarioHarness implements
 
     public void tearDown() {
         try {
-            Thread.sleep(4000);
-            this.shootist.checkState();
-            this.shootme.checkState();
-            this.proxy.checkState();
+            assertTrue(
+                    "Should see at most one dialog",
+                    AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "Should see invite",
+                    AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT));
+            assertTrue(
+                    "Should see LOOP DETECTED",
+                    AssertUntil.assertUntil(proxy.getAssertion(), TIMEOUT));
             getTiProtocolObjects().destroy();
             if (getRiProtocolObjects() != getTiProtocolObjects())
                 getRiProtocolObjects().destroy();

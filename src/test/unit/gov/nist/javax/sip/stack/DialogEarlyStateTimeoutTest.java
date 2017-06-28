@@ -48,6 +48,9 @@ import org.apache.log4j.Logger;
 import test.unit.gov.nist.javax.sip.stack.CtxExpiredTest.Shootist;
 import test.unit.gov.nist.javax.sip.stack.CtxExpiredTest.Shootme;
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class DialogEarlyStateTimeoutTest extends TestCase {
     AddressFactory addressFactory;
@@ -64,22 +67,21 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
 
     private SipStackExt shootmeStack;
 
-    private static String PEER_ADDRESS = Shootme.myAddress;
-
-    private static int PEER_PORT = Shootme.myPort;
-
-    private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
-
     private static Logger logger = Logger.getLogger(CtxExpiredTest.class);
     static {
         logger.addAppender(new ConsoleAppender());
     }
 
     class Shootist implements SipListenerExt {
+        private String PEER_ADDRESS;
+
+        private int PEER_PORT;
+
+        private String peerHostPort;        
 
         protected static final String myAddress = "127.0.0.1";
 
-        protected static final int myPort = 6050;
+        protected final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         private SipProviderExt provider;
 
@@ -93,6 +95,15 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
 
         private Dialog timeoutDialog;
 
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return timeoutSeen && saw1xx && dialog.equals(timeoutDialog);
+                    }
+                };
+        }        
+        
         public void checkState() {
             assertTrue("Should see timeout ", timeoutSeen);
             assertTrue("Should see 1xx ", saw1xx);
@@ -100,11 +111,14 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
                     timeoutDialog);
         }
 
-        public Shootist(SipStackExt sipStack) throws Exception {
+        public Shootist(SipStackExt sipStack,Shootme shootme) throws Exception {
             ListeningPoint lp = sipStack.createListeningPoint("127.0.0.1",
                     myPort, "udp");
             this.provider = (SipProviderExt) sipStack.createSipProvider(lp);
             provider.addSipListener(this);
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;             
         }
 
         public void sendInvite() {
@@ -302,12 +316,21 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
 
     public class Shootme implements SipListener {
 
-        public static final int myPort = 6060;
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
         public static final String myAddress = "127.0.0.1";
         private SipProviderExt provider;
         private boolean cancelSeen;
         private boolean byeSeen;
 
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return cancelSeen;
+                    }
+                };
+        }          
+        
         public void checkState() {
             TestCase.assertTrue("Should see cancel", cancelSeen);
         }
@@ -431,7 +454,6 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
             }
             this.shootistStack = (SipStackExt) sipFactory
                     .createSipStack(properties);
-            this.shootist = new Shootist(shootistStack);
 
             // -----------------------------
             properties = new Properties();
@@ -450,6 +472,7 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
             this.shootmeStack = (SipStackExt) sipFactory
                     .createSipStack(properties);
             this.shootme = new Shootme(shootmeStack);
+            this.shootist = new Shootist(shootistStack,shootme);            
 
         } catch (PeerUnavailableException e) {
             // could not find
@@ -466,14 +489,15 @@ public class DialogEarlyStateTimeoutTest extends TestCase {
 
     
     public void tearDown() throws Exception {
-        Thread.sleep(50000);
         this.shootist.checkState();
         this.shootme.checkState();
         this.shootistStack.stop();
         this.shootmeStack.stop();
     }
 
-    public void testSendInviteExpectTimeout() {
+    public void testSendInviteExpectTimeout() throws InterruptedException {
         this.shootist.sendInvite();
+        AssertUntil.assertUntil(shootist.getAssertion(), 50000);
+        AssertUntil.assertUntil(shootme.getAssertion(), 50000);
     }
 }

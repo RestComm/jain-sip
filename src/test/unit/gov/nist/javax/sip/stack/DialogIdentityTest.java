@@ -47,6 +47,7 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class DialogIdentityTest extends TestCase {
     private static AddressFactory addressFactory;
@@ -64,7 +65,7 @@ public class DialogIdentityTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ServerTransaction inviteTid;
 
@@ -223,7 +224,7 @@ public class DialogIdentityTest extends TestCase {
                 new Timer().schedule(new ByeTimer(this), 5000);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                //System.exit(0);
+                //junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -272,7 +273,7 @@ public class DialogIdentityTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -297,7 +298,7 @@ public class DialogIdentityTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -346,7 +347,7 @@ public class DialogIdentityTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -416,6 +417,8 @@ public class DialogIdentityTest extends TestCase {
         private Dialog dialog;
 
         private boolean byeTaskRunning;
+        
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();        
 
         class ByeTask  extends TimerTask {
             Dialog dialog;
@@ -546,7 +549,7 @@ public class DialogIdentityTest extends TestCase {
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
         }
@@ -614,14 +617,14 @@ public class DialogIdentityTest extends TestCase {
                 // in the classpath
                 e.printStackTrace();
                 System.err.println(e.getMessage());
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5099, "udp");
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);

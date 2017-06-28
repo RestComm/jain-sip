@@ -62,7 +62,7 @@ public class Shootme implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -169,7 +169,7 @@ public class Shootme implements SipListener {
             new Timer().schedule(new MyTimerTask(this), 1000);
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -207,7 +207,7 @@ public class Shootme implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -232,7 +232,7 @@ public class Shootme implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -287,7 +287,7 @@ public class Shootme implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

@@ -62,8 +62,11 @@ import javax.sip.message.Response;
 
 import org.apache.log4j.Logger;
 
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * Non regression test for http://code.google.com/p/mobicents/issues/detail?id=3188
@@ -80,6 +83,8 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
     private Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 4000;
 
     static {
         if (!logger.isAttached(console))
@@ -95,7 +100,7 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
             // To run on two machines change these to suit.
             public static final String myAddress = "127.0.0.1";
 
-            public static final int myPort = 5070;
+            public int myPort = NetworkPortAssigner.retrieveNextPort();
 
             ServerTransaction inviteTid;
 
@@ -282,9 +287,6 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
                 return sipProvider;
             }
 
-
-
-
             public void checkState() {
                 ReconnectTCPTest.assertTrue("ACK was not received", ackReceived);
             }
@@ -337,14 +339,14 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
         private  String PEER_ADDRESS = Shootme.myAddress;
 
-        private  int PEER_PORT = Shootme.myPort;
+        private  int PEER_PORT = 5060;
 
-        private  String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+        private  String peerHostPort = "";
 
         // To run on two machines change these to suit.
         public static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5060;
+        private int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ClientTransaction inviteTid;
 
@@ -359,10 +361,11 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
 
 
-        public Shootist(ProtocolObjects protocolObjects) {
+        public Shootist(ProtocolObjects protocolObjects, int peerpost) {
             super();
             this.protocolObjects = protocolObjects;
-
+            PEER_PORT = peerpost;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
         }
 
 
@@ -654,15 +657,16 @@ public class ReconnectTCPTest extends ScenarioHarness implements SipListener {
 
         try {
             this.transport = "tcp";
-
             super.setUp();
-            shootist = new Shootist(getRiProtocolObjects());
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
-
+            
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getRiProtocolObjects(), shootme.myPort);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);
+
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
 

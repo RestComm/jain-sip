@@ -11,6 +11,8 @@ import org.apache.log4j.Appender;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * @author <a href="mailto:baranowb@gmail.com"> Bartosz Baranowski </a>
@@ -25,6 +27,8 @@ public class TimeoutOnTerminatedTest extends TestCase {
     private static Logger logger = Logger.getLogger("test.tck");
 
     protected static final Appender console = new ConsoleAppender(new SimpleLayout());
+    
+    private static final int TIMEOUT = 60000;    
 
     // private Appender appender;
 
@@ -39,11 +43,13 @@ public class TimeoutOnTerminatedTest extends TestCase {
 
         try {
             super.setUp();
-            shootist = new Shootist(5060, 5080);
+            int shootitsPort = NetworkPortAssigner.retrieveNextPort();
+            int shootmePort = NetworkPortAssigner.retrieveNextPort();
+            shootist = new Shootist(shootitsPort, shootmePort);
             SipProvider shootistProvider = shootist.createSipProvider();
             shootistProvider.addSipListener(shootist);
 
-            shootme = new Shootme(5080, 1000);
+            shootme = new Shootme(shootmePort, 1000);
 
             SipProvider shootmeProvider = shootme.createProvider();
             shootmeProvider.addSipListener(shootme);
@@ -58,7 +64,8 @@ public class TimeoutOnTerminatedTest extends TestCase {
     @Override
     public void tearDown() {
         try {
-            Thread.sleep(60000);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
+            AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT);
 
             this.shootist.checkState();
 

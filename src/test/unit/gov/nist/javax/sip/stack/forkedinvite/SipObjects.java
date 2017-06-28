@@ -54,7 +54,7 @@ public class SipObjects {
         try {
             // Create SipStack object
             sipStack = sipFactory.createSipStack(properties);
-            String logFileDirectory = "logs/";
+            String logFileDirectory = "./target/logs/";
 
             /* SipFoundryAppender sfa = new SipFoundryAppender(new SipFoundryLayout(),
                     logFileDirectory + "sip" + stackname + ".log");

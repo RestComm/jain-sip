@@ -58,6 +58,7 @@
 	<modules>
 		<module>jain-sip-api</module>
 		<module>jain-sip-ri</module>
+		<module>jain-sip-testsuite</module>
 	</modules>
 
 	<properties>

@@ -191,7 +191,7 @@ public class Shootme extends TestCase implements SipListener {
             //System.out.println("dialog = " + dialog);
         } catch (SipException ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }

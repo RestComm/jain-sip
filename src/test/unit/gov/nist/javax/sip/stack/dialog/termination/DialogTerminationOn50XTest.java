@@ -12,8 +12,11 @@ import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 
 import org.apache.log4j.Logger;
+import static test.tck.TestHarness.assertTrue;
+import test.tck.msgflow.callflows.AssertUntil;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class DialogTerminationOn50XTest extends ScenarioHarness implements SipListener {
 
@@ -22,6 +25,8 @@ public class DialogTerminationOn50XTest extends ScenarioHarness implements SipLi
     private Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 60000;    
 
     static {
         if (!logger.isAttached(console))
@@ -50,15 +55,19 @@ public class DialogTerminationOn50XTest extends ScenarioHarness implements SipLi
             this.transport = "udp";
 
             super.setUp();
-            shootist = new Shootist(getRiProtocolObjects());
-            SipProvider shootistProvider = shootist.createSipProvider();
-            shootist.init();
-            providerTable.put(shootistProvider, shootist);
+
 
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
-            shootme.init();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getRiProtocolObjects(), shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);            
+
+            shootme.init();
+            shootist.init();
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
 
@@ -71,23 +80,22 @@ public class DialogTerminationOn50XTest extends ScenarioHarness implements SipLi
         }
     }
 
-    public void testSendInviteShouldNotTerminatedOnINFO() {
+    public void testSendInviteShouldNotTerminatedOnINFO() throws InterruptedException {
         for (int i = 300; i < 601; i += 100 ) {
-            try {
 
-                this.shootme.setResponseCodeToINFO(i);
-                this.shootist.setResponseCodeToINFO(i);
-                this.shootist.sendInviteRequest();
-                Thread.currentThread().sleep(25000);
-            } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
+            this.shootme.setResponseCodeToINFO(i);
+            this.shootist.setResponseCodeToINFO(i);
+            this.shootist.sendInviteRequest();
 
-            if (!this.shootme.checkState() || !this.shootist.checkState()) {
-                fail("Test Failed - Didnt receive DTE for response: "+i);
-                return;
-            }
+            assertTrue("Test Failed - Didnt receive DTE for response: "+i, 
+                AssertUntil.assertUntil(new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return shootme.checkState() && shootist.checkState();
+                    };
+                }, TIMEOUT)
+            );               
+
             if (i != 600) {
 //                doTearDown(false);
 //                doSetUp();

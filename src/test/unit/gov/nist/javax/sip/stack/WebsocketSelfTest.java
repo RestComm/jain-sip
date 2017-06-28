@@ -47,6 +47,7 @@ import org.apache.log4j.PatternLayout;
 
 import test.unit.gov.nist.javax.sip.stack.tls.TlsTest;
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * Testing complete websocket scenario browser to server HTTP-Upgrade->INVITE->ACK->MESSAGE->BYE
@@ -58,7 +59,7 @@ public class WebsocketSelfTest extends TestCase {
 
 	private static String transport;
     private static final String myAddress = "127.0.0.1";
-    private String peerHostPort = "127.0.0.1:5070";
+
     private WebsocketServer websocketServer;
     private WebsocketBrowser websocketBrowser;
     
@@ -69,7 +70,7 @@ public class WebsocketSelfTest extends TestCase {
         private  HeaderFactory headerFactory;
         private SipStack sipStack;
         private SipProvider sipProvider;
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
         private DialogExt dialog;
         public static final boolean callerSendsBye = true;
         boolean ackReceived;
@@ -336,6 +337,22 @@ public class WebsocketSelfTest extends TestCase {
                 + "a=rtpmap:0 PCMU/8000\r\n" + "a=rtpmap:4 G723/8000\r\n"
                 + "a=rtpmap:18 G729A/8000\r\n" + "a=ptime:20\r\n";
         
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
+        
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;  
+
+        public WebsocketBrowser(WebsocketServer server) {
+            PEER_ADDRESS = myAddress;
+            PEER_PORT = server.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;              
+        }
+
+        
+        
         public void processRequest(RequestEvent requestReceivedEvent) {
             Request request = requestReceivedEvent.getRequest();
             try {
@@ -410,7 +427,7 @@ public class WebsocketSelfTest extends TestCase {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint(myAddress, 5060, transport);
+                udpListeningPoint = sipStack.createListeningPoint(myAddress, myPort, transport);
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 WebsocketBrowser listener = this;
                 sipProvider.addSipListener(listener);
@@ -545,7 +562,7 @@ public class WebsocketSelfTest extends TestCase {
     	console.activateOptions();
     	Logger.getRootLogger().addAppender(console);
     	this.websocketServer = new WebsocketServer();
-    	this.websocketBrowser = new WebsocketBrowser();
+    	this.websocketBrowser = new WebsocketBrowser(websocketServer);
     }
     
     public void tearDown() {

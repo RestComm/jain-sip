@@ -51,6 +51,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class ServerTransactionRetransmissionTimerTest extends TestCase {
     public static final boolean callerSendsBye = true;
@@ -102,7 +103,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                     dialog.sendRequest(ct);
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    System.exit(0);
+                    junit.framework.TestCase.fail("Exit JVM");
                 }
 
             }
@@ -154,13 +155,27 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
 
         // Save the created ACK request, to respond to retransmitted 2xx
         private Request ackRequest;
+        
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();        
+
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;
+
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;             
+        }         
 
         public void processResponse(ResponseEvent responseReceivedEvent) {
             logger.info(System.currentTimeMillis() - startTime
@@ -288,7 +303,6 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort
                     + "/" + transport);
             // If you want to use UDP then uncomment this.
@@ -317,6 +331,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
             	logger.info("\nNIO Enabled\n");
             	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
             }
+            
             try {
                 // Create SipStack object
                 sipStack = sipFactory.createSipStack(properties);
@@ -327,7 +342,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                 // in the classpath
                 e.printStackTrace();
                 System.err.println(e.getMessage());
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -335,7 +350,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
                 udpListeningPoint = sipStack.createListeningPoint("127.0.0.1",
-                        5060, "udp");
+                        myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -490,6 +505,21 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
         }
 
         public void terminate() {
+            sipProvider.removeSipListener(this);
+            while (true) {
+                try {                   
+                    sipStack.deleteListeningPoint(udpListeningPoint);
+                    // This will close down the stack and exit all threads                    
+                    sipStack.deleteSipProvider(sipProvider);
+                    break;
+                } catch (ObjectInUseException ex) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        continue;
+                    }
+                }
+            }
             sipStack.stop();
         }
     }
@@ -506,7 +536,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ServerTransaction inviteTid;
 
@@ -716,7 +746,7 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -837,18 +867,25 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
 
     }
     public void tearDown() {
         shootist.terminate();
         shootme.terminate();
+        try {
+            SipFactory.getInstance().resetFactory();
+            super.tearDown();
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
     }
 
     public void testRetransmit() {
-        this.shootme.init("shootme_retransmit");
         this.shootist.init();
+        this.shootme.init("shootme_retransmit");
         try {
             Thread.sleep(60000);
         } catch (Exception ex) {
@@ -857,9 +894,9 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
     }
     
     public void testRetransmitNoAckSent() {
-        this.shootme.init("shootme_retransmit_ack_sent");
         this.shootist.sendAck = false;
         this.shootist.init();
+        this.shootme.init("shootme_retransmit_ack_sent");
         try {
             Thread.sleep(60000);
         } catch (Exception ex) {
@@ -869,9 +906,9 @@ public class ServerTransactionRetransmissionTimerTest extends TestCase {
     
     // Non Regression Test for Issue http://java.net/jira/browse/JSIP-443
     public void testEnableRetransmitionAlertsLeaks() {
+        this.shootist.init();
     	this.shootme.enableRetransmitAlerts = true;
         this.shootme.init("shootme_retransmit_alerts");        
-        this.shootist.init();
         try {
             Thread.sleep(60000);
         } catch (Exception ex) {

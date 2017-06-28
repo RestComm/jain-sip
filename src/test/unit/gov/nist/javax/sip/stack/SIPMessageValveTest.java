@@ -46,6 +46,7 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * Test for SIP_MESSAGE_VALVE callback
@@ -69,7 +70,7 @@ public class SIPMessageValveTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
 
 
@@ -213,7 +214,7 @@ public class SIPMessageValveTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -268,7 +269,7 @@ public class SIPMessageValveTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -348,7 +349,19 @@ public class SIPMessageValveTest extends TestCase {
 
         boolean messageSeen = false;
 
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();        
 
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;
+
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;             
+        }
 
 
 
@@ -395,7 +408,6 @@ public class SIPMessageValveTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort + "/"
                     + transport);
             // If you want to use UDP then uncomment this.
@@ -441,7 +453,7 @@ public class SIPMessageValveTest extends TestCase {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060, "udp");
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -602,7 +614,7 @@ public class SIPMessageValveTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
 
     }

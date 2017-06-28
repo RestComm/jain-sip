@@ -3,12 +3,15 @@
  */
 package examples.cancel;
 
+import test.tck.msgflow.callflows.AssertUntil;
+
 /**
  * @author M. Ranganathan
  *
  */
 public class TestDelayedCancel extends AbstractCancelTest {
 
+    private static final int TIMEOUT = 2000;
     public TestDelayedCancel() {
         super();
     }
@@ -16,7 +19,8 @@ public class TestDelayedCancel extends AbstractCancelTest {
     public void testCancelDelay() throws Exception {
         Shootist.sendDelayedCancel = true;
         shootist.sendInvite();
-        Thread.sleep(2000);
-        shootist.checkState();
+        assertTrue(AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT));
+//        Thread.sleep(2000);
+//        shootist.checkState();
     }
 }

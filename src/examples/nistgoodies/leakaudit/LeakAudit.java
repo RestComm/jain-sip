@@ -61,7 +61,7 @@ public class LeakAudit {
         sleep(20 * auditIntervalInMillis);
 
         System.out.println("Done!");
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
     }
 
     /// Creates and initializes the SIP Stack
@@ -76,7 +76,7 @@ public class LeakAudit {
             System.err.println("could not find \"gov.nist.jain.protocol.ip.sip.SipStackImpl\" in the classpath");
             e.printStackTrace();
             System.err.println(e.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         // Create a UDP listening point
@@ -85,7 +85,7 @@ public class LeakAudit {
         } catch (Exception e) {
             System.err.println("Failed to create UDP listening point");
             e.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         // Create a SIP Provider
@@ -95,7 +95,7 @@ public class LeakAudit {
         } catch (Exception e) {
             System.err.println("Failed to create sip provider");
             e.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -107,7 +107,7 @@ public class LeakAudit {
         } catch (InterruptedException e) {
             System.err.println("Can't sleep");
             e.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 

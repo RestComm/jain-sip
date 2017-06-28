@@ -15,6 +15,7 @@ import java.util.*;
 import junit.framework.TestCase;
 
 import org.apache.log4j.*;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * This class is a UAC template. Shootist is the guy that shoots and notifier is
@@ -56,7 +57,7 @@ public class Notifier implements SipListener {
 
     private static void usage() {
         logger.info(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -155,7 +156,7 @@ public class Notifier implements SipListener {
                 
                 MaxForwardsHeader maxForwards = headerFactory.createMaxForwardsHeader(70);
                 SipURI requestURI = addressFactory.createSipURI(null, "127.0.0.1");
-                requestURI.setPort(5060);
+                requestURI.setPort(subscriberPort);
                 
                 CallIdHeader callIdHeader = ((ResponseExt)response).getCallIdHeader();
     
@@ -199,7 +200,7 @@ public class Notifier implements SipListener {
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
-            // System.exit(0);
+            // junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -270,7 +271,7 @@ public class Notifier implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {
@@ -279,7 +280,7 @@ public class Notifier implements SipListener {
             messageFactory = sipFactory.createMessageFactory();
         } catch  (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -304,10 +305,20 @@ public class Notifier implements SipListener {
     public Notifier( int port ) {
         this.port = port;
     }
+    
+    private int subscriberPort;
+
+    public int getSubscriberPort() {
+        return subscriberPort;
+    }
+
+    public void setSubscriberPort(int subscriberPort) {
+        this.subscriberPort = subscriberPort;
+    }
 
 
     public static Notifier createNotifier() throws Exception {
-        int port = 5070;
+        int port = NetworkPortAssigner.retrieveNextPort();
         logger.addAppender(new ConsoleAppender(new SimpleLayout()));
         initFactories( port );
         Notifier notifier = new Notifier( port );
@@ -342,4 +353,7 @@ public class Notifier implements SipListener {
         handleSubscribe = b;
     }
 
+    public int getPort() {
+        return port;
+    }
 }

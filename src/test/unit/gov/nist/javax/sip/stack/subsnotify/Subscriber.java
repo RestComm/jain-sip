@@ -19,6 +19,7 @@ import org.apache.log4j.SimpleLayout;
 import java.util.*;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 /**
  * This class is a Subscriber template. Shootist is the guy that shoots and
@@ -41,7 +42,7 @@ public class Subscriber implements SipListener {
 
     private ContactHeader contactHeader;
 
-    private static String notifierPort;
+    private int notifierPort;
 
     private static String transport;
 
@@ -78,7 +79,7 @@ public class Subscriber implements SipListener {
 
     private static void usage() {
         logger.info(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -149,7 +150,7 @@ public class Subscriber implements SipListener {
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.error("Unexpected exception",ex);
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -205,10 +206,17 @@ public class Subscriber implements SipListener {
         NotifyBefore202Test.assertEquals("Dialog should be same as NOTIFY dialog", this.notifyDialog,tid.getDialog());
         dialogSameAsNotify = true;
     }
+    
+    private int port;
 
+    public int getPort() {
+        return port;
+    }
+   
+    
     public void createProvider() throws Exception {
-
-        this.listeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060,
+        port = NetworkPortAssigner.retrieveNextPort();
+        this.listeningPoint = sipStack.createListeningPoint("127.0.0.1", port,
                 transport);
         sipProvider = sipStack.createSipProvider(listeningPoint);
 
@@ -327,8 +335,6 @@ public class Subscriber implements SipListener {
         // 5065 sends to the forker.
         // 5070 sends to the subscriber1
 
-        notifierPort = "5070";
-
         transport = "udp";
 
         SipFactory sipFactory = SipFactory.getInstance();
@@ -418,4 +424,13 @@ public class Subscriber implements SipListener {
 	public boolean checkState() {
 		return dialogSameAsNotify;
 	}
+
+    public int getNotifierPort() {
+        return notifierPort;
+    }
+
+    public void setNotifierPort(int notifierPort) {
+        this.notifierPort = notifierPort;
+    }
+       
 }

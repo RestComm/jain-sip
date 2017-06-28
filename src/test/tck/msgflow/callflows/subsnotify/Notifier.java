@@ -55,6 +55,7 @@ import org.apache.log4j.SimpleLayout;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * This is the side that sends out the notify.
@@ -346,6 +347,16 @@ public class Notifier implements SipListener {
             DialogTerminatedEvent dialogTerminatedEvent) {
         // TODO Auto-generated method stub
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return gotSubscribeRequest;
+            }
+        };
     }
 
     public void checkState() {

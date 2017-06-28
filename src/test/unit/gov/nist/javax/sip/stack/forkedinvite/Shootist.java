@@ -49,6 +49,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.helpers.NullEnumeration;
+import test.tck.msgflow.callflows.TestAssertion;
 
 
 /**
@@ -130,7 +131,9 @@ public class Shootist implements SipListener {
 
     private boolean terminatedDialogWasOneOfCancelled;
 
-    private boolean forkFirst;       
+    private boolean forkFirst;
+    
+    private int[] targetPorts;    
 
     class SendBye extends TimerTask {
 
@@ -154,7 +157,7 @@ public class Shootist implements SipListener {
         }
     }
 
-    public Shootist(int myPort, int proxyPort, String createDialogAuto, boolean forkFirst) {
+    public Shootist(int myPort, int proxyPort, String createDialogAuto, boolean forkFirst, int[] targetPorts) {
         this.port = myPort;
         this.peerPort = proxyPort;
         this.forkFirst = forkFirst;
@@ -168,6 +171,8 @@ public class Shootist implements SipListener {
         if(!createDialogAuto.equalsIgnoreCase("on")) {
             isAutomaticDialogSupportEnabled = false;
         }
+        
+        this.targetPorts = targetPorts;
     }   
 
     public void processRequest(RequestEvent requestReceivedEvent) {
@@ -205,7 +210,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -240,9 +245,9 @@ public class Shootist implements SipListener {
             String toTag = ((ResponseExt)response).getToHeader().getTag();
             boolean isFromFork = false;
             if(forkFirst) {
-                isFromFork = toTag != null && !toTag.contains("shootme-5080");
+                isFromFork = toTag != null && !toTag.contains("shootme-" + this.targetPorts[0]);
             } else {
-                isFromFork = toTag != null && !toTag.contains("shootme-5081");
+                isFromFork = toTag != null && !toTag.contains("shootme-" + this.targetPorts[1]);
             }
             logger.info("isRetransmission = " + responseReceivedEvent.isRetransmission() + " isFromForked = " + isFromFork + " isForked = " + responseReceivedEvent.isForkedResponse() + " response "+ response);
             
@@ -342,7 +347,7 @@ public class Shootist implements SipListener {
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
-            // System.exit(0);
+            // junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -363,6 +368,18 @@ public class Shootist implements SipListener {
             return null;
         }
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return counter == forkedEarlyDialogs.size() &&
+                       counter == forkedDialogs.size() &&
+                        ((SipStackImpl)sipStack).getDialogs(DialogState.EARLY).isEmpty() && 
+                        ((Shootist.this.counter == 0) || (Shootist.this.counter > 0 && terminatedDialogWasOneOfCancelled));
+            };
+        }; 
     }
 
     public void checkState() {

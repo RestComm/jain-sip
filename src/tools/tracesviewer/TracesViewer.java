@@ -490,7 +490,7 @@ public class TracesViewer extends javax.swing.JFrame {
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
                 System.out.println("Trace viewer closed!");
-                // System.exit(0);
+                // junit.framework.TestCase.fail("Exit JVM");
             }
         });
 
@@ -820,7 +820,7 @@ public class TracesViewer extends javax.swing.JFrame {
     public void close() {
         System.out.println("Trace viewer closed!");
         this.dispose();
-        //  System.exit(0);
+        //  junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -840,7 +840,7 @@ public class TracesViewer extends javax.swing.JFrame {
         System.out.println("When viewing from a debug file:\n" +
             " --> java tools.tracesviewer.tracesViewer -server_file fileName");
         System.out.println("*************************************\n" );
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
     }
 
     // This method is only used by the GUI proxy!!!!!
@@ -979,7 +979,7 @@ public class TracesViewer extends javax.swing.JFrame {
                         "Stack Id (name) not specified Bailing!"
                             + " Please specify stackId (JAIN stack name) "
                             + " using -stackId flag");
-                    System.exit(0);
+                    junit.framework.TestCase.fail("Exit JVM");
                 }
 
                 if (launcher)

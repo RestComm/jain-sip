@@ -39,6 +39,7 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class DeliverUnsolicitedNotifyTest extends TestCase implements
         SipListener {
@@ -133,7 +134,7 @@ public class DeliverUnsolicitedNotifyTest extends TestCase implements
         	properties.setProperty("gov.nist.javax.sip.MESSAGE_PROCESSOR_FACTORY", NioMessageProcessorFactory.class.getName());
         }
         try {
-            this.port = 6050;
+            this.port = NetworkPortAssigner.retrieveNextPort();
             this.transport = "udp";
             this.sipStack = sipFactory.createSipStack(properties);
             this.listeningPoint = sipStack.createListeningPoint("127.0.0.1",

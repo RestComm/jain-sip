@@ -49,7 +49,7 @@ public class ShootmeDialogAndTxStateless implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -113,7 +113,7 @@ public class ShootmeDialogAndTxStateless implements SipListener {
             sipProvider.sendResponse(response);
         } catch (Exception ex) {
             ex.printStackTrace();
-            //System.exit(0);
+            //junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -130,7 +130,7 @@ public class ShootmeDialogAndTxStateless implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            //System.exit(0);
+            //junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -183,7 +183,7 @@ public class ShootmeDialogAndTxStateless implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

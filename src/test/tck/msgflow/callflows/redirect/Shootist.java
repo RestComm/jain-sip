@@ -8,7 +8,9 @@ import javax.sip.message.*;
 import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 import java.util.*;
 
@@ -35,7 +37,7 @@ public class Shootist extends TestHarness implements SipListener {
 
     private Dialog dialog;
 
-    public static final int myPort = 5080;
+    public static final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     private int peerPort;
 
@@ -103,7 +105,7 @@ public class Shootist extends TestHarness implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -408,6 +410,16 @@ public class Shootist extends TestHarness implements SipListener {
             DialogTerminatedEvent dialogTerminatedEvent) {
         this.dialogTerminatedCount++;
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return byeReceived  && redirectReceived;
+            }
+        };
     }
 
     public void checkState() {

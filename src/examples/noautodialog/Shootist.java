@@ -50,7 +50,7 @@ public class Shootist implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
 
     }
 
@@ -129,7 +129,7 @@ public class Shootist implements SipListener {
             st.sendResponse(response);
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -143,7 +143,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -167,7 +167,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -212,7 +212,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -266,7 +266,7 @@ public class Shootist implements SipListener {
             // in the classpath
             e.printStackTrace();
             System.err.println(e.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
         try {

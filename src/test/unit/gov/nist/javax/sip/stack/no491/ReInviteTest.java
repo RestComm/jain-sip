@@ -36,6 +36,7 @@ import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 
 import org.apache.log4j.Logger;
+import test.tck.msgflow.callflows.AssertUntil;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
 
@@ -51,6 +52,8 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
     private Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 60000;     
 
    
     private SipListener getSipListener(EventObject sipEvent) {
@@ -75,14 +78,15 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
 
             super.setUp();
             
-            shootist = new Shootist(getRiProtocolObjects());
-            
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
-
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getRiProtocolObjects(), shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);
+            
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
             
@@ -98,13 +102,10 @@ public class ReInviteTest extends ScenarioHarness implements SipListener {
         }
     }
 
-    public void testSendInvite() {
+    public void testSendInvite() throws InterruptedException {
         this.shootist.sendInvite();
-        try {
-            Thread.sleep(15000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
+        AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT);            
     }
     
     public void tearDown() {

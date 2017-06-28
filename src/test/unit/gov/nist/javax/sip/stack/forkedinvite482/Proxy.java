@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * A very simple forking proxy server.
@@ -76,7 +77,7 @@ public class Proxy extends TestHarness implements SipListener {
                     Request newRequest = (Request) request.clone();
                     SipURI sipUri = protocolObjects.addressFactory.createSipURI("UA1",
                             "127.0.0.1");
-                    sipUri.setPort(5080);
+                    sipUri.setPort(targetPort);
                     sipUri.setLrParam();
                     Address address = protocolObjects.addressFactory.createAddress("client1",
                             sipUri);
@@ -91,7 +92,7 @@ public class Proxy extends TestHarness implements SipListener {
                     ClientTransaction ct1 = sipProvider.getNewClientTransaction(newRequest);
                     sipUri = protocolObjects.addressFactory.createSipURI("proxy", "127.0.0.1");
                     address = protocolObjects.addressFactory.createAddress("proxy", sipUri);
-                    sipUri.setPort(5080);
+                    sipUri.setPort(targetPort);
                     sipUri.setLrParam();
                     RecordRouteHeader recordRoute = protocolObjects.headerFactory
                             .createRecordRouteHeader(address);
@@ -102,7 +103,7 @@ public class Proxy extends TestHarness implements SipListener {
                     newRequest = (Request) request.clone();
                     sipUri = protocolObjects.addressFactory.createSipURI("UA2", "127.0.0.1");
                     sipUri.setLrParam();
-                    sipUri.setPort(5080);
+                    sipUri.setPort(targetPort);
                     address = protocolObjects.addressFactory.createAddress("client2", sipUri);
                     rheader = protocolObjects.headerFactory.createRouteHeader(address);
                     newRequest.addFirst(rheader);
@@ -110,7 +111,7 @@ public class Proxy extends TestHarness implements SipListener {
                             protocolObjects.transport, null);
                     newRequest.addFirst(viaHeader);
                     sipUri = protocolObjects.addressFactory.createSipURI("proxy", "127.0.0.1");
-                    sipUri.setPort(5080);
+                    sipUri.setPort(targetPort);
                     sipUri.setLrParam();
                     sipUri.setTransportParam(protocolObjects.transport);
                     address = protocolObjects.addressFactory.createAddress("proxy", sipUri);
@@ -142,9 +143,19 @@ public class Proxy extends TestHarness implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return loopDetectedSeen;
+            }
+        };
     }
 
     public void checkState() {
@@ -241,5 +252,17 @@ public class Proxy extends TestHarness implements SipListener {
         this.port = myPort;
         this.protocolObjects = protocolObjects;
     }
+    
+    private int targetPort;
+
+    public int getTargetPort() {
+        return targetPort;
+    }
+
+    public void setTargetPort(int targetPort) {
+        this.targetPort = targetPort;
+    }
+
+
 
 }

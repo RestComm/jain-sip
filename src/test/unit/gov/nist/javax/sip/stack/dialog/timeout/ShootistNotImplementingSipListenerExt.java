@@ -96,16 +96,16 @@ public class ShootistNotImplementingSipListenerExt implements SipListener {
 
     private MessageFactory messageFactory;
 
-    private static String PEER_ADDRESS = Shootme.myAddress;
+    private String PEER_ADDRESS;
 
-    private static int PEER_PORT = Shootme.myPort;
+    private int PEER_PORT;
 
-    private static String peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;
+    private String peerHostPort;
 
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    private static final int myPort = 5060;
+    private final int myPort = 5060;
 
     private boolean stateIsOk = false;
     
@@ -121,10 +121,13 @@ public class ShootistNotImplementingSipListenerExt implements SipListener {
         }
     }
 
-    public ShootistNotImplementingSipListenerExt(ProtocolObjects protocolObjects) {
+    public ShootistNotImplementingSipListenerExt(ProtocolObjects protocolObjects,Shootme shootme) {
         super();
         this.protocolObjects = protocolObjects;
         stateIsOk = protocolObjects.autoDialog;
+        PEER_ADDRESS = shootme.myAddress;
+        PEER_PORT = shootme.myPort;
+        peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;  
     }
 
     public boolean checkState() {
@@ -154,8 +157,6 @@ public class ShootistNotImplementingSipListenerExt implements SipListener {
         sipFactory.setPathName("gov.nist");
         Properties properties = new Properties();
 
-        /* remote peer host */
-        String peerHostPort = ShootistNotImplementingSipListenerExt.peerHostPort;
         String localHost = myAddress;
 
         try {

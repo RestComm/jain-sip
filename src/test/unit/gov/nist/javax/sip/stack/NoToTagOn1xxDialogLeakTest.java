@@ -47,6 +47,8 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.ProtocolObjects;
 /**
  * This test aims to test the fact when a 1xx is received with no to tag it was letting a dialog in the sip stack not being removed
  * See Issue 178
@@ -82,7 +84,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         protected ServerTransaction inviteTid;
 
@@ -215,7 +217,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
                 new Timer().schedule(new MyTimerTask(this), 1000);
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -253,7 +255,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -278,7 +280,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -326,7 +328,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -396,6 +398,22 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
         private Dialog dialog;
 
         private boolean byeTaskRunning;
+        
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
+
+        private Response lastResponse;
+        
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;   
+        
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;            
+        }        
 
         class ByeTask  extends TimerTask {
             Dialog dialog;
@@ -463,7 +481,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -532,7 +550,7 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
         }
@@ -562,8 +580,6 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
-            // String peerHostPort = "230.0.0.1:5070";
             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort + "/"
                     + transport);
             // If you want to use UDP then uncomment this.
@@ -599,14 +615,14 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
                 // in the classpath
                 e.printStackTrace();
                 System.err.println(e.getMessage());
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060, "udp");
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -777,9 +793,9 @@ public class NoToTagOn1xxDialogLeakTest extends TestCase {
 
     public void testDialogIdentity() throws Exception {
 
-        shootist = new Shootist();
-
         shootme = new Shootme();
+        
+        shootist = new Shootist(shootme);        
 
         shootme.init();
 

@@ -46,6 +46,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 
 /**
@@ -191,7 +192,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -278,7 +279,7 @@ public class Shootist implements SipListener {
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
-            // System.exit(0);
+            // junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -301,6 +302,16 @@ public class Shootist implements SipListener {
 
     }
 
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                // TODO Auto-generated method stub
+                return byeResponseSeen && inviteOkSeen;
+            }
+        };
+    }
     public void checkState() {
        
        TestCase.assertTrue("Should see BYE response for ACKED Dialog",this.byeResponseSeen);

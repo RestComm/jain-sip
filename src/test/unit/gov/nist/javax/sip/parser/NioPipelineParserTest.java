@@ -107,7 +107,7 @@ public class NioPipelineParserTest extends ScenarioHarness {
     public void testBodySeparationAtChunkEnd() throws Exception {
         parser.addBytes((HEADER_CHUNK + "\r").getBytes());
         parser.addBytes(("\n" + BODY_CHUNK).getBytes());
-        Thread.sleep(ASSERTION_WAIT);        
+        Thread.sleep(ASSERTION_WAIT + 2000);        
         Assert.assertEquals(1, listener.getProcessedMsgs());
     }
 

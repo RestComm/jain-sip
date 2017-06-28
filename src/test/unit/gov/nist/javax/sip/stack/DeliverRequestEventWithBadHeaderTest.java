@@ -41,6 +41,9 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class DeliverRequestEventWithBadHeaderTest extends TestCase {
     public class Shootme implements SipListener {
@@ -55,7 +58,7 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         private Dialog dialog;
 
@@ -127,7 +130,7 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -174,7 +177,7 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -224,6 +227,16 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
         public void terminate() {
             this.sipStack.stop();
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                
+                @Override
+                public boolean assertCondition() {
+                    return sawInvite;
+                }
+            };
+        }
 
     }
 
@@ -248,6 +261,21 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
         private boolean timeoutRecieved;
 
         boolean sawOk;
+        
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+
+        private  String peerHostPort;
+
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();         
+
+        public Shootist( Shootme shootme) {
+            super();
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;  
+        }         
 
         public void processRequest(RequestEvent requestReceivedEvent) {
 
@@ -287,7 +315,6 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort
                     + "/" + transport);
             // If you want to use UDP then uncomment this.
@@ -333,20 +360,20 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
                 udpListeningPoint = sipStack.createListeningPoint("127.0.0.1",
-                        5060, "udp");
+                        myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
 
-                String badRequest = "INVITE sip:LittleGuy@127.0.0.1:5070 SIP/2.0\r\n"
+                String badRequest = "INVITE sip:LittleGuy@127.0.0.1:" + PEER_PORT + " SIP/2.0\r\n"
                         + "Call-ID: 7a3cd620346e3fa199cb397fe6b6fc16@127.0.0.1\r\n"
                         + "CSeq: 1 INVITE\r\n"
                         + "From: \"The Master Blaster\" <sip:BigGuy@here.com>;tag=12345\r\n"
                         + "To: \"The Little Blister\" <sip:LittleGuy@there.com>\r\n"
-                        + "Via: SIP/2.0/UDP 127.0.0.1:5060\r\n"
+                        + "Via: SIP/2.0/UDP 127.0.0.1:" + myPort + "\r\n"
                         + "Max-Forwards: 70\r\n"
                         + "Date: 123 GMT 789\r\n"
-                        + "Contact: <127.0.0.1:5060>\r\n"
+                        + "Contact: <127.0.0.1:" + myPort + ">\r\n"
                         + "Content-Length: 0\r\n\r\n";
 
                 System.out.println("Parsing message \n" + badRequest);
@@ -399,6 +426,16 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
         public void terminate() {
             this.sipStack.stop();
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                
+                @Override
+                public boolean assertCondition() {
+                    return sawOk;
+                }
+            };
+        }
     }
 
     private Shootme shootme;
@@ -406,7 +443,7 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
     }
 
@@ -418,8 +455,10 @@ public class DeliverRequestEventWithBadHeaderTest extends TestCase {
     public void testSendInviteWithBadHeader() {
         this.shootme.init();
         this.shootist.init();
+        
         try {
-            Thread.sleep(5000);
+            AssertUntil.assertUntil(shootme.getAssertion(), 5000);
+            AssertUntil.assertUntil(shootist.getAssertion(), 5000);
         } catch (Exception ex) {
 
         }

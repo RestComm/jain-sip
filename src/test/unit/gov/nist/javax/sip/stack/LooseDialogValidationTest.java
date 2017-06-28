@@ -41,6 +41,9 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * Test originally tested the LOOSE_DIALOG_VALIDATION stack proprty to accept ACK retransmissions and to not validate CSeq numbers.
@@ -66,7 +69,7 @@ public class LooseDialogValidationTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
 
 
 
@@ -211,7 +214,7 @@ public class LooseDialogValidationTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -270,7 +273,7 @@ public class LooseDialogValidationTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -321,6 +324,15 @@ public class LooseDialogValidationTest extends TestCase {
         public void terminate() {
             this.sipStack.stop();
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return acks == 5;
+                    }
+                };
+        }        
 
     }
 
@@ -348,8 +360,22 @@ public class LooseDialogValidationTest extends TestCase {
 
         boolean messageSeen = false;
 
+        private  String PEER_ADDRESS;
+
+        private  int PEER_PORT;
+        
+        private String peerHostPort;
+
+        private final int myPort = NetworkPortAssigner.retrieveNextPort();
+
+        public Shootist(Shootme shootme) {
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;            
+        }
 
 
+        
 
 
         public void processRequest(RequestEvent requestReceivedEvent) {
@@ -416,7 +442,7 @@ public class LooseDialogValidationTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
+            
             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort + "/"
                     + transport);
             // If you want to use UDP then uncomment this.
@@ -461,7 +487,7 @@ public class LooseDialogValidationTest extends TestCase {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060, "udp");
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -615,6 +641,15 @@ public class LooseDialogValidationTest extends TestCase {
         public void terminate() {
             this.sipStack.stop();
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return messageSeen;
+                    }
+                };
+        }        
     }
 
     private test.unit.gov.nist.javax.sip.stack.LooseDialogValidationTest.Shootme shootme;
@@ -622,7 +657,7 @@ public class LooseDialogValidationTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme);
 
 
     }
@@ -631,14 +666,11 @@ public class LooseDialogValidationTest extends TestCase {
         shootme.terminate();
     }
 
-    public void testCSeqValidationIsOff() {
+    public void testCSeqValidationIsOff() throws InterruptedException {
         this.shootme.init();
         this.shootist.init();
-        try {
-            Thread.sleep(10000);
-        } catch (Exception ex) {
-
-        }
+        AssertUntil.assertUntil(shootist.getAssertion(), 10000);
+        AssertUntil.assertUntil(shootme.getAssertion(), 10000);
         if(!this.shootist.messageSeen) {
             fail("Something went wrong. We expected the MESSAGE requests. Why are they not sent?");
         }

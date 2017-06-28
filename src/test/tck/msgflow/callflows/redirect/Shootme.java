@@ -9,7 +9,9 @@ import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.MessageFlowHarness;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 import java.util.*;
 
@@ -28,7 +30,7 @@ public class Shootme extends TestHarness implements SipListener {
 
     private static final String myAddress = "127.0.0.1";
 
-    public static final int myPort = 5070;
+    public static final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     protected ServerTransaction inviteTid;
 
@@ -271,6 +273,17 @@ public class Shootme extends TestHarness implements SipListener {
                 + dialogTerminatedEvent.getDialog());
         this.dialogTerminationCount++;
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return inviteCount == 2 && ackCount >= 1
+                        && byeOkRecieved >= 1;
+            }
+        };
     }
 
     public void checkState() {

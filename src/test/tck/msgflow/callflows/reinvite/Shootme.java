@@ -29,6 +29,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.helpers.NullEnumeration;
 
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
 /**
@@ -46,7 +47,7 @@ public class Shootme  implements SipListener {
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    public static final int myPort = 5070;
+    public static final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     private ServerTransaction inviteTid;
 

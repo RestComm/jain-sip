@@ -40,6 +40,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 
 
@@ -215,7 +216,7 @@ public class Shootme   implements SipListener {
             this.sendInviteOK(requestEvent,st,toTag);
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -276,7 +277,7 @@ public class Shootme   implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -305,7 +306,7 @@ public class Shootme   implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -374,6 +375,16 @@ public class Shootme   implements SipListener {
             DialogTerminatedEvent dialogTerminatedEvent) {
         logger.info("Dialog terminated event recieved");
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return inviteSeen && byeSeen;
+            }
+        };
     }
 
     public void checkState() {

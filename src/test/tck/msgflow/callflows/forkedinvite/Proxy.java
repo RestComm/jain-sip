@@ -74,7 +74,7 @@ public class Proxy extends TestHarness implements SipListener {
                     ((SipURI)newRequest.getRequestURI()).removePort();
                     SipURI sipUri = protocolObjects.addressFactory.createSipURI("UA1",
                             "127.0.0.1");
-                    sipUri.setPort(5080);
+                    sipUri.setPort(targetPorts[0]);
                     sipUri.setLrParam();
                     Address address = protocolObjects.addressFactory.createAddress("client1",
                             sipUri);
@@ -88,19 +88,19 @@ public class Proxy extends TestHarness implements SipListener {
                     ClientTransaction ct1 = sipProvider.getNewClientTransaction(newRequest);
                     sipUri = protocolObjects.addressFactory.createSipURI("proxy", "127.0.0.1");
                     address = protocolObjects.addressFactory.createAddress("proxy", sipUri);
-                    sipUri.setPort(5070);
+                    sipUri.setPort(port);
                     sipUri.setLrParam();
                     RecordRouteHeader recordRoute = protocolObjects.headerFactory
                             .createRecordRouteHeader(address);
                     newRequest.addHeader(recordRoute);
                     ct1.setApplicationData(st);
-                    this.clientTxTable.put(new Integer(5080), ct1);
+                    this.clientTxTable.put(new Integer(targetPorts[0]), ct1);
 
                     newRequest = (Request) request.clone();
                     ((SipURI)newRequest.getRequestURI()).removePort();
                     sipUri = protocolObjects.addressFactory.createSipURI("UA2", "127.0.0.1");
                     sipUri.setLrParam();
-                    sipUri.setPort(5090);
+                    sipUri.setPort(targetPorts[1]);
                     address = protocolObjects.addressFactory.createAddress("client2", sipUri);
                     rheader = protocolObjects.headerFactory.createRouteHeader(address);
                     newRequest.setHeader(rheader);
@@ -108,7 +108,7 @@ public class Proxy extends TestHarness implements SipListener {
                             protocolObjects.transport, null);
                     newRequest.addFirst(viaHeader);
                     sipUri = protocolObjects.addressFactory.createSipURI("proxy", "127.0.0.1");
-                    sipUri.setPort(5070);
+                    sipUri.setPort(port);
                     sipUri.setLrParam();
                     sipUri.setTransportParam(protocolObjects.transport);
                     address = protocolObjects.addressFactory.createAddress("proxy", sipUri);
@@ -118,7 +118,7 @@ public class Proxy extends TestHarness implements SipListener {
                     newRequest.addHeader(recordRoute);
                     ClientTransaction ct2 = sipProvider.getNewClientTransaction(newRequest);
                     ct2.setApplicationData(st);
-                    this.clientTxTable.put(new Integer(5090), ct2);
+                    this.clientTxTable.put(new Integer(targetPorts[1]), ct2);
 
                     // Send the requests out to the two listening points of the
                     // client.
@@ -138,7 +138,7 @@ public class Proxy extends TestHarness implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -242,10 +242,11 @@ public class Proxy extends TestHarness implements SipListener {
             DialogTerminatedEvent dialogTerminatedEvent) {
         fail("unexpected event");
     }
-
-    public Proxy(int myPort, ProtocolObjects protocolObjects) {
+    private int[] targetPorts;
+    public Proxy(int myPort, ProtocolObjects protocolObjects, int[] targetPorts) {
         this.port = myPort;
         this.protocolObjects = protocolObjects;
+        this.targetPorts = targetPorts;
     }
 
 }

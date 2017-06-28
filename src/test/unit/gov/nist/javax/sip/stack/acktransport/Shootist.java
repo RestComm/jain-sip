@@ -192,7 +192,7 @@ public class Shootist implements SipListenerExt {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -232,7 +232,7 @@ public class Shootist implements SipListenerExt {
                        
         } catch (Throwable ex) {
             ex.printStackTrace();
-            // System.exit(0);
+            // junit.framework.TestCase.fail("Exit JVM");
         }
 
     }

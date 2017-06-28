@@ -14,6 +14,10 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.log4j.SimpleLayout;
+import static test.tck.TestHarness.assertTrue;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * @author M. Ranganathan
@@ -27,14 +31,15 @@ public class InviteTest extends TestCase {
 
     protected static final Appender console = new ConsoleAppender(new SimpleLayout());
 
-    private static int forkCount = 2;
+//    private static int forkCount = 2;
     
     public static final String PREFERRED_SERVICE_VALUE="urn:urn-7:3gpp-service.ims.icsi.mmtel.gsma.ipcall"; 
    
 
     protected HashSet<Shootme> shootme = new HashSet<Shootme>();
+    
+    private static final int TIMEOUT = 60000;
 
-    private static final int TIMEOUT = 37000;
   
 
     private Proxy proxy;
@@ -60,7 +65,6 @@ public class InviteTest extends TestCase {
 
     public void tearDown() {
         try {
-            
         } catch (Exception ex) {
             ex.printStackTrace();
             logger.error("unexpected exception", ex);
@@ -69,31 +73,35 @@ public class InviteTest extends TestCase {
     }
 
     public void testInvite() throws Exception {
+    	int forkCount = 2;
         try {
-            shootist = new Shootist(6050, 5070, "on", true);
-            SipProvider shootistProvider = shootist.createSipProvider();
-            shootistProvider.addSipListener(shootist);
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
             boolean sendRinging = true;
+            int[] targetPorts = new int[forkCount];
             for  (int i = 0 ; i <  forkCount ; i ++ ) {
-                
-                Shootme shootme = new Shootme(5080 + i,sendRinging,4000 + (500 *i), 4000 + (500 *i));
+                int shootmePort = NetworkPortAssigner.retrieveNextPort();
+                targetPorts[i] = shootmePort;
+                Shootme shootme = new Shootme(shootmePort,sendRinging,4000 + (500 *i), 4000 + (500 *i));
                 sendRinging = true;
                 SipProvider shootmeProvider = shootme.createProvider();
                 shootmeProvider.addSipListener(shootme);
                 this.shootme.add(shootme);
             }
+            shootist = new Shootist(shootistPort, proxyPort, "on", true, targetPorts);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            shootistProvider.addSipListener(shootist);    
     
-           
-    
-            this.proxy = new Proxy(5070,forkCount);
+            this.proxy = new Proxy(proxyPort,forkCount,targetPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
             
-            Thread.sleep(TIMEOUT);
-            this.shootist.checkState();
+            
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
+            shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
                  shootme.checkState();
@@ -112,25 +120,33 @@ public class InviteTest extends TestCase {
     }
 
     public void testInviteAutomaticDialogNonEnabled() throws Exception {
+    	int forkCount = 2;
         try {
-            shootist = new Shootist(6050, 5070, "off", true);        
-            SipProvider shootistProvider = shootist.createSipProvider();
-            shootistProvider.addSipListener(shootist);
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();
+
             boolean sendRinging = true;
+            int[] targetPorts = new int[forkCount];
             for  (int i = 0 ; i <  forkCount ; i ++ ) {
-                Shootme shootme = new Shootme(5080 + i,sendRinging, 4000 + (100 *i), 4000 + (100 *i));
+                int shootmePort = NetworkPortAssigner.retrieveNextPort();
+                targetPorts[i] = shootmePort;
+                Shootme shootme = new Shootme(shootmePort,sendRinging, 4000 + (100 *i), 4000 + (100 *i));
                 sendRinging = true;
                 SipProvider shootmeProvider = shootme.createProvider();
                 shootmeProvider.addSipListener(shootme);
                 this.shootme.add(shootme);
             }
-            this.proxy = new Proxy(5070,forkCount);
+            shootist = new Shootist(shootistPort, proxyPort, "off", true,targetPorts);        
+            SipProvider shootistProvider = shootist.createSipProvider();
+            shootistProvider.addSipListener(shootist);
+            
+            this.proxy = new Proxy(proxyPort,forkCount, targetPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
-            Thread.sleep(TIMEOUT);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
@@ -150,25 +166,33 @@ public class InviteTest extends TestCase {
     }
     
     public void testInviteAutomaticDialogNonEnabledForkSecond() throws Exception {
+    	int forkCount = 2;
         try {
-            shootist = new Shootist(6050, 5070, "off", false);        
-            SipProvider shootistProvider = shootist.createSipProvider();
-            shootistProvider.addSipListener(shootist);
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();             
+
             boolean sendRinging = true;
+            int[] targetPorts = new int[forkCount];
             for  (int i = 0 ; i <  forkCount ; i ++ ) {
-                Shootme shootme = new Shootme(5080 + i,sendRinging, 4000 - (500 *i), 4000 - (500 *i));
+                int shootmePort = NetworkPortAssigner.retrieveNextPort();
+                targetPorts[i]=shootmePort;
+                Shootme shootme = new Shootme(shootmePort,sendRinging, 4000 - (500 *i), 4000 - (500 *i));
                 sendRinging = true;
                 SipProvider shootmeProvider = shootme.createProvider();
                 shootmeProvider.addSipListener(shootme);
                 this.shootme.add(shootme);
             }
-            this.proxy = new Proxy(5070,forkCount);
+            shootist = new Shootist(shootistPort, proxyPort, "off", false,targetPorts);        
+            SipProvider shootistProvider = shootist.createSipProvider();
+            shootistProvider.addSipListener(shootist);
+            
+            this.proxy = new Proxy(proxyPort,forkCount,targetPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
-            Thread.sleep(TIMEOUT);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
@@ -188,25 +212,33 @@ public class InviteTest extends TestCase {
     }
     
     public void testInviteAutomaticDialogNonEnabledOKFromSecondForkFirst() throws Exception {
+    	int forkCount = 2;
         try {
-            shootist = new Shootist(6050, 5070, "off", true);        
-            SipProvider shootistProvider = shootist.createSipProvider();
-            shootistProvider.addSipListener(shootist);
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();             
+
             boolean sendRinging = true;
+            int[] targetPorts = new int[forkCount];
             for  (int i = 0 ; i <  forkCount ; i ++ ) {
-                Shootme shootme = new Shootme(5080 + i,sendRinging, 4000 + (100 *i), 4000 - (100 *i));
+                int shootmePort = NetworkPortAssigner.retrieveNextPort();
+                targetPorts[i]=shootmePort;
+                Shootme shootme = new Shootme(shootmePort,sendRinging, 4000 + (100 *i), 4000 - (100 *i));
                 sendRinging = true;
                 SipProvider shootmeProvider = shootme.createProvider();
                 shootmeProvider.addSipListener(shootme);
                 this.shootme.add(shootme);
             }
-            this.proxy = new Proxy(5070,forkCount);
+            shootist = new Shootist(shootistPort, proxyPort, "off", true,targetPorts);        
+            SipProvider shootistProvider = shootist.createSipProvider();
+            shootistProvider.addSipListener(shootist);            
+            
+            this.proxy = new Proxy(proxyPort,forkCount, targetPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
             
             this.shootist.sendInvite(forkCount);
-            Thread.sleep(TIMEOUT);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {
@@ -230,27 +262,35 @@ public class InviteTest extends TestCase {
      * the app code has called createNewDialog doesn't create a dialog 
      */
     public void testAutomaticDialogNonEnabledRaceCondition() throws Exception {
+    	int forkCount = 2;
         try {
-            shootist = new Shootist(6050, 5070, "off", false); 
-            shootist.setCreateDialogAfterRequest(true);
-            SipProvider shootistProvider = shootist.createSipProvider();
-            shootistProvider.addSipListener(shootist);
+            int shootistPort = NetworkPortAssigner.retrieveNextPort();
+            int proxyPort = NetworkPortAssigner.retrieveNextPort();             
+
             boolean sendRinging = true;
             forkCount = 1;
+            int[] targetPorts = new int[forkCount];
             for  (int i = 0 ; i <  forkCount ; i ++ ) {
-                Shootme shootme = new Shootme(5080 + i,sendRinging, 4000 + (500 *i), 4000 + (500 *i));
+                int shootmePort = NetworkPortAssigner.retrieveNextPort();
+                targetPorts[i] = shootmePort;
+                Shootme shootme = new Shootme(shootmePort,sendRinging, 4000 + (500 *i), 4000 + (500 *i));
                 sendRinging = true;
                 SipProvider shootmeProvider = shootme.createProvider();
                 shootmeProvider.addSipListener(shootme);
                 this.shootme.add(shootme);
             }
-            this.proxy = new Proxy(5070,forkCount);
+            shootist = new Shootist(shootistPort, proxyPort, "off", false,targetPorts); 
+            shootist.setCreateDialogAfterRequest(true);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            shootistProvider.addSipListener(shootist);
+            
+            this.proxy = new Proxy(proxyPort,forkCount, targetPorts);
             SipProvider provider = proxy.createSipProvider();
             provider.addSipListener(proxy);
             logger.debug("setup completed");
             
             this.shootist.sendInvite(0);
-            Thread.sleep(35000);
+            AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
             this.shootist.checkState();
             int ackCount = 0;
             for ( Shootme shootme: this.shootme) {

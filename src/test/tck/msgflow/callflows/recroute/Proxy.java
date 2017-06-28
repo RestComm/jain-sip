@@ -27,6 +27,7 @@ import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * A very simple Record-Routing proxy server.
@@ -42,6 +43,8 @@ public class Proxy extends TestHarness implements SipListener {
     private static String host = "127.0.0.1";
 
     private int port = 5070;
+    
+    private int peerPort;
 
     private SipProvider sipProvider;
 
@@ -60,6 +63,16 @@ public class Proxy extends TestHarness implements SipListener {
     private int infoCount = 0;
 
 
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return inviteSeen && (infoCount == 2) && byeSeen && ackSeen;
+            }
+        };
+    }
+    
     public void checkState() {
         TestHarness.assertTrue("INVITE should be seen by proxy", inviteSeen);
         TestHarness.assertTrue("Should see two INFO messages", infoCount == 2);
@@ -90,7 +103,7 @@ public class Proxy extends TestHarness implements SipListener {
                 //
                 SipURI sipUri = protocolObjects.addressFactory.createSipURI(
                         "UA1", "127.0.0.1");
-                sipUri.setPort(5080);
+                sipUri.setPort(peerPort);
                 sipUri.setLrParam();
                 sipUri.setTransportParam( protocolObjects.transport );
                 Address address = protocolObjects.addressFactory.createAddress(
@@ -114,7 +127,7 @@ public class Proxy extends TestHarness implements SipListener {
                         "127.0.0.1");
                 address = protocolObjects.addressFactory.createAddress("proxy",
                         sipUri);
-                sipUri.setPort(5070);
+                sipUri.setPort(this.port);
                 sipUri.setLrParam();
                 sipUri.setTransportParam(protocolObjects.transport);
 
@@ -266,8 +279,9 @@ public class Proxy extends TestHarness implements SipListener {
         fail("unexpected event");
     }
 
-    public Proxy(int myPort, ProtocolObjects protocolObjects) {
+    public Proxy(int myPort, int peerPort, ProtocolObjects protocolObjects) {
         this.port = myPort;
+        this.peerPort = peerPort;
         this.protocolObjects = protocolObjects;
     }
 

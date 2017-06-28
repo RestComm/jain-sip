@@ -79,7 +79,7 @@ public class Controller implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        System.exit(0);
+        junit.framework.TestCase.fail("Exit JVM");
     }
 
     public void processRequest(RequestEvent requestReceivedEvent) {
@@ -124,7 +124,7 @@ public class Controller implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -208,7 +208,7 @@ public class Controller implements SipListener {
             }
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
     }
 
@@ -349,7 +349,7 @@ public class Controller implements SipListener {
         } catch (PeerUnavailableException e) {
             e.printStackTrace();
             System.err.println(e.getMessage());
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         } catch (Exception e) {
             System.out.println("Creating Listener Points");
             System.out.println(e.getMessage());

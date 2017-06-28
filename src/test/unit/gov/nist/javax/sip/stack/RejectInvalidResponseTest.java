@@ -1,5 +1,6 @@
 package test.unit.gov.nist.javax.sip.stack;
 
+import gov.nist.javax.sip.SipStackImpl;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
 
 import java.text.ParseException;
@@ -46,8 +47,12 @@ import javax.sip.message.Response;
 
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class RejectInvalidResponseTest extends TestCase {
+	private static final int TIMEOUT = 40000;
 
     public class Shootme implements SipListener {
 
@@ -61,7 +66,7 @@ public class RejectInvalidResponseTest extends TestCase {
 
         private static final String myAddress = "127.0.0.1";
 
-        private static final int myPort = 5070;
+        public int myPort = NetworkPortAssigner.retrieveNextPort();
 
 
 
@@ -137,7 +142,7 @@ public class RejectInvalidResponseTest extends TestCase {
 
             } catch (Exception ex) {
                 ex.printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -189,7 +194,7 @@ public class RejectInvalidResponseTest extends TestCase {
                 System.err.println(e.getMessage());
                 if (e.getCause() != null)
                     e.getCause().printStackTrace();
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
             }
 
             try {
@@ -265,9 +270,13 @@ public class RejectInvalidResponseTest extends TestCase {
 
         private boolean timeoutRecieved;
 
+        private int peerPort = 0;
+        
+        private int myPort = NetworkPortAssigner.retrieveNextPort();
 
-
-
+        public Shootist(int peerPort) {
+        	this.peerPort = peerPort;
+        }
 
 
 
@@ -302,7 +311,7 @@ public class RejectInvalidResponseTest extends TestCase {
             Properties properties = new Properties();
             // If you want to try TCP transport change the following to
             String transport = "udp";
-            String peerHostPort = "127.0.0.1:5070";
+            String peerHostPort = "127.0.0.1:" + peerPort;
             properties.setProperty("javax.sip.OUTBOUND_PROXY", peerHostPort + "/"
                     + transport);
             // If you want to use UDP then uncomment this.
@@ -345,7 +354,7 @@ public class RejectInvalidResponseTest extends TestCase {
                 headerFactory = sipFactory.createHeaderFactory();
                 addressFactory = sipFactory.createAddressFactory();
                 messageFactory = sipFactory.createMessageFactory();
-                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", 5060, "udp");
+                udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", myPort, "udp");
                 sipProvider = sipStack.createSipProvider(udpListeningPoint);
                 Shootist listener = this;
                 sipProvider.addSipListener(listener);
@@ -499,7 +508,7 @@ public class RejectInvalidResponseTest extends TestCase {
 
     public void setUp() {
         this.shootme = new Shootme();
-        this.shootist = new Shootist();
+        this.shootist = new Shootist(shootme.myPort);
 
 
     }
@@ -508,16 +517,19 @@ public class RejectInvalidResponseTest extends TestCase {
         shootme.terminate();
     }
 
-    public void testRejectInvalidResponse() {
+    public void testRejectInvalidResponse() throws Exception {
         this.shootme.init();
         this.shootist.init();
-        try {
-            Thread.sleep(40000);
-        } catch (Exception ex) {
-
-        }
-        assertTrue("Should get timeout for client transaction even if branch id matches for response ", shootist.timeoutRecieved);
+        AssertUntil.assertUntil(getAssertion(), TIMEOUT);
     }
-
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            @Override
+            public boolean assertCondition() {
+                return shootist.timeoutRecieved;
+            };
+        }; 
+    }
 
 }

@@ -29,7 +29,7 @@ public class ParserTestSuite extends TestSuite {
 
     public static void main(String[] args) {
          junit.textui.TestRunner.run(new ParserTestSuite("ParserTestSuite"));
-     System.exit(0);
+     junit.framework.TestCase.fail("Exit JVM");
     }
 
     public ParserTestSuite(String name) {

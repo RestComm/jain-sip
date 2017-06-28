@@ -36,7 +36,7 @@ public class UdpSubsnotifyTest extends AbstractSubsnotifyTestCase {
      *
      */
     public void testSubsnotify() {
-        this.subscriber.sendSubscribe(5065);
+        this.subscriber.sendSubscribe(forkerPort);
     }
     /**
      * tests provider in TI (test impl) provider. Subscriber and Notifier
@@ -44,7 +44,7 @@ public class UdpSubsnotifyTest extends AbstractSubsnotifyTestCase {
      *
      */
     public void testSubsnotify2() {
-        this.subscriber.sendSubscribe(5065);
+        this.subscriber.sendSubscribe(forkerPort);
     }
     public static void main(String[] args) {
         String[] nargs = {UdpSubsnotifyTest.class.getName()};

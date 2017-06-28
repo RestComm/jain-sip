@@ -46,6 +46,7 @@ import junit.framework.TestCase;
 import org.apache.log4j.Logger;
 
 import test.tck.msgflow.callflows.ProtocolObjects;
+import test.tck.msgflow.callflows.TestAssertion;
 
 
 /**
@@ -191,7 +192,7 @@ public class Shootist implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
 
         }
     }
@@ -278,7 +279,7 @@ public class Shootist implements SipListener {
             }
         } catch (Throwable ex) {
             ex.printStackTrace();
-            // System.exit(0);
+            // junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -299,6 +300,16 @@ public class Shootist implements SipListener {
             return null;
         }
 
+    }
+    
+    public TestAssertion getAssertion() {
+        return new TestAssertion() {
+            
+            @Override
+            public boolean assertCondition() {
+                return byeResponseSeen && inviteOkSeen;
+            }
+        };
     }
 
     public void checkState() {

@@ -38,8 +38,11 @@ import javax.sip.TimeoutEvent;
 import javax.sip.TransactionTerminatedEvent;
 
 import org.apache.log4j.Logger;
+import static test.tck.TestHarness.assertTrue;
+import test.tck.msgflow.callflows.AssertUntil;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 /**
  * @author M. Ranganathan
@@ -53,6 +56,8 @@ public class ReInviteTCPPostParserThreadPoolTest extends ScenarioHarness impleme
     private Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 60000;    
 
    
     private SipListener getSipListener(EventObject sipEvent) {
@@ -77,14 +82,15 @@ public class ReInviteTCPPostParserThreadPoolTest extends ScenarioHarness impleme
 
             super.setUp();
             
-            shootist = new Shootist(getRiProtocolObjects());
-            
-            SipProvider shootistProvider = shootist.createSipProvider();
-            providerTable.put(shootistProvider, shootist);
-
             shootme = new Shootme(getTiProtocolObjects());
             SipProvider shootmeProvider = shootme.createSipProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getRiProtocolObjects(),shootme);
+            SipProvider shootistProvider = shootist.createSipProvider();
+            providerTable.put(shootistProvider, shootist);
+
+            
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
             
@@ -106,11 +112,10 @@ public class ReInviteTCPPostParserThreadPoolTest extends ScenarioHarness impleme
         getTiProtocolObjects().start();
                    
         this.shootist.sendInvite();
-        try {
-            Thread.sleep(20000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        
+        AssertUntil.assertUntil(shootist.getAssertion(), TIMEOUT);
+        AssertUntil.assertUntil(shootme.getAssertion(), TIMEOUT);
+
         this.shootist.checkState();
         this.shootme.checkState();
     }

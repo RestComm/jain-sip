@@ -34,6 +34,9 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class NoAutoDialogTest extends TestCase {
 
@@ -63,9 +66,9 @@ public class NoAutoDialogTest extends TestCase {
 
     protected Server server;
 
-    public final int SERVER_PORT = 5600;
+    public final int SERVER_PORT = NetworkPortAssigner.retrieveNextPort();
 
-    public final int CLIENT_PORT = 6500;
+    public final int CLIENT_PORT = NetworkPortAssigner.retrieveNextPort();
 
     public NoAutoDialogTest() {
 
@@ -316,6 +319,16 @@ public class NoAutoDialogTest extends TestCase {
 
         }
 
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return o_sentInvite && o_received180 && o_sentCancel && o_receiver200Cancel
+                    && o_inviteTxTerm && o_dialogTerinated;
+                    }
+                };
+        }        
+        
         public void checkState() {
             if (!o_sentInvite || !o_received180 || !o_sentCancel || !o_receiver200Cancel
                     || !o_inviteTxTerm || !o_dialogTerinated) {
@@ -434,14 +447,9 @@ public class NoAutoDialogTest extends TestCase {
 
     }
 
-    public void testSendInvite() {
-        try {
-            this.client.sendLocalInvite();
-            Thread.sleep(50000);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            fail("Unexpected exception ");
-        }
+    public void testSendInvite() throws InterruptedException, Exception {
+        this.client.sendLocalInvite();
+        AssertUntil.assertUntil(client.getAssertion(), 60000);
         this.client.checkState();
 
     }

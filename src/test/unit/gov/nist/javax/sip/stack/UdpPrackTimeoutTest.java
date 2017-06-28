@@ -35,8 +35,12 @@ import javax.sip.message.Response;
 import org.apache.log4j.Logger;
 
 import test.tck.TestHarness;
+import static test.tck.TestHarness.assertTrue;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener {
 
@@ -45,6 +49,8 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
     protected Shootme shootme;
 
     private static Logger logger = Logger.getLogger("test.tck");
+    
+    private static final int TIMEOUT = 60000;    
 
     static {
         if (!logger.isAttached(console)) {
@@ -64,13 +70,14 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
             super.setUp();
 
             logger.info("PrackTest: setup()");
-            shootist = new Shootist(getTiProtocolObjects());
-            SipProvider shootistProvider = shootist.createProvider();
-            providerTable.put(shootistProvider, shootist);
 
             shootme = new Shootme(getRiProtocolObjects());
             SipProvider shootmeProvider = shootme.createProvider();
             providerTable.put(shootmeProvider, shootme);
+            
+            shootist = new Shootist(getTiProtocolObjects(), shootme);
+            SipProvider shootistProvider = shootist.createProvider();
+            providerTable.put(shootistProvider, shootist);            
 
             shootistProvider.addSipListener(this);
             shootmeProvider.addSipListener(this);
@@ -86,7 +93,16 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
     public void tearDown() throws Exception {
         try {
-            Thread.sleep(50000);
+            assertTrue(
+                AssertUntil.assertUntil(shootist.getAssertion()
+                , TIMEOUT)
+            );
+            assertTrue(
+                AssertUntil.assertUntil(shootme.getAssertion()
+                , TIMEOUT)
+            );
+            
+            
             this.shootist.checkState();
             this.shootme.checkState();
             getTiProtocolObjects().destroy();
@@ -126,18 +142,27 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
         private boolean prackTriggerReceived;
         private boolean prackConfirmed;
 
-        public static final int myPort = 5070;
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         private String toUser = "LittleGuy";
 
         private Response lastResponse;
+        
+        private  String PEER_ADDRESS;
 
-        public Shootist(ProtocolObjects protObjects) {
+        private  int PEER_PORT;
+
+        private  String peerHostPort;           
+
+        public Shootist(ProtocolObjects protObjects, Shootme shootme) {
             addressFactory = protObjects.addressFactory;
             messageFactory = protObjects.messageFactory;
             headerFactory = protObjects.headerFactory;
             sipStack = protObjects.sipStack;
             transport = protObjects.transport;
+            PEER_ADDRESS = shootme.myAddress;
+            PEER_PORT = shootme.myPort;
+            peerHostPort = PEER_ADDRESS + ":" + PEER_PORT;            
         }
 
         public SipProvider createProvider() throws Exception {
@@ -183,7 +208,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
             } catch (Exception ex) {
                 TestHarness.fail(ex.getMessage());
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -275,7 +300,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
                 // create Request URI
                 SipURI requestURI = addressFactory.createSipURI(toUser,
-                        "127.0.0.1:" + Shootme.myPort);
+                        peerHostPort);
 
                 // Create ViaHeaders
 
@@ -369,6 +394,15 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                 DialogTerminatedEvent dialogTerminatedEvent) {
             logger.info("dialogTerminatedEvent");
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return lastResponse != null && lastResponse.getStatusCode() == 500;
+                };
+            }; 
+        }        
 
         public void checkState() {
             TestHarness.assertNotNull(this.lastResponse);
@@ -410,7 +444,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
         private boolean transactionTimedOut;
 
-        public static final int myPort = 5080;
+        public final int myPort = NetworkPortAssigner.retrieveNextPort();
 
         public Shootme(ProtocolObjects protObjects) {
             addressFactory = protObjects.addressFactory;
@@ -563,7 +597,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
             } catch (Exception ex) {
                 TestHarness.fail(ex.getMessage());
-                System.exit(0);
+                junit.framework.TestCase.fail("Exit JVM");
 
             }
         }
@@ -595,7 +629,7 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
                     errorResponseSent = true;
                 } catch (Exception ex) {
                     TestHarness.fail(ex.getMessage());
-                    System.exit(0);
+                    junit.framework.TestCase.fail("Exit JVM");
                 }
             }
         }
@@ -627,6 +661,15 @@ public class UdpPrackTimeoutTest extends ScenarioHarness implements SipListener 
 
         }
 
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                @Override
+                public boolean assertCondition() {
+                    return transactionTimedOut && errorResponseSent;
+                };
+            }; 
+        }        
+        
         public void checkState() {
             TestHarness.assertTrue(transactionTimedOut && errorResponseSent);
         }

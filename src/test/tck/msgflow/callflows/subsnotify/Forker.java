@@ -167,8 +167,8 @@ public class Forker implements SipListener {
                 Request newRequest = (Request) request.clone();
                 newRequest.removeFirst(RouteHeader.NAME);
 
-                doFork(newRequest, st, 5070);
-                doFork(newRequest, st, 5071);
+                doFork(newRequest, st, notifier1Port);
+                doFork(newRequest, st, notifier2Port);
             } else {
                 logger
                         .info("forker: got a mid-dialog Subscribe, forwarding statelessly...");
@@ -193,6 +193,10 @@ public class Forker implements SipListener {
     private String transport;
 
     private int port;
+    
+    private int notifier1Port;
+    
+    private int notifier2Port;
 
     public Forker(ProtocolObjects protObjects) {
         addressFactory = protObjects.addressFactory;
@@ -341,12 +345,14 @@ public class Forker implements SipListener {
         logger.info("Transaction Time out");
     }
 
-    public SipProvider createProvider(int newPort) {
+    public SipProvider createProvider(int newPort, int notifier1, int notifier2) {
 
         try {
 
             this.port = newPort;
-
+            this.notifier1Port = notifier1;
+            this.notifier2Port = notifier2;
+            
             ListeningPoint lp = sipStack.createListeningPoint("127.0.0.1",
                     port, transport);
 

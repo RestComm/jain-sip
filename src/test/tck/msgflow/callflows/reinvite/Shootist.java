@@ -33,6 +33,7 @@ import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.helpers.NullEnumeration;
 
 import test.tck.TestHarness;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 import test.tck.msgflow.callflows.ProtocolObjects;
 
 import java.util.*;
@@ -66,7 +67,7 @@ public class Shootist  implements SipListener {
     // To run on two machines change these to suit.
     public static final String myAddress = "127.0.0.1";
 
-    private static final int myPort = 5060;
+    private static final int myPort = NetworkPortAssigner.retrieveNextPort();
 
     protected ClientTransaction inviteTid;
 

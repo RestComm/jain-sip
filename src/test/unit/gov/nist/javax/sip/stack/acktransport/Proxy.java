@@ -98,7 +98,7 @@ public class Proxy implements SipListener {
         ClientTransaction ct1 = sipProviders.get(Shootme.transport).getNewClientTransaction(newRequest);
         sipUri = addressFactory.createSipURI("proxy", "127.0.0.1");
         address = addressFactory.createAddress("proxy", sipUri);
-        sipUri.setPort(5070);
+        sipUri.setPort(port);
         sipUri.setLrParam();
         RecordRouteHeader recordRoute = headerFactory.createRecordRouteHeader(address);
         newRequest.addHeader(recordRoute);
@@ -119,7 +119,7 @@ public class Proxy implements SipListener {
                     st = sipProvider.getNewServerTransaction(request);
 
                 }                
-                this.sendTo(st,request,5080 );
+                this.sendTo(st,request,getTargetPort() );
                             
 
             } else {
@@ -134,7 +134,7 @@ public class Proxy implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -241,5 +241,16 @@ public class Proxy implements SipListener {
     public void stop() {
        this.sipStack.stop();
     }
+    
+    private int targetPort;
+
+    public int getTargetPort() {
+        return targetPort;
+    }
+
+    public void setTargetPort(int targetPort) {
+        this.targetPort = targetPort;
+    }
+    
 
 }

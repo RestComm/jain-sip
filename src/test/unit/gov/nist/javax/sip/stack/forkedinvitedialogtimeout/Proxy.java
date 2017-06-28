@@ -74,6 +74,7 @@ public class Proxy implements SipListener {
     private SipStack sipStack;
 
     private int ntargets;
+    private int[] targetPorts;
     
     
     private void sendTo(ServerTransaction st, Request request, int targetPort) throws Exception {
@@ -91,7 +92,7 @@ public class Proxy implements SipListener {
         ClientTransaction ct1 = sipProvider.getNewClientTransaction(newRequest);
         sipUri = addressFactory.createSipURI("proxy", "127.0.0.1");
         address = addressFactory.createAddress("proxy", sipUri);
-        sipUri.setPort(5070);
+        sipUri.setPort(this.port);
         sipUri.setLrParam();
         RecordRouteHeader recordRoute = headerFactory.createRecordRouteHeader(address);
         newRequest.addHeader(recordRoute);
@@ -118,7 +119,7 @@ public class Proxy implements SipListener {
                 }
                 
                 for ( int i = 0; i < ntargets; i++ ) {
-                    this.sendTo(st,request,5080 + i);
+                    this.sendTo(st,request,targetPorts[i]);
                 }
 
              
@@ -135,7 +136,7 @@ public class Proxy implements SipListener {
 
         } catch (Exception ex) {
             ex.printStackTrace();
-            System.exit(0);
+            junit.framework.TestCase.fail("Exit JVM");
         }
 
     }
@@ -227,9 +228,10 @@ public class Proxy implements SipListener {
         TestCase.fail("unexpected event");
     }
 
-    public Proxy(int myPort, int ntargets) {
+    public Proxy(int myPort, int ntargets, int[] targetPorts) {
         this.port = myPort;
         this.ntargets = ntargets;
+        this.targetPorts = targetPorts;
         SipObjects sipObjects = new SipObjects(myPort, "proxy","off");
         addressFactory = sipObjects.addressFactory;
         messageFactory = sipObjects.messageFactory;

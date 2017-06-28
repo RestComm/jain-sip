@@ -46,6 +46,7 @@ import org.apache.log4j.FileAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class DeliverNotifyBefore202Test extends TestCase {
     private static Logger logger = Logger.getLogger(DeliverNotifyBefore202Test.class);
@@ -519,7 +520,7 @@ public class DeliverNotifyBefore202Test extends TestCase {
 
             } catch (Throwable ex) {
                 ex.printStackTrace();
-                // System.exit(0);
+                // junit.framework.TestCase.fail("Exit JVM");
             }
         }
 
@@ -611,8 +612,11 @@ public class DeliverNotifyBefore202Test extends TestCase {
     }
      
     public void setUp() throws Exception  {
-        this.notifier = new Notifier(5090);
-        this.subscriber = new Subscriber(5090,5092);
+        int notifierPort = NetworkPortAssigner.retrieveNextPort();
+        int subsPort = NetworkPortAssigner.retrieveNextPort();
+        
+        this.notifier = new Notifier(notifierPort);
+        this.subscriber = new Subscriber(notifierPort,subsPort);
         
     }
     public void testDeliverNotifyBefore202() {

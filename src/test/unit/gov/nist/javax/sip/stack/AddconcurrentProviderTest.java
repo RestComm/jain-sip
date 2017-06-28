@@ -20,12 +20,13 @@ import javax.sip.TransportNotSupportedException;
 import gov.nist.javax.sip.stack.NioMessageProcessorFactory;
 import junit.framework.Assert;
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 public class AddconcurrentProviderTest extends TestCase {
     public SipStack sipStack;
     private ExecutorService threadPool = Executors.newFixedThreadPool(
             Runtime.getRuntime().availableProcessors());    
-    private AtomicInteger portCounter = new AtomicInteger(5060);
+//    private AtomicInteger portCounter = new AtomicInteger(5060);
     private AtomicBoolean failed = new AtomicBoolean(false);
 	public void testAddConcurrentProvider() throws Exception
 	{
@@ -76,7 +77,8 @@ public class AddconcurrentProviderTest extends TestCase {
 				public void run() {
 	                ListeningPoint udpListeningPoint;
 					try {
-						udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", portCounter.incrementAndGet(), "udp");
+						int port = NetworkPortAssigner.retrieveNextPort();
+						udpListeningPoint = sipStack.createListeningPoint("127.0.0.1", port, "udp");
 		                SipProvider sipProvider = sipStack.createSipProvider(udpListeningPoint);
 					} catch (Exception e) {
 						failed.set(true);

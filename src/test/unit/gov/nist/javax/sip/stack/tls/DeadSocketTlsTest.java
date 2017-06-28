@@ -46,6 +46,7 @@ import javax.sip.message.Request;
 import javax.sip.message.Response;
 
 import junit.framework.TestCase;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -140,7 +141,7 @@ public class DeadSocketTlsTest extends TestCase {
 		private ContactHeader contactHeader;
 		private ListeningPoint tlsListeningPoint;
 		private int counter;
-
+		
 
 		protected ClientTransaction inviteTid;
 		private boolean byeSeen;
@@ -150,6 +151,10 @@ public class DeadSocketTlsTest extends TestCase {
 				"java "
 						+ "examples.shootistTLS.Shootist \n"
 						+ ">>>> is your class path set to the root?";
+		
+		private final int myPort = NetworkPortAssigner.retrieveNextPort();
+		
+		
 
 
 
@@ -269,8 +274,7 @@ public class DeadSocketTlsTest extends TestCase {
 			sipFactory.setPathName("gov.nist");
 			Properties properties = new Properties();
 			String transport = "tls";
-			int port = 5061;
-			String peerHostPort = "127.0.0.1:5071";
+			String peerHostPort = "127.0.0.1:" + BadShootme.myPort;
 			properties.setProperty(
 					"javax.sip.OUTBOUND_PROXY",
 					peerHostPort + "/" + transport);
@@ -328,7 +332,7 @@ public class DeadSocketTlsTest extends TestCase {
 				BadShootist listener = this;
 
 				tlsListeningPoint = sipStack.createListeningPoint
-						("127.0.0.1", port, transport);
+						("127.0.0.1", myPort, transport);
 				tlsProvider = sipStack.createSipProvider(tlsListeningPoint);
 				tlsProvider.addSipListener(listener);
 
@@ -372,7 +376,7 @@ public class DeadSocketTlsTest extends TestCase {
 				ViaHeader viaHeader =
 						headerFactory.createViaHeader(
 								"127.0.0.1",
-								port,
+								myPort,
 								transport,
 								null);
 
@@ -415,7 +419,7 @@ public class DeadSocketTlsTest extends TestCase {
 				// Create the contact name address.
 				SipURI contactURI = addressFactory.createSipURI(fromName, host);
 				//contactURI.setSecure( true );
-				contactURI.setPort(port);
+				contactURI.setPort(myPort);
 				contactURI.setTransportParam(transport);
 
 				Address contactAddress = addressFactory.createAddress(contactURI);
@@ -576,9 +580,9 @@ public class DeadSocketTlsTest extends TestCase {
 		private static HeaderFactory headerFactory;
 		private static SipStack sipStack;
 		private static final String myAddress = "127.0.0.1";
-		private static final int myPort    = 5071;
+		public static int myPort    = NetworkPortAssigner.retrieveNextPort();
 
-		protected ServerTransaction inviteTid;
+		protected ServerTransaction inviteTid; 
 
 		Dialog dialog;
 		private boolean inviteSeen;
@@ -599,7 +603,7 @@ public class DeadSocketTlsTest extends TestCase {
 
 		private static void usage() {
 			System.out.println(usageString);
-			System.exit(0);
+			junit.framework.TestCase.fail("Exit JVM");
 
 		}
 
@@ -648,7 +652,7 @@ public class DeadSocketTlsTest extends TestCase {
 				} else ((ApplicationData) dialog.getApplicationData()).ackCount ++;
 			} catch (Exception ex) {
 				ex.printStackTrace();
-				System.exit(0);
+				junit.framework.TestCase.fail("Exit JVM");
 			}
 		}
 
@@ -835,7 +839,7 @@ public class DeadSocketTlsTest extends TestCase {
 				System.err.println(e.getMessage());
 				if (e.getCause() != null)
 					e.getCause().printStackTrace();
-				System.exit(0);
+				junit.framework.TestCase.fail("Exit JVM");
 			}
 
 			try {

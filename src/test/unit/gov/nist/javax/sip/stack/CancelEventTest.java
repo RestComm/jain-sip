@@ -42,8 +42,11 @@ import javax.sip.message.Response;
 import junit.framework.TestCase;
 
 import org.apache.log4j.Logger;
+import test.tck.msgflow.callflows.AssertUntil;
+import test.tck.msgflow.callflows.NetworkPortAssigner;
 
 import test.tck.msgflow.callflows.ScenarioHarness;
+import test.tck.msgflow.callflows.TestAssertion;
 
 public class CancelEventTest extends  ScenarioHarness {
 
@@ -52,9 +55,9 @@ public class CancelEventTest extends  ScenarioHarness {
 
     private static String host = "127.0.0.1";
 
-    private static int port = 6050;
+    private int port = NetworkPortAssigner.retrieveNextPort();
 
-    private static int peerPort = 6060;
+    private int peerPort = NetworkPortAssigner.retrieveNextPort();
 
     private static Logger logger = Logger.getLogger("test.tck");
 
@@ -100,7 +103,7 @@ public class CancelEventTest extends  ScenarioHarness {
 
         int logLevel = 32;
 
-        String logFileDirectory = "logs/";
+        String logFileDirectory = "./target/logs/";
 
         Shootist() {
             SipFactory sipFactory = null;
@@ -374,6 +377,15 @@ public class CancelEventTest extends  ScenarioHarness {
                 dialogTerminated = true;
             }
 
+        }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return cancelOk && cancelTxTerm && inviteTxTerm && dialogTerminated;
+                    }
+                };
         }
 
         public boolean conditionMet() {
@@ -657,6 +669,15 @@ public class CancelEventTest extends  ScenarioHarness {
             dialogTerminated = true;
             dteCount++;
         }
+        
+        public TestAssertion getAssertion() {
+            return new TestAssertion() {
+                    @Override
+                    public boolean assertCondition() {
+                        return cancelOk && cancelTxTerm && inviteTxTerm && dialogTerminated && dialogOnCancelTx;
+                    }
+                };
+        }        
 
         public boolean conditionMet() {
              System.out.println("cancelOK = " + cancelOk);
@@ -705,7 +726,8 @@ public class CancelEventTest extends  ScenarioHarness {
 
     public void testCancelEvent() throws Exception {
         shootist.sendInvite();
-        Thread.sleep(40000);
+        AssertUntil.assertUntil(shootist.getAssertion(), 40000);
+        AssertUntil.assertUntil(shootme.getAssertion(), 40000);
         assertTrue ( shootist.conditionMet());
         assertTrue ( shootme.conditionMet());
     }
