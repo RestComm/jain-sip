@@ -58,7 +58,8 @@ public class Shootme implements SipListener {
 
     private static final int myPort = 5080;
     
-    private static String TRANSPORT = "tcp";
+    private static String TRANSPORT_TCP = "tcp";
+    private static String TRANSPORT_UDP = "udp";
 
     protected static final String usageString = "java "
             + Shootme.class.getCanonicalName() + " \n"
@@ -225,12 +226,15 @@ public class Shootme implements SipListener {
             headerFactory = sipFactory.createHeaderFactory();
             addressFactory = sipFactory.createAddressFactory();
             messageFactory = sipFactory.createMessageFactory();
-            ListeningPoint lp = sipStack.createListeningPoint("127.0.0.1",
-                    myPort, TRANSPORT);
+            ListeningPoint lpTcp = sipStack.createListeningPoint("127.0.0.1",
+                    myPort, TRANSPORT_TCP);
+            ListeningPoint lpUdp = sipStack.createListeningPoint("127.0.0.1",
+                    myPort, TRANSPORT_UDP);
 
             Shootme listener = this;
 
-            sipProvider = sipStack.createSipProvider(lp);
+            sipProvider = sipStack.createSipProvider(lpTcp);
+            sipProvider.addListeningPoint(lpUdp);
             sipProvider.addSipListener(listener);
 
         } catch (Exception ex) {
