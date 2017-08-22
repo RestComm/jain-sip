@@ -71,7 +71,7 @@ public class Shootme implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        junit.framework.TestCase.fail("Exit JVM");
+        System.exit(2);
     }
 
     class ByeTask extends TimerTask {
@@ -219,7 +219,7 @@ public class Shootme implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            junit.framework.TestCase.fail("Exit JVM");
+            System.exit(2);
         }
 
         try {

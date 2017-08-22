@@ -210,7 +210,7 @@ public class SniffMessage implements ParseExceptionListener {
         } catch (ClassNotFoundException e) {
             System.out.println("could not find class -- internal error");
             e.printStackTrace();
-            junit.framework.TestCase.fail("Exit JVM");
+            System.exit(2);
         }
 
     }

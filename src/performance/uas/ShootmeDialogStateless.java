@@ -54,7 +54,7 @@ public class ShootmeDialogStateless implements SipListener {
 
     private static void usage() {
         System.out.println(usageString);
-        junit.framework.TestCase.fail("Exit JVM");
+        System.exit(2);
 
     }
 
@@ -204,7 +204,7 @@ public class ShootmeDialogStateless implements SipListener {
             System.err.println(e.getMessage());
             if (e.getCause() != null)
                 e.getCause().printStackTrace();
-            junit.framework.TestCase.fail("Exit JVM");
+            System.exit(2);
         }
 
         try {
