@@ -840,7 +840,7 @@ public class TracesViewer extends javax.swing.JFrame {
         System.out.println("When viewing from a debug file:\n" +
             " --> java tools.tracesviewer.tracesViewer -server_file fileName");
         System.out.println("*************************************\n" );
-        junit.framework.TestCase.fail("Exit JVM");
+        System.exit(2);
     }
 
     // This method is only used by the GUI proxy!!!!!
@@ -979,7 +979,7 @@ public class TracesViewer extends javax.swing.JFrame {
                         "Stack Id (name) not specified Bailing!"
                             + " Please specify stackId (JAIN stack name) "
                             + " using -stackId flag");
-                    junit.framework.TestCase.fail("Exit JVM");
+                    System.exit(2);
                 }
 
                 if (launcher)

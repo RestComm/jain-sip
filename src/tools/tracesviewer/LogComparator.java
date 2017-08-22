@@ -34,7 +34,7 @@ class LogComparator implements Comparator {
             }
         } catch (NumberFormatException ex) {
             ex.printStackTrace();
-            junit.framework.TestCase.fail("Exit JVM");
+            System.exit(2);
             return 0;
         }
     }
