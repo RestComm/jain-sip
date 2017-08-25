@@ -145,7 +145,7 @@ public class WebSocketHttpHandshake {
 		return output;
 	}
 
-	static String computeRev13Response(String key) throws IOException {
+	public static String computeRev13Response(String key) throws IOException {
 		key = key + "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 		MessageDigest md = null;
 		try {
@@ -157,7 +157,8 @@ public class WebSocketHttpHandshake {
 		}
 		byte[] digest = md.digest(key.getBytes());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		return new String(Base64Coder.encode(digest));
+                String encodeBase64String = Base64.encodeBytes(digest);
+		return encodeBase64String;
 		
 	}
 
