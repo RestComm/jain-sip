@@ -1547,7 +1547,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     int code = sipResponse.getStatusCode();
     boolean isRetransmission = !responsesReceived.add(Integer.valueOf(code));
     if (code > 100 && code < 200 && isRetransmission) {
-      if (lastResponse != null && !sipResponse.toString().equals(lastResponse.toString())) {
+      if (lastResponse != null && !sipResponse.equals(lastResponse)) {
         isRetransmission = false;
       }
     }
