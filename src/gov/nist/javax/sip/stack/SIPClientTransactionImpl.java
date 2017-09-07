@@ -51,13 +51,6 @@ import gov.nist.javax.sip.message.SIPRequest;
 import gov.nist.javax.sip.message.SIPResponse;
 import gov.nist.javax.sip.stack.IllegalTransactionStateException.Reason;
 
-import java.io.IOException;
-import java.text.ParseException;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 import javax.sip.Dialog;
 import javax.sip.DialogState;
 import javax.sip.InvalidArgumentException;
@@ -72,6 +65,12 @@ import javax.sip.header.ExpiresHeader;
 import javax.sip.header.RouteHeader;
 import javax.sip.header.TimeStampHeader;
 import javax.sip.message.Request;
+import java.io.IOException;
+import java.text.ParseException;
+import java.util.ListIterator;
+import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
  * Jeff Keyser -- initial. Daniel J. Martinez Manzano --Added support for TLS message channel.
@@ -1547,7 +1546,7 @@ public class SIPClientTransactionImpl extends SIPTransactionImpl implements SIPC
     int code = sipResponse.getStatusCode();
     boolean isRetransmission = !responsesReceived.add(Integer.valueOf(code));
     if (code > 100 && code < 200 && isRetransmission) {
-      if (lastResponse != null && !sipResponse.toString().equals(lastResponse.toString())) {
+      if (lastResponse != null && !sipResponse.equals(lastResponse)) {
         isRetransmission = false;
       }
     }
