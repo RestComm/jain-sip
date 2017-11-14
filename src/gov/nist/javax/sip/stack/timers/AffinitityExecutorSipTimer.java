@@ -139,7 +139,7 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#isStarted()
 	 */
 	public boolean isStarted() {
-		return threadPoolExecutor.isTerminated();
+		return !threadPoolExecutor.isShutdown();
 	}
 	
 }
