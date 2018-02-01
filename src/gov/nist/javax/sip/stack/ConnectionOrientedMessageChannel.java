@@ -720,9 +720,9 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
     
 	/*
      * (non-Javadoc)
-     * @see gov.nist.javax.sip.parser.SIPMessageListener#sendSingleCLRF()
+     * @see gov.nist.javax.sip.parser.SIPMessageListener#sendSingleCRLF()
      */
-	public void sendSingleCLRF() throws Exception {
+	public void sendSingleCRLF() throws Exception {
         lastKeepAliveReceivedTime = System.currentTimeMillis();
 
 		if(mySock != null && !mySock.isClosed()) {
