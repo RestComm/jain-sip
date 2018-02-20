@@ -1664,9 +1664,9 @@ public class SipStackImpl extends SIPTransactionStack implements
 				lip = new ListeningPointImpl(this, port, transport);
 				lip.messageProcessor = messageProcessor;
 				messageProcessor.setListeningPoint(lip);
-				this.listeningPoints.put(key, lip);
 				// start processing messages.
 				messageProcessor.start();
+				this.listeningPoints.put(key, lip);
 				return (ListeningPoint) lip;
 			} catch (java.io.IOException ex) {
 				if (logger.isLoggingEnabled())
