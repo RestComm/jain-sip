@@ -14,6 +14,10 @@ Platforms:
 You need to install J2SE JDK 1.5 or above. You can
 get the SDK from http://www.javasoft.com
 
+Documentation
+-------------
+
+If you're looking for some documentation for the Restcomm JAIN-SIP project, you might want to head over to: https://github.com/RestComm/jain-sip.docs
 
 
 Dependencies
@@ -68,15 +72,6 @@ Please ensure that the directory  classes  (relative to where you have
 built the distribution) is included in the  classpath. Ant targets
 are provided in each example directory to run the examples.
 
-How to get Source Code Refreshes
---------------------------------
-
-Continuous Integration
------------------------
-https://mobicents.ci.cloudbees.com/job/JAIN-SIP/
-
-
-
 Credits
 --------
 
@@ -110,7 +105,7 @@ Jeroen van Bemmel <jeroen@zonnet.nl>
 LICENSE
 -------
 
-The implementation is public domain although the API itself is'nt. 
+The implementation is public domain although the API itself isn't. 
 See the license directory in this distribution for definitive information.
 
 ----------------------------------------------------------------------------
