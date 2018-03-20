@@ -217,12 +217,12 @@ public class LogWriter implements StackLogger {
         }
 
     }
-    
+
     /*
      * (non-Javadoc)
      * @see gov.nist.core.StackLogger#logDebug(java.lang.String, java.lang.Exception)
      */
-    public void logDebug(String message, Exception ex) {
+    public void logDebug(String message, Throwable ex) {
     	if (needsLogging) {
             String newMessage = this.enhanceMessage(message);
             if ( this.lineCount == 0) {
@@ -233,7 +233,7 @@ public class LogWriter implements StackLogger {
             getLogger().debug(newMessage, ex);
         }
     }
-    
+
     /**
      * Log a message into the log file.
      *
@@ -298,7 +298,7 @@ public class LogWriter implements StackLogger {
 
     public LogWriter() {
     }
-    
+
 	public void setStackProperties(Properties configurationProperties) {
 
         this.configurationProperties = configurationProperties;
@@ -323,7 +323,7 @@ public class LogWriter implements StackLogger {
         if (logLevel != null) {
             if (logLevel.equals("LOG4J")) {
                 CommonLogger.useLegacyLogger = false;
-                
+
             }
             else {
                 try {
@@ -409,7 +409,7 @@ public class LogWriter implements StackLogger {
 
         }
 
-        
+
     }
 
     /**
@@ -436,7 +436,7 @@ public class LogWriter implements StackLogger {
      * @param message
      * @param ex
      */
-    public void logError(String message, Exception ex) {
+    public void logError(String message, Throwable ex) {
         Logger logger = this.getLogger();
         logger.error(message, ex);
 
@@ -509,7 +509,7 @@ public class LogWriter implements StackLogger {
            return Level.OFF;
        }
    }
-	
+
 	public String getLoggerName() {
 	    if ( this.logger != null ) {
 	        return logger.getName();
@@ -518,5 +518,5 @@ public class LogWriter implements StackLogger {
 	    }
 	}
 
-  
+
 }

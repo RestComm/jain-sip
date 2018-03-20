@@ -40,19 +40,19 @@ public class SocketTimeoutAuditor extends SIPStackTimerTask {
 	private static StackLogger logger = CommonLogger.getLogger(SocketTimeoutAuditor.class);
 	long nioSocketMaxIdleTime;
 	private NIOHandler nioHandler;
-	
+
 	public SocketTimeoutAuditor(long nioSocketMaxIdleTime, NIOHandler nioHandler) {
 		this.nioSocketMaxIdleTime = nioSocketMaxIdleTime;
 		this.nioHandler = nioHandler;
 	}
-        
+
         @Override
         public Object getThreadHash() {
             return null;
-        }        
-	
+        }
+
 	public void runTask() {
-		try {
+
 			// Reworked the method for https://java.net/jira/browse/JSIP-471
 			if(logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
 				logger.logDebug("keys to check for inactivity removal " + nioHandler.channelMap.keySet());
@@ -80,8 +80,6 @@ public class SocketTimeoutAuditor extends SIPStackTimerTask {
 					}
 				}
 			}
-		} catch (Exception anything) {
 
-		}
 	}
 }

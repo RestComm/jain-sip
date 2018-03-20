@@ -13,16 +13,16 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.SimpleLayout;
 
 public class StackLoggerImpl implements StackLogger {
-    
+
     private static Logger logger = Logger.getLogger(StackLoggerImpl.class) ;
-    
-    
+
+
     private static HashMap<String,Integer> levelMap = new HashMap<String,Integer>();
-    
+
     private static HashMap<Integer,String> inverseLevelMap = new HashMap<Integer,String>();
-    
+
     boolean enabled = true;
- 
+
     private static void putMap(String level, int jsipLevel) {
         levelMap.put(level, jsipLevel);
         inverseLevelMap.put(new Integer(jsipLevel), level);
@@ -37,14 +37,14 @@ public class StackLoggerImpl implements StackLogger {
         putMap(Level.OFF.toString(), new Integer(TRACE_NONE));
         logger.addAppender(new ConsoleAppender(new SimpleLayout()));
     }
-    
-    
+
+
     public StackLoggerImpl( ) {
         logger.setLevel(Level.DEBUG);
         logger.addAppender(new ConsoleAppender());
     }
-    
- 
+
+
     public static void setLogger(Logger logger) {
         StackLoggerImpl.logger = logger;
     }
@@ -62,7 +62,7 @@ public class StackLoggerImpl implements StackLogger {
         return 0;
     }
 
-    public boolean isLoggingEnabled() {   
+    public boolean isLoggingEnabled() {
         return enabled;
     }
 
@@ -75,8 +75,8 @@ public class StackLoggerImpl implements StackLogger {
        logger.debug(string);
 
     }
-    
-    public void logDebug(String string, Exception ex) {
+
+    public void logDebug(String string, Throwable ex) {
         logger.debug(string, ex);
 
      }
@@ -85,7 +85,7 @@ public class StackLoggerImpl implements StackLogger {
         logger.error(string);
     }
 
-    public void logError(String string, Exception exception) {
+    public void logError(String string, Throwable exception) {
       logger.error(string,exception);
 
     }
@@ -94,11 +94,11 @@ public class StackLoggerImpl implements StackLogger {
         logger.error("Exception occured",throwable);
     }
 
-    public void logFatalError(String string) {     
+    public void logFatalError(String string) {
         logger.fatal("Fatal error " + string);
     }
 
-    public void logInfo(String string) { 
+    public void logInfo(String string) {
         logger.info(string);
     }
 
@@ -118,7 +118,7 @@ public class StackLoggerImpl implements StackLogger {
             logDebug(stackTrace);
 
         }
-        
+
     }
 
     public void logStackTrace(int level) {
@@ -131,7 +131,7 @@ public class StackLoggerImpl implements StackLogger {
     public void logWarning(String message) {
         logger.warn(message);
     }
-    
+
     public void logTrace(String message) {
         logger.trace(message);
     }

@@ -53,7 +53,7 @@ public final class KeyedSemaphore {
      * It is assumed the current thread has locked the lock previously. Under
      * this assumption is safer to unlock after removal, so any blocked thread
      * on waiting removed block may proceed without timeout.
-     * 
+     *
      * Only remove if no other threads are already waiting on this lock, otherwise
      * unexpected behaviour may arise by locking one lock object, and trying to release
      * another instance of lock for the same key.
@@ -71,7 +71,7 @@ public final class KeyedSemaphore {
             while (myLock.isHeldByCurrentThread() && myLock.getHoldCount() > 0) {
                 logger.logDebug("unlocking after remove:" + myLock);
                 myLock.unlock();
-            }            
+            }
         }//if there are other threads waiting on this semaphore let them reuse it
         //so unwanted side effects are prevented
     }
@@ -97,7 +97,7 @@ public final class KeyedSemaphore {
                         + "' after 10 seconds -- giving up ");
             }
         } catch (InterruptedException e) {
-            throw new IOException("exception in acquiring sem");
+            throw new IOException("exception in acquiring sem", e);
         }
     }
 

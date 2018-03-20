@@ -61,7 +61,7 @@ public class CommonLoggerLog4j implements StackLogger {
     }
 
     public void logStackTrace(int traceLevel) {
-        
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             StackTraceElement[] ste = new Exception().getStackTrace();
@@ -129,15 +129,15 @@ public class CommonLoggerLog4j implements StackLogger {
         logger.debug(message);
 
     }
-    
+
     /*
      * (non-Javadoc)
      * @see gov.nist.core.StackLogger#logDebug(java.lang.String, java.lang.Exception)
      */
-    public void logDebug(String message, Exception ex) {
+    public void logDebug(String message, Throwable ex) {
         logger.debug(message, ex);
     }
-    
+
     /**
      * Log a message into the log file.
      *
@@ -188,11 +188,11 @@ public class CommonLoggerLog4j implements StackLogger {
     public CommonLoggerLog4j(Logger logger) {
     	this.logger = logger;
     }
-    
+
 	public void setStackProperties(Properties configurationProperties) {
 
         // Do nothing (can't do anything here, this method is called only for legacy)
-        
+
     }
 
     /**
@@ -219,7 +219,7 @@ public class CommonLoggerLog4j implements StackLogger {
      * @param message
      * @param ex
      */
-    public void logError(String message, Exception ex) {
+    public void logError(String message, Throwable ex) {
         Logger logger = this.getLogger();
         logger.error(message, ex);
 
@@ -271,9 +271,9 @@ public class CommonLoggerLog4j implements StackLogger {
     	}
     	return Level.OFF;
     }
-    
+
     public static int levelToInt(Level level) {
- 
+
     	if(level.equals(Level.INFO)) {
     		return TRACE_INFO;
     	} else if(level.equals(Level.ERROR)) {
@@ -289,7 +289,7 @@ public class CommonLoggerLog4j implements StackLogger {
     	}
     	return 0;
     }
-	
+
 	public String getLoggerName() {
 	    if ( this.logger != null ) {
 	        return logger.getName();
@@ -302,5 +302,5 @@ public class CommonLoggerLog4j implements StackLogger {
 		logger.info("Build timestamp: " + buildTimeStamp);
 	}
 
-  
+
 }

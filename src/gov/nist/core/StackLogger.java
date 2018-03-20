@@ -15,21 +15,21 @@ public interface StackLogger extends LogLevels {
      * log a stack trace. This helps to look at the stack frame.
      */
 	public void logStackTrace();
-	
+
 	/**
-	 * Log a stack trace if the current logging level exceeds 
+	 * Log a stack trace if the current logging level exceeds
 	 * given trace level.
 	 * @param traceLevel
 	 */
 	public void logStackTrace(int traceLevel);
-	
+
 	/**
      * Get the line count in the log stream.
      *
      * @return
      */
 	public int getLineCount();
-	
+
 	/**
      * Log an exception.
      *
@@ -43,15 +43,15 @@ public interface StackLogger extends LogLevels {
      *            message to log into the log file.
      */
     public void logDebug(String message);
-    
+
     /**
      * Log a message into the log file.
      *
      * @param message
      *            message to log into the log file.
-     * @param ex 
+     * @param ex
      */
-    public void logDebug(String message, Exception ex);
+    public void logDebug(String message, Throwable ex);
     /**
      * Log a message into the log file.
      *
@@ -90,7 +90,7 @@ public interface StackLogger extends LogLevels {
      * @param message
      * @param ex
      */
-    public void logError(String message, Exception ex);
+    public void logError(String message, Throwable ex);
     /**
      * Log a warning mesasge.
      *
@@ -103,8 +103,8 @@ public interface StackLogger extends LogLevels {
      * @param string
      */
     public void logInfo(String string);
-    
-   
+
+
     /**
      * Disable logging altogether.
      *
@@ -115,25 +115,25 @@ public interface StackLogger extends LogLevels {
      * Enable logging (globally).
      */
     public void enableLogging();
-    
+
     /**
      * Set the build time stamp. This is logged into the logging stream.
      */
     public void setBuildTimeStamp(String buildTimeStamp);
-    
+
     /**
      * Stack creation properties.
      * @param stackProperties
      */
-    
+
     public void setStackProperties(Properties stackProperties);
-    
+
     /**
      * The category for the logger.
      * @return
      */
     public String getLoggerName();
-    
-    
-   
+
+
+
 }

@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the SIP Timer based on java.util.concurrent.ScheduledThreadPoolExecutor
- * Seems to perform 
- * 
+ * Seems to perform
+ *
  * @author jean.deruelle@gmail.com
  *
  */
@@ -47,15 +47,15 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 	private static StackLogger logger = CommonLogger.getLogger(ScheduledExecutorSipTimer.class);
 	protected SipStackImpl sipStackImpl;
 	ScheduledThreadPoolExecutor threadPoolExecutor;
-    
+
 	public ScheduledExecutorSipTimer() {
-		threadPoolExecutor = new ScheduledThreadPoolExecutor(1, new NamingThreadFactory("jain_sip_timer_executor"));		
+		threadPoolExecutor = new ScheduledThreadPoolExecutor(1, new NamingThreadFactory("jain_sip_timer_executor"));
 	}
-	
+
 	private void schedulePurgeTaskIfNeeded() {
 		int purgePeriod = Integer.parseInt(sipStackImpl.getConfigurationProperties().getProperty("gov.nist.javax.sip.timers.SCHEDULED_EXECUTOR_PURGE_DELAY", "1"));
 		if(purgePeriod > 0) {
-			Runnable r = new Runnable() {			
+			Runnable r = new Runnable() {
 				public void run() {
 					try {
 						if(logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
@@ -64,7 +64,7 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 						threadPoolExecutor.purge();
 						if(logger.isLoggingEnabled(StackLogger.TRACE_DEBUG)) {
 							logger.logDebug("Purging canceled timer tasks completed.");
-						}						
+						}
 					}
 					catch (Exception e) {
 						logger.logError("failed to execute purge",e);
@@ -74,7 +74,7 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 			threadPoolExecutor.scheduleWithFixedDelay(r, purgePeriod, purgePeriod, TimeUnit.MINUTES);
 		}
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#stop()
 	 */
@@ -97,7 +97,7 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 		task.setSipTimerTask(future);
 		return true;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#scheduleWithFixedDelay(gov.nist.javax.sip.stack.SIPStackTimerTask, long, long)
@@ -133,11 +133,11 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 		boolean cancelled = false;
 		ScheduledFuture<?> sipTimerTask = (ScheduledFuture<?>) task.getSipTimerTask();
 		if(sipTimerTask != null) {
-			task.cleanUpBeforeCancel();			
+			task.cleanUpBeforeCancel();
 			task.setSipTimerTask(null);
 			threadPoolExecutor.remove((Runnable)sipTimerTask);
 			cancelled = sipTimerTask.cancel(false);
-		} 
+		}
 		return cancelled;
 	}
 
@@ -145,9 +145,9 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 		private SIPStackTimerTask task;
 
 		public ScheduledSipTimerTask(SIPStackTimerTask task) {
-			this.task= task;			
+			this.task= task;
 		}
-		
+
 		public void run() {
 			 try {
 				 // task can be null if it has been cancelled
@@ -155,10 +155,9 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 					 task.runTask();
 				 }
 	        } catch (Throwable e) {
-	            System.out.println("SIP stack timer task failed due to exception:");
-	            e.printStackTrace();
+	            logger.logDebug("SIP stack timer task failed due to exception:", e);
 	        }
-		}				
+		}
 	}
 
 	/*
@@ -168,5 +167,5 @@ public class ScheduledExecutorSipTimer implements SipTimer {
 	public boolean isStarted() {
 		return !threadPoolExecutor.isShutdown();
 	}
-	
+
 }

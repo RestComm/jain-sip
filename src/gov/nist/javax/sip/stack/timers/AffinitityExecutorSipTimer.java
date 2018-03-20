@@ -37,7 +37,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of the SIP Timer based on Affinity executor provided by stack
- * 
+ *
  * @author jean.deruelle@gmail.com
  *
  */
@@ -45,10 +45,10 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 	private static StackLogger logger = CommonLogger.getLogger(AffinitityExecutorSipTimer.class);
 	protected SipStackImpl sipStackImpl;
 	ScheduledExecutorService threadPoolExecutor;
-    
+
 	public AffinitityExecutorSipTimer() {
 	}
-	
+
 	/* (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#stop()
 	 */
@@ -71,7 +71,7 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 		task.setSipTimerTask(future);
 		return true;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#scheduleWithFixedDelay(gov.nist.javax.sip.stack.SIPStackTimerTask, long, long)
@@ -106,11 +106,11 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 		boolean cancelled = false;
 		ScheduledFuture<?> sipTimerTask = (ScheduledFuture<?>) task.getSipTimerTask();
 		if(sipTimerTask != null) {
-			task.cleanUpBeforeCancel();			
+			task.cleanUpBeforeCancel();
 			task.setSipTimerTask(null);
 			//threadPoolExecutor.remove((Runnable)sipTimerTask);
 			cancelled = sipTimerTask.cancel(false);
-		} 
+		}
 		return cancelled;
 	}
 
@@ -118,9 +118,9 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 		private SIPStackTimerTask task;
 
 		public ScheduledSipTimerTask(SIPStackTimerTask task) {
-			this.task= task;			
+			this.task= task;
 		}
-		
+
 		public void run() {
 			 try {
 				 // task can be null if it has been cancelled
@@ -128,10 +128,9 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 					 task.runTask();
 				 }
 	        } catch (Throwable e) {
-	            System.out.println("SIP stack timer task failed due to exception:");
-	            e.printStackTrace();
+	            logger.logDebug("SIP stack timer task failed due to exception:", e);
 	        }
-		}				
+		}
 	}
 
 	/*
@@ -141,5 +140,5 @@ public class AffinitityExecutorSipTimer implements SipTimer {
 	public boolean isStarted() {
 		return !threadPoolExecutor.isShutdown();
 	}
-	
+
 }

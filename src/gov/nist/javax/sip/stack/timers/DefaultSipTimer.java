@@ -37,8 +37,8 @@ import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Default SIP Timer implementation based on java.util.Timer 
- * 
+ * Default SIP Timer implementation based on java.util.Timer
+ *
  * @author jean.deruelle@gmail.com
  *
  */
@@ -47,11 +47,11 @@ public class DefaultSipTimer extends Timer implements SipTimer {
 
 	protected AtomicBoolean started = new AtomicBoolean(false);
 	protected SipStackImpl sipStackImpl;
-	
+
         public DefaultSipTimer() {
             super("DefaultSipTimerThread");
         }
-        
+
 	private class DefaultTimerTask extends TimerTask {
 		private SIPStackTimerTask task;
 
@@ -59,19 +59,18 @@ public class DefaultSipTimer extends Timer implements SipTimer {
 			this.task= task;
 			task.setSipTimerTask(this);
 		}
-		
+
 		public void run() {
 			 try {
 				 // task can be null if it has been cancelled
 				 if(task != null) {
-					 task.runTask();					 
+					 task.runTask();
 				 }
 	        } catch (Throwable e) {
-	            System.out.println("SIP stack timer task failed due to exception:");
-	            e.printStackTrace();
+	            logger.logDebug("SIP stack timer task failed due to exception:", e);
 	        }
 		}
-		
+
 		public boolean cancel() {
 			if(task != null) {
 				task.cleanUpBeforeCancel();
@@ -80,7 +79,7 @@ public class DefaultSipTimer extends Timer implements SipTimer {
 			return super.cancel();
 		}
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#schedule(gov.nist.javax.sip.stack.SIPStackTimerTask, long)
@@ -92,7 +91,7 @@ public class DefaultSipTimer extends Timer implements SipTimer {
 		super.schedule(new DefaultTimerTask(task), delay);
 		return true;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#scheduleWithFixedDelay(gov.nist.javax.sip.stack.SIPStackTimerTask, long, long)
@@ -105,7 +104,7 @@ public class DefaultSipTimer extends Timer implements SipTimer {
 		super.schedule(new DefaultTimerTask(task), delay, period);
 		return true;
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#cancel(gov.nist.javax.sip.stack.SIPStackTimerTask)
@@ -133,13 +132,13 @@ public class DefaultSipTimer extends Timer implements SipTimer {
 	 */
 	public void stop() {
 		started.set(false);
-		cancel();		
+		cancel();
 		logger.logStackTrace(StackLogger.TRACE_DEBUG);
 		if(logger.isLoggingEnabled(StackLogger.TRACE_INFO)) {
 			logger.logInfo("the sip stack timer " + this.getClass().getName() + " has been stopped");
 		}
 	}
-	
+
 	/*
 	 * (non-Javadoc)
 	 * @see gov.nist.javax.sip.stack.timers.SipTimer#isStarted()
