@@ -102,6 +102,8 @@ import gov.nist.javax.sip.header.ims.SecurityVerify;
 import gov.nist.javax.sip.header.ims.SecurityVerifyList;
 import gov.nist.javax.sip.header.ims.ServiceRoute;
 import gov.nist.javax.sip.header.ims.ServiceRouteList;
+import gov.nist.javax.sip.header.ims.PAccessNetworkInfo;
+import gov.nist.javax.sip.header.ims.PAccessNetworkInfoList;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -205,6 +207,8 @@ public class ListMap {
         headerListTable.put(SecurityVerify.class, SecurityVerifyList.class);
 
         headerListTable.put(PAssertedIdentity.class, PAssertedIdentityList.class);
+
+        headerListTable.put(PAccessNetworkInfo.class, PAccessNetworkInfoList.class);
         
         // https://java.net/jira/browse/JSIP-460
         headerListTable.put(Reason.class, ReasonList.class);

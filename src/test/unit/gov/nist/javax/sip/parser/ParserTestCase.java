@@ -78,7 +78,7 @@ public abstract class ParserTestCase extends TestCase {
                 	SIPHeaderList<?> list = (SIPHeaderList<?>) hdr;
                 	assertNotNull( "Header should be added to list", list.getFirst() );
                 	// JvB: Should be consistent, some parser classes override getFirst but leave list empty
-                	assertTrue( "List should contain at least 1 header", list.size() > 0 );	
+                	assertTrue( "List should contain at least 1 header", list.size() > 0 );
                 }
                 
                 hp = createParser(parserClass, ((SIPHeader) hdr.clone()).encode().trim() + "\n");
