@@ -3,7 +3,7 @@ package gov.nist.javax.sip.header.ims;
 import gov.nist.javax.sip.header.SIPHeaderList;
 
 /**
- * A list of CallInfo headers (there can be multiple in a message).
+ * A list of PAccessNetworkInfo headers (there can be multiple in a message).
  *
  * @author M. Hoan Luu hoan.h.luu@telestax.com  <br/>
  *

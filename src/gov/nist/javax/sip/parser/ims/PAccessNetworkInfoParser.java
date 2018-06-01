@@ -77,7 +77,68 @@ import gov.nist.javax.sip.parser.TokenTypes;
  *       np                     = "network-provided"
  *       extension-access-info  = generic-param
  * </pre>
- * 
+ *
+ * <p>RFC 7315 - Private Header (P-Header) Extensions to the Session Initiation Protocol (SIP) for the 3GPP </p>
+ * <p>Syntax (RFC 7315):</p>
+ *
+ * <pre>
+ * P-Access-Network-Info  = "P-Access-Network-Info" HCOLON
+ *                                 access-net-spec *(COMMA access-net-spec)
+ * access-net-spec        = (access-type / access-class)
+ *                          *(SEMI access-info)
+ * access-type            = "IEEE-802.11" / "IEEE-802.11a" /
+ *                          "IEEE-802.11b" / "IEEE-802.11g" /
+ *                          "IEEE-802.11n" /
+ *                          "IEEE-802.3" / "IEEE-802.3a" /
+ *                          "IEEE-802.3ab" / "IEEE-802.3ae" /
+ *                          "IEEE-802.3ak" / "IEEE-802.3ah" /
+ *                          "IEEE-802.3aq" / "IEEE-802.3an" /
+ *                          "IEEE-802.3e" / "IEEE-802.3i" /
+ *                          "IEEE-802.3j" / "IEEE-802.3u" /
+ *                          "IEEE-802.3y" / "IEEE-802.3z" /
+ *                          "3GPP-GERAN" /
+ *                          "3GPP-UTRAN-FDD" / "3GPP-UTRAN-TDD" /
+ *                          "3GPP-E-UTRAN-FDD" / "3GPP-E-UTRAN-TDD" /
+ *                          "3GPP2-1X-Femto" / "3GPP2-UMB" /
+ *                          "3GPP2-1X-HRPD" / "3GPP2-1X" /
+ *                          "ADSL" / "ADSL2" / "ADSL2+" / "RADSL" /
+ *                          "SDSL" / "HDSL" / "HDSL2" / "G.SHDSL" /
+ *                          "VDSL" / "IDSL" /
+ *                          "DOCSIS" / "GSTN" / "GPON" / " XGPON1" /
+ *                          "DVB-RCS2" / token
+ * access-class           = "3GPP-GERAN" /  "3GPP-UTRAN" /
+ *                          "3GPP-E-UTRAN" / "3GPP-WLAN" /
+ *                          "3GPP-GAN" / "3GPP-HSPA" /
+ *                          "3GPP2" / token
+ * np                     = "network-provided"
+ * extension-access-info  = gen-value
+ * cgi-3gpp               = "cgi-3gpp" EQUAL
+ *                          (token / quoted-string)
+ * utran-cell-id-3gpp     = "utran-cell-id-3gpp" EQUAL
+ *                          (token / quoted-string)
+ * i-wlan-node-id         = "i-wlan-node-id" EQUAL
+ *                          (token / quoted-string)
+ * dsl-location           = "dsl-location" EQUAL
+ *                          (token / quoted-string)
+ * eth-location           = "eth-location" EQUAL
+ *                          (token / quoted-string)
+ * fiber-location         = "fiber-location" EQUAL
+ *                          (token / quoted-string)
+ * ci-3gpp2               = "ci-3gpp2" EQUAL
+ *                          (token / quoted-string)
+ * ci-3gpp2-femto         = "ci-3gpp2-femto" EQUAL
+ *                          (token / quoted-string)
+ * gstn-location          = "gstn-location" EQUAL
+ *                          (token / quoted-string)
+ * dvb-rcs2-node-id       = "dvb-rcs2-node-id" EQUAL
+ *                          quoted-string
+ * local-time-zone        = "local-time-zone"  EQUAL
+ *                          quoted-string
+ * operator-specific-GI   = "operator-specific-GI" EQUAL
+ *                          (token / quoted-string)
+ * utran-sai-3gpp         = "utran-sai-3gpp" EQUAL
+ *                          (token / quoted-string)
+ * </pre>
  *
  * @author Miguel Freitas (IT) PT-Inovacao
  */
