@@ -42,6 +42,7 @@ import gov.nist.javax.sip.header.CSeq;
 import gov.nist.javax.sip.header.CallID;
 import gov.nist.javax.sip.header.ContentLength;
 import gov.nist.javax.sip.header.From;
+import gov.nist.javax.sip.header.MaxForwards;
 import gov.nist.javax.sip.header.RequestLine;
 import gov.nist.javax.sip.header.StatusLine;
 import gov.nist.javax.sip.header.To;
@@ -684,6 +685,7 @@ public class UDPMessageChannel extends MessageChannel implements
                         || hdrClass.equals(Via.class)
                         || hdrClass.equals(CallID.class)
                         || hdrClass.equals(ContentLength.class)
+                        || hdrClass.equals(MaxForwards.class)
                         || hdrClass.equals(RequestLine.class) || hdrClass
                         .equals(StatusLine.class))) {
             if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {

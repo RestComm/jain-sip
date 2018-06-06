@@ -80,6 +80,7 @@ import javax.sip.TransactionState;
 import javax.sip.TransactionUnavailableException;
 import javax.sip.address.Hop;
 import javax.sip.header.CallIdHeader;
+import javax.sip.header.ToHeader;
 import javax.sip.message.Request;
 import javax.sip.message.Response;
 
@@ -491,8 +492,25 @@ public class SipProviderImpl implements javax.sip.SipProvider, gov.nist.javax.si
         SIPRequest sipRequest = (SIPRequest) request;
         try {
             sipRequest.checkHeaders();
-        } catch (ParseException ex) {
-            throw new TransactionUnavailableException(ex.getMessage(), ex);
+        } catch (ParseException pe) {
+            try {
+                SIPResponse badReqRes = sipRequest.createResponse(Response.BAD_REQUEST,
+                        "Bad Request (" + pe.getLocalizedMessage() + ')');
+                // Should add a to-tag if not already present...
+                ToHeader to = (ToHeader) badReqRes.getHeader(ToHeader.NAME);
+                if (to.getTag() == null || to.getTag().isEmpty()) {
+                    to.setTag("badreq");
+                    badReqRes.setHeader(to);
+                }
+                if (logger.isLoggingEnabled(LogWriter.TRACE_DEBUG)) {
+                    logger.logDebug("Sending automatic 400 Bad Request:");
+                    logger.logDebug(badReqRes.toString());
+                }
+                sendResponse(badReqRes);
+            } catch (Exception ex) {
+                logger.logError("error sending response", ex);
+            }
+            throw new TransactionUnavailableException(pe.getMessage(), pe);
         }
 
         if ( request.getMethod().equals(Request.ACK)) {

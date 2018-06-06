@@ -736,7 +736,8 @@ public class LexerCore extends StringTokenizer {
 
         int startIdx = ptr;
         try {
-            if (!isDigit(lookAhead(0))) {
+            char c = lookAhead(0);
+            if (c != '-' && !isDigit(c)) {
                 throw new ParseException(
                     buffer + ": Unexpected token at " + lookAhead(0),
                     ptr);

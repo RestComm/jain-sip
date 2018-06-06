@@ -42,4 +42,17 @@ public class ContentLengthParserTest extends ParserTestCase {
 
     }
 
+    // https://github.com/RestComm/jain-slee/issues/111
+    public void testNegativeContentLength(){
+        String error = "";
+        try {
+            final String header = "Content-Length: -123 \n";
+            System.out.print(header);
+            createParser(ContentLengthParser.class, header).parse();
+        } catch (java.text.ParseException ex) {
+            System.out.println(ex.getMessage());
+            error = ex.getLocalizedMessage();
+        }
+        assertTrue(error.contains("the contentLength parameter is <0"));
+    }
 }
