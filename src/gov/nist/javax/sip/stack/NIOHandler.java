@@ -303,6 +303,7 @@ public class NIOHandler {
                                                 receiverAddress + " " + contactPort + " " + senderAddress);
                                     }
                                     putSocket(key, clientSock);
+                                    connected = true;
                                     break;
                             } else {
                                     break;
