@@ -137,6 +137,7 @@ public class URLParser extends Parser {
                 case '&':
                 case '+':
                 case '$':
+                case '\"':
                     isValidChar = true;
             }
             if (isValidChar || isUnreserved(next)) {
