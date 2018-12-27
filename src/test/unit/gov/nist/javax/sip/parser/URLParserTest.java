@@ -66,6 +66,8 @@ public class URLParserTest extends TestCase {
           "sip:alice",
           "sip:alice@registrar.com;method=REGISTER",
           "sip:annc@10.10.30.186:6666;early=no;play=http://10.10.30.186:8080/examples/pin.vxml",
+          "sip:+1-650-444-2222@ss1.wcom.com;user=phone;Reason=SIP;cause=408;text=\"Request+Timeout\"",
+          "sip:+1-650-444-2222@ss1.wcom.com;user=phone;Reason=SIP;cause=408",
         "tel:+463-1701-4291" ,
         "tel:46317014291" ,
         "http://10.10.30.186:8080/examples/pin.vxml"

@@ -47,6 +47,8 @@ public class AddressParserTest extends ParserTestCase {
                 "<sip:user@example.com?Route=%3csip:sip.example.com%3e>",
                 "\"M. Ranganathan\"   <sip:mranga@nist.gov>",
                 "<sip:+1-650-555-2222@ss1.wcom.com;user=phone>",
+                "<sip:+1-650-444-2222@ss1.wcom.com;user=phone;Reason=SIP;cause=408;>;index=1",
+                "<sip:+1-650-444-2222@ss1.wcom.com;user=phone;Reason=SIP;cause=408;text=\"Request+Timeout\">;index=1",
                 "M. Ranganathan <sip:mranga@nist.gov>" };
         try {
             for (int i = 0; i < addresses.length; i++) {
