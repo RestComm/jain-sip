@@ -254,7 +254,6 @@ public class NIOHandler {
         SocketChannel clientSock = null;
         
         boolean entered = false;
-        boolean connected = false;
         boolean attempted = false;
         try {
                 keyedSemaphore.enterIOCriticalSection(key);
@@ -368,7 +367,7 @@ public class NIOHandler {
             }
         } finally {
             if (entered) {
-                if (attempted && !connected) 
+                if (attempted && (clientSock!= null && clientSock.isBlocking() && !clientSock.isConnected()))
                 {
                     // new connection is bad.
                     // remove from our table the socket and its semaphore
