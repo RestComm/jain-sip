@@ -602,7 +602,7 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
                     int nbytes = myClientInputStream.read(msg, 0, bufferSize);
                     // no more bytes to read...
                     if (nbytes == -1) {
-                        hispipe.write("\r\n\r\n".getBytes("UTF-8"));
+                        hispipe.write("\r\n".getBytes("UTF-8")); // send \r\n to allow the pipe to wake up
                         try {
                             if (sipStack.maxConnections != -1) {
                                 synchronized (messageProcessor) {
@@ -720,9 +720,9 @@ public abstract class ConnectionOrientedMessageChannel extends MessageChannel im
     
 	/*
      * (non-Javadoc)
-     * @see gov.nist.javax.sip.parser.SIPMessageListener#sendSingleCLRF()
+     * @see gov.nist.javax.sip.parser.SIPMessageListener#sendSingleCRLF()
      */
-	public void sendSingleCLRF() throws Exception {
+	public void sendSingleCRLF() throws Exception {
         lastKeepAliveReceivedTime = System.currentTimeMillis();
 
 		if(mySock != null && !mySock.isClosed()) {
