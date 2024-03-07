@@ -153,10 +153,10 @@ public class NameValueList implements Serializable, Cloneable, Map<String,NameVa
         }
         NameValueList other = (NameValueList) otherObject;
 
-        if (this.size() != this.size()) {
+        if (this.size() != other.size()) {
             return false;
         }
-	        Iterator<String> li = this.getNames();
+	    Iterator<String> li = this.getNames();
 	
         while (li.hasNext()) {
             String key = (String) li.next();
