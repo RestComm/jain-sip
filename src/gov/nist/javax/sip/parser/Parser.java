@@ -43,7 +43,7 @@ public abstract class Parser extends ParserCore implements TokenTypes {
 
     protected ParseException createParseException(String exceptionString) {
         return new ParseException(
-            lexer.getBuffer() + ":" + exceptionString,
+            lexer.getBuffer().trim() + ":" + exceptionString,
             lexer.getPtr());
     }
 
